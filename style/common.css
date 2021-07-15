@@ -1,0 +1,14 @@
+@charset "UTF-8";
+
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  font-size: 16px;
+  height: 100%;
+}
+
+.tom-editor-container {
+  height: 100%;
+}
