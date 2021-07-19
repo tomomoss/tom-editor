@@ -27,7 +27,7 @@ const HorizontalScrollbarArea = class {
 
     // スクロールバーを初期化します。
     this.horizontalScrollbar = document.createElement("div");
-    this.horizontalScrollbar.style.background = "rgba(238, 238, 238)";
+    this.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
     this.horizontalScrollbar.style.height = "100%";
     this.horizontalScrollbar.style.left = "0";
     this.horizontalScrollbar.style.position = "absolute";

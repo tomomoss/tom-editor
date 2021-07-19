@@ -22,8 +22,8 @@ const LineNumberArea = class {
     // 行番号領域を初期化します。
     this.root = document.createElement("div");
     this.root.style.background = "rgb(255, 255, 255)";
-    this.root.style.borderRight = "solid 0.1rem rgb(238, 238, 238)";
     this.root.style.flex = `0 0 ${alphanumericWidth * 4}px`;
+    this.root.style.padding = "0 2rem 0 0";
     this.root.style.overflow = "hidden";
     this.root.style.textAlign = "right";
     this.root.style.zIndex = "1";
@@ -32,6 +32,9 @@ const LineNumberArea = class {
     this.root.appendChild(this.negativeSpace);
     this.appendLineNumber();
   }
+
+  /** @type {string} フォーカスされた行番号の文字色です。 */
+  focusedLineNumberColor = "rgb(51, 51, 51)";
 
   /** @type {number} フォーカスしている行を指すインデックス値です。 */
   focusedLineNumberIndex;
@@ -44,6 +47,9 @@ const LineNumberArea = class {
 
   /** @type {Element} 自身（行番号領域）を表すHTML要素です。 */
   root;
+
+  /** @type {string} 基本となる行番号の文字色です。 */
+  unfocusedLineNumberColor = "rgb(204, 204, 204)";
 
   /**
    * 行番号を1つ追加します。
@@ -90,7 +96,7 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.innerHTML = this.lineNumbers.length + 1;
-    lineNumber.style.color = "rgb(204, 204, 204)";
+    lineNumber.style.color = this.unfocusedLineNumberColor;
     lineNumber.style.cursor = "default";
     return lineNumber;
   };
@@ -110,7 +116,7 @@ const LineNumberArea = class {
   resetLineNumber = (numberOfTextLines, focusedTextLineIndex) => {
     if (typeof numberOfTextLines === "undefined") {
       if (typeof this.focusedLineNumberIndex !== "undefined") {
-        this.lineNumbers[this.focusedLineNumberIndex].style.color = "rgb(204, 204, 204)";
+        this.lineNumbers[this.focusedLineNumberIndex].style.color = this.unfocusedLineNumberColor;
         this.focusedLineNumberIndex = undefined;
         return;
       }
@@ -133,10 +139,10 @@ const LineNumberArea = class {
       return;
     }
     if (typeof this.focusedLineNumberIndex !== "undefined" && typeof this.lineNumbers[this.focusedLineNumberIndex] !== "undefined") {
-      this.lineNumbers[this.focusedLineNumberIndex].style.color = "rgb(204, 204, 204)";
+      this.lineNumbers[this.focusedLineNumberIndex].style.color = this.unfocusedLineNumberColor;
     }
     this.focusedLineNumberIndex = focusedTextLineIndex;
-    this.lineNumbers[this.focusedLineNumberIndex].style.color = "rgb(102, 102, 102)";
+    this.lineNumbers[this.focusedLineNumberIndex].style.color = this.focusedLineNumberColor;
   };
 
   /**
