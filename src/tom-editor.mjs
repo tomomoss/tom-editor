@@ -381,8 +381,8 @@ const TOMEditor = class {
             } else {
               this.textArea.appendCharacter(character);
             }
-            this.reflectChangesInTextAreaToOtherArea();
           }
+          this.reflectChangesInTextAreaToOtherArea();
         });
 
         // 行番号の更新とかの諸々の処理は上でやっているためfalseを返します。
