@@ -56,7 +56,7 @@
    */
   startBlinkingAnimation = () => {
     this.root.animate([{
-      borderLeft: "solid 0.125rem rgb(0, 0, 0)"
+      borderLeft: "solid 0.125rem rgb(51, 51, 51)"
     },
     {
       borderLeft: "solid 0.125rem transparent"
