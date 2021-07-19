@@ -146,11 +146,21 @@ const TOMEditor = class {
       this.lineNumberArea.resetLineNumber();
     });
 
-    // ドラッグ処理各種のフラグを解除します。
-    window.addEventListener("mouseup", () => {
+    // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
+    window.addEventListener("mouseup", (event) => {
       this.textArea.duringSelectionRange = false;
-      this.horizontalScrollbarIsDragging = undefined;
       this.virticalScrollbarIsDragging = undefined;
+      if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      this.horizontalScrollbarIsDragging = undefined;
     });
 
     // ブラウザからフォーカスが外れたときはキャレットを取り除きます。
@@ -220,6 +230,22 @@ const TOMEditor = class {
     // スクロールバーのドラッグ移動処理のフラグを起動します。
     this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mousedown", (event) => {
       this.horizontalScrollbarIsDragging = event.x;
+      this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(204, 204, 204)";
+    });
+
+    // マウス重なり時のスタイルを適用します。
+    this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mouseenter", () => {
+      if (this.horizontalScrollbarArea.horizontalScrollbar.style.background === "rgb(204, 204, 204)") {
+        return;
+      }
+      this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
+    });
+
+    // マウスを外したときは普通のスタイルに戻します。
+    this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mouseleave", () => {
+      if (typeof this.horizontalScrollbarIsDragging === "undefined") {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
     });
   };
 
@@ -247,8 +273,27 @@ const TOMEditor = class {
   addEventListenersIntoVirticalScrollbar = () => {
 
     // スクロールバーのドラッグ移動処理のフラグを起動します。
+    // また、ドラッグ状態になったことを表すためにスタイルを適用します。
     this.virticalScrollbarArea.virticalScrollbar.addEventListener("mousedown", (event) => {
       this.virticalScrollbarIsDragging = event.y;
+      this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(204, 204, 204)";
+    });
+
+    // マウスの重なり時用スタイルを適用します。
+    // ただし、ドラッグ状態であればドラッグ用のスタイルを優先します。
+    this.virticalScrollbarArea.virticalScrollbar.addEventListener("mouseenter", () => {
+      if (this.virticalScrollbarArea.virticalScrollbar.style.background === "rgb(204, 204, 204)") {
+        return;
+      }
+      this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
+    });
+
+    // マウスが外れた時は通常時用のスタイルを適用します。
+    // ただし、ドラッグ中ならばスタイルを残します。
+    this.virticalScrollbarArea.virticalScrollbar.addEventListener("mouseleave", () => {
+      if (typeof this.virticalScrollbarIsDragging === "undefined") {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
     });
   };
 

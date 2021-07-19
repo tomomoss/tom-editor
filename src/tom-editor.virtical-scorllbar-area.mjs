@@ -23,7 +23,7 @@ const VirticalScrollbarArea = class {
 
     // スクロールバーを初期化します。
     this.virticalScrollbar = document.createElement("div");
-    this.virticalScrollbar.style.background = "rgba(238, 238, 238)";
+    this.virticalScrollbar.style.background = "rgb(238, 238, 238)";
     this.virticalScrollbar.style.display = "none";
     this.virticalScrollbar.style.height = "100%";
     this.virticalScrollbar.style.position = "absolute";
