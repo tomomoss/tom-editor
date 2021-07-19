@@ -10,7 +10,7 @@ html {
 }
 
 .tom-editor-container {
-  border: solid 0.1rem black;
+  border: solid 0.1rem rgb(204, 204, 204);
   flex: 1 1 auto;
   margin: 3rem;
   overflow: hidden;
