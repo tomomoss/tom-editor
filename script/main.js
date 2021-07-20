@@ -10,5 +10,5 @@ const tomEditor = new TOMEditor(tomEditorContainer);
 
 // 入力内容取得ボタンをクリックしたときはwindow.alertメソッドで内容を表示します。
 document.querySelector(".get-content-button").addEventListener("click", () => {
-  alert("!");
+  alert(tomEditor.value);
 });

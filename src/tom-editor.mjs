@@ -79,6 +79,24 @@ const TOMEditor = class {
     this.addEventListenersIntoCaret();
   }
 
+  /**
+   * 現在入力中の値をstring化して返します。
+   */
+  get value() {
+    let text = "";
+    for (const textLine of this.textArea.characters) {
+      for (const character of textLine) {
+        if (character === textLine[textLine.length - 1]) {
+          text += "\n";
+          continue;
+        }
+        text += character.innerHTML;
+      }
+    }
+    text = text.slice(0, -1);
+    return text;
+  }
+
   /** @type {Caret} キャレットです。 */
   caret;
 
