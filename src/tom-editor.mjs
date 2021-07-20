@@ -89,6 +89,12 @@ const TOMEditor = class {
   /** @type {TextArea} 文字領域です。 */
   textArea;
 
+  /** @type {string} 現在入力中の日本語文字列が入ります。 */
+  typingJapanese;
+
+  /** @type {number} 現在入力中の日本語文字列の参照位置です。 */
+  typingJapaneseIndex;
+
   /** @type {VirticalScrollbarArea} 縦方向のスクロールバー領域です。 */
   virticalScrollbarArea;
 
@@ -103,6 +109,17 @@ const TOMEditor = class {
     // キャレットがDOM上に存在するときにキーが押された場合は押されたキーに応じた処理を実行します。
     // また、Shiftキー・Ctrlキーのフラグの起動操作も当イベントリスナーの範疇です。
     this.caret.root.addEventListener("keydown", (event) => {
+      if (event.key === "Process") {
+        if (typeof this.typingJapanese === "undefined") {
+          this.typingJapanese = "";
+          this.typingJapaneseIndex = 0;
+        } else if (event.code === "Enter") {
+          this.typingJapanese = undefined;
+        }
+        this.caret.root.value = "";
+        return;
+      }
+      this.typingJapanese = undefined;
 
       // Shifキーが押されているかどうかをTextAreaオブジェクトに伝達します。
       this.textArea.duringSelectionRange = event.shiftKey;
@@ -112,6 +129,32 @@ const TOMEditor = class {
       if (this.reflectMousedownKey(event)) {
         this.reflectChangesInTextAreaToOtherArea();
       }
+    });
+
+    // 日本語入力用の処理です。
+    this.caret.root.addEventListener("input", () => {
+      if (typeof this.typingJapanese === "undefined") {
+        return;
+      }
+        
+      // まずは既存の文字列を全て削除します。
+      for (let i = 0; i < this.typingJapaneseIndex; i += 1) {
+        this.textArea.resetFocusAndSelectionRange("ArrowLeft");
+      }
+      for (const character of this.typingJapanese) {
+        this.textArea.removeCharacter("Delete");
+      }
+
+      // 入力情報と位置情報を更新し、DOMに反映させます。
+      this.typingJapanese = this.caret.root.value;
+      this.typingJapaneseIndex = this.caret.root.selectionStart;
+      for (const character of this.typingJapanese) {
+        this.textArea.appendCharacter(character);
+      }
+      for (let i = 0; i < this.typingJapanese.length - this.typingJapaneseIndex; i += 1) {
+        this.textArea.resetFocusAndSelectionRange("ArrowLeft");
+      }
+      this.reflectChangesInTextAreaToOtherArea();
     });
   };
 
@@ -136,6 +179,7 @@ const TOMEditor = class {
       // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
       event.preventDefault();
 
+      this.typingJapanese = undefined;
       for (const element of event.path) {
         if (element === this.root) {
           return;
