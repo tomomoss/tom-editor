@@ -135,7 +135,7 @@ const TextArea = class {
     this.getFocusedTextLine().appendChild(EOL);
 
     // 余白内にダミー行を追加します。
-    const dummyTextLine = this.createTextLine();
+    const dummyTextLine = this.createDummyTextLine();
     this.dummyTextLines.push(dummyTextLine);
     this.negativeSpace.before(dummyTextLine);
   };
@@ -200,13 +200,22 @@ const TextArea = class {
     }
 
     // 1文字ずつ取得していきます。
-    for (let i = 0; i < this.selectionRangeEndRowIndex - this.selectionRangeStartRowIndex + 1; i += 1) {
-      for (let j = 0; j < this.selectionRangeEndColumnIndex - this.selectionRangeStartColumnIndex + 1; j += 1) {
-        if (this.selectionRangeEndColumnIndex === this.characters[this.selectionRangeStartRowIndex + i].length - 1) {
-          convertedText += "\n";
-          continue;
-        }
-        convertedText += this.characters[this.selectionRangeStartRowIndex + i][this.selectionRangeStartColumnIndex + j].innerHTML;
+    let checkingRowIndex = this.selectionRangeStartRowIndex;
+    let checkingColumnIndex = this.selectionRangeStartColumnIndex;
+    while (true) {
+      if (checkingColumnIndex === this.characters[checkingRowIndex].length - 1) {
+        convertedText += "\n";
+        checkingRowIndex += 1;
+        checkingColumnIndex = 0;
+      } else {
+        convertedText += this.characters[checkingRowIndex][checkingColumnIndex].innerHTML;
+        checkingColumnIndex += 1;
+      }
+      if (
+        checkingRowIndex > this.selectionRangeEndRowIndex ||
+        (checkingRowIndex === this.selectionRangeEndRowIndex && checkingColumnIndex > this.selectionRangeEndColumnIndex)
+      ) {
+        break;
       }
     }
 
@@ -228,6 +237,16 @@ const TextArea = class {
   };
 
   /**
+   * 余白領域に追加するダミー行を表すHTML要素を作成します。
+   * @returns {Element} ダミー行を表すHTML要素です。
+   */
+  createDummyTextLine = () => {
+    const textLine = document.createElement("div");
+    textLine.style.height = `${parseFloat(getComputedStyle(this.root).lineHeight)}px`;
+    return textLine;
+  };
+
+  /**
    * 行末文字を表すHTML要素を作成します。
    * @returns {Element} 行末文字を表すHTML要素です。
    */
@@ -243,7 +262,6 @@ const TextArea = class {
    */
   createTextLine = () => {
     const textLine = document.createElement("div");
-    textLine.style.height = getComputedStyle(this.root).fontSize;
     return textLine;
   };
 
@@ -392,7 +410,7 @@ const TextArea = class {
     this.root.appendChild(this.negativeSpaceWrapper);
 
     // ダミー行の1行目を追加します。
-    this.dummyTextLines[0] = this.createTextLine();
+    this.dummyTextLines[0] = this.createDummyTextLine();
     this.negativeSpaceWrapper.appendChild(this.dummyTextLines[0]);
 
     // 余白を挿入します。
@@ -800,7 +818,7 @@ const TextArea = class {
    */
   resetNegativeSpaceHeight = () => {
     const areaHeight = this.root.getBoundingClientRect().height
-    const textLineHeight = parseFloat(getComputedStyle(this.root).fontSize);
+    const textLineHeight = parseFloat(getComputedStyle(this.root).lineHeight);
     this.negativeSpace.style.height = `${areaHeight - textLineHeight}px`;
   };
 

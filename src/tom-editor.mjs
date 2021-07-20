@@ -4,6 +4,9 @@ import {
   Caret
 } from "./tom-editor.caret.mjs";
 import {
+  DecorationUnderLine
+} from "./tom-editor.decoration-under-line.mjs";
+import {
   HorizontalScrollbarArea
 } from "./tom-editor.horizontal-scorllbar-area.mjs";
 import {
@@ -44,7 +47,7 @@ const TOMEditor = class {
     // エディター本体を初期化します。
     this.root = document.createElement("div");
     this.root.style.display = "flex";
-    this.root.style.font = "normal 1rem/1rem Consolas, 'Courier New', monospace";
+    this.root.style.font = "normal 1rem/1.25rem Consolas, 'Courier New', monospace";
     this.root.style.height = "100%";
     this.root.style.position = "relative";
     this.root.style.whiteSpace = "pre";
@@ -60,6 +63,11 @@ const TOMEditor = class {
       this.virticalScrollbarArea.root.getBoundingClientRect().width
     );
     this.caret = new Caret(this.root);
+    this.decorationUnderLine = new DecorationUnderLine(
+      this.root,
+      this.lineNumberArea.root.getBoundingClientRect().width,
+      this.virticalScrollbarArea.root.getBoundingClientRect().width
+    );
 
     // イベントリスナーを実装します。
     this.addEventListenersIntoEditor();
@@ -73,6 +81,9 @@ const TOMEditor = class {
 
   /** @type {Caret} キャレットです。 */
   caret;
+
+  /** @type {DecorationUnderLine} 装飾下線です。 */
+  decorationUnderLine;
 
   /** @type {HorizontalScrollbarArea} 横方向のスクロールバー領域です。 */
   horizontalScrollbarArea
@@ -89,6 +100,12 @@ const TOMEditor = class {
   /** @type {TextArea} 文字領域です。 */
   textArea;
 
+  /** @type {string} 現在入力中の日本語文字列が入ります。 */
+  typingJapanese;
+
+  /** @type {number} 現在入力中の日本語文字列の参照位置です。 */
+  typingJapaneseIndex;
+
   /** @type {VirticalScrollbarArea} 縦方向のスクロールバー領域です。 */
   virticalScrollbarArea;
 
@@ -103,6 +120,17 @@ const TOMEditor = class {
     // キャレットがDOM上に存在するときにキーが押された場合は押されたキーに応じた処理を実行します。
     // また、Shiftキー・Ctrlキーのフラグの起動操作も当イベントリスナーの範疇です。
     this.caret.root.addEventListener("keydown", (event) => {
+      if (event.key === "Process") {
+        if (typeof this.typingJapanese === "undefined") {
+          this.typingJapanese = "";
+          this.typingJapaneseIndex = 0;
+        } else if (event.code === "Enter") {
+          this.typingJapanese = undefined;
+        }
+        this.caret.root.value = "";
+        return;
+      }
+      this.typingJapanese = undefined;
 
       // Shifキーが押されているかどうかをTextAreaオブジェクトに伝達します。
       this.textArea.duringSelectionRange = event.shiftKey;
@@ -112,6 +140,32 @@ const TOMEditor = class {
       if (this.reflectMousedownKey(event)) {
         this.reflectChangesInTextAreaToOtherArea();
       }
+    });
+
+    // 日本語入力用の処理です。
+    this.caret.root.addEventListener("input", () => {
+      if (typeof this.typingJapanese === "undefined") {
+        return;
+      }
+        
+      // まずは既存の文字列を全て削除します。
+      for (let i = 0; i < this.typingJapaneseIndex; i += 1) {
+        this.textArea.resetFocusAndSelectionRange("ArrowLeft");
+      }
+      for (const character of this.typingJapanese) {
+        this.textArea.removeCharacter("Delete");
+      }
+
+      // 入力情報と位置情報を更新し、DOMに反映させます。
+      this.typingJapanese = this.caret.root.value;
+      this.typingJapaneseIndex = this.caret.root.selectionStart;
+      for (const character of this.typingJapanese) {
+        this.textArea.appendCharacter(character);
+      }
+      for (let i = 0; i < this.typingJapanese.length - this.typingJapaneseIndex; i += 1) {
+        this.textArea.resetFocusAndSelectionRange("ArrowLeft");
+      }
+      this.reflectChangesInTextAreaToOtherArea();
     });
   };
 
@@ -136,6 +190,7 @@ const TOMEditor = class {
       // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
       event.preventDefault();
 
+      this.typingJapanese = undefined;
       for (const element of event.path) {
         if (element === this.root) {
           return;
@@ -143,6 +198,10 @@ const TOMEditor = class {
       }
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
+      this.decorationUnderLine.placeDecorationUnderLine(
+        this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+        this.root.getBoundingClientRect().top
+      );
       this.lineNumberArea.resetLineNumber();
     });
 
@@ -200,29 +259,6 @@ const TOMEditor = class {
   };
 
   /**
-   * 文字領域を対象としたイベントリスナーを実装します。
-   */
-  addEventListenersIntoTextArea = () => {
-
-    // クリックされた場所に応じてキャレットを配置します。
-    this.textArea.root.addEventListener("mousedown", (event) => {
-      this.textArea.duringSelectionRange = true;
-      this.textArea.resetFocusAndSelectionRange();
-      this.textArea.identifyCharacterForPlacingCaret(event);
-      this.reflectChangesInTextAreaToOtherArea();
-    });
-
-    // ドラッグによる範囲選択処理です。
-    this.textArea.root.addEventListener("mousemove", (event) => {
-      if (this.textArea.duringSelectionRange) {
-        this.textArea.updateSelectionRangeByMouseDragging(event);
-        this.reflectChangesInTextAreaToOtherArea();
-        return;
-      }
-    });
-  };
-
-  /**
    * 水平方向のスクロールバーを対象としたイベントリスナーを実装します。
    */
   addEventListenersIntoHorizontalScrollbar = () => {
@@ -264,6 +300,29 @@ const TOMEditor = class {
         return;
       }
       this.scrollEditor(event.target, "next");
+    });
+  };
+
+  /**
+   * 文字領域を対象としたイベントリスナーを実装します。
+   */
+  addEventListenersIntoTextArea = () => {
+
+    // クリックされた場所に応じてキャレットを配置します。
+    this.textArea.root.addEventListener("mousedown", (event) => {
+      this.textArea.duringSelectionRange = true;
+      this.textArea.resetFocusAndSelectionRange();
+      this.textArea.identifyCharacterForPlacingCaret(event);
+      this.reflectChangesInTextAreaToOtherArea();
+    });
+
+    // ドラッグによる範囲選択処理です。
+    this.textArea.root.addEventListener("mousemove", (event) => {
+      if (this.textArea.duringSelectionRange) {
+        this.textArea.updateSelectionRangeByMouseDragging(event);
+        this.reflectChangesInTextAreaToOtherArea();
+        return;
+      }
     });
   };
 
@@ -326,6 +385,7 @@ const TOMEditor = class {
     this.textArea.autoScroll(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
 
     this.resetScrollbar();
+    this.decorationUnderLine.placeDecorationUnderLine(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
   };
 
   /**
@@ -338,6 +398,7 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
+    this.decorationUnderLine.placeDecorationUnderLine(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
   };
 
   /**
@@ -469,6 +530,10 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
+    this.decorationUnderLine.placeDecorationUnderLine(
+      this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+      this.root.getBoundingClientRect().top
+    );
   };
 
   /**
@@ -521,6 +586,10 @@ const TOMEditor = class {
     this.caret.placeCaret(
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
+    );
+    this.decorationUnderLine.placeDecorationUnderLine(
+      this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+      this.root.getBoundingClientRect().top
     );
   };
 };
