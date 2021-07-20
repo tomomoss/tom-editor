@@ -243,7 +243,6 @@ const TextArea = class {
    */
   createTextLine = () => {
     const textLine = document.createElement("div");
-    textLine.style.height = getComputedStyle(this.root).fontSize;
     return textLine;
   };
 

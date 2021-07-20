@@ -44,7 +44,7 @@ const TOMEditor = class {
     // エディター本体を初期化します。
     this.root = document.createElement("div");
     this.root.style.display = "flex";
-    this.root.style.font = "normal 1rem/1rem Consolas, 'Courier New', monospace";
+    this.root.style.font = "normal 1rem/1.25rem Consolas, 'Courier New', monospace";
     this.root.style.height = "100%";
     this.root.style.position = "relative";
     this.root.style.whiteSpace = "pre";

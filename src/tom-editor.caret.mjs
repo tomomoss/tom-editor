@@ -16,7 +16,7 @@
     this.root.style.border = "none";
     this.root.style.color = "transparent";
     this.root.style.display = "none";
-    this.root.style.height = "1rem";
+    this.root.style.height = superRoot.style.lineHeight;
     this.root.style.left = "0";
     this.root.style.maxWidth = "0.01px";
     this.root.style.outline = "none";
