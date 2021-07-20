@@ -398,7 +398,11 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
-    this.decorationUnderLine.placeDecorationUnderLine(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
+    if (typeof this.textArea.selectionRangeEndRowIndex === "undefined") {
+      this.decorationUnderLine.placeDecorationUnderLine(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
+    } else {
+      this.decorationUnderLine.blurDecorationUnderLine();
+    }
   };
 
   /**
