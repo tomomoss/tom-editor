@@ -487,7 +487,11 @@ const TOMEditor = class {
 
     // 文字領域のoffsetサイズとscrollサイズを基準にして、スクロールバーのサイズを更新します。
     // また、フォーカスしている位置を基準にスクロールバーのスライド具合も更新します。
-    this.virticalScrollbarArea.resetVirticalScrollbar(this.textArea.root.offsetHeight, this.textArea.root.scrollHeight, this.textArea.root.scrollTop);
+    this.virticalScrollbarArea.resetVirticalScrollbar(
+      this.textArea.root.offsetHeight,
+      this.textArea.root.scrollHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
+      this.textArea.root.scrollTop
+    );
     this.horizontalScrollbarArea.resetHorizontalScrollbar(this.textArea.root.offsetWidth, this.textArea.root.scrollWidth, this.textArea.root.scrollLeft);
   };
 
@@ -577,7 +581,11 @@ const TOMEditor = class {
     // スクロールします。
     this.lineNumberArea.scrollVertically(scrollSize);
     this.textArea.scrollVertically(scrollSize);
-    this.virticalScrollbarArea.resetVirticalScrollbar(this.textArea.root.offsetHeight, this.textArea.root.scrollHeight, this.textArea.root.scrollTop);
+    this.virticalScrollbarArea.resetVirticalScrollbar(
+      this.textArea.root.offsetHeight,
+      this.textArea.root.scrollHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
+      this.textArea.root.scrollTop)
+    ;
 
     // フォーカス中ならばキャレットの位置も更新します。
     if (typeof this.textArea.focusedRowIndex === "undefined") {

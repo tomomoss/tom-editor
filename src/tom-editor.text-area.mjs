@@ -19,6 +19,7 @@ const TextArea = class {
     this.root.style.display = "flex";
     this.root.style.flex = "1 1 auto";
     this.root.style.overflow = "hidden";
+    this.root.style.padding = "0.5rem 0 0";
     this.root.style.position = "relative";
     superRoot.appendChild(this.root);
     this.initializeTextLinesWrapper();

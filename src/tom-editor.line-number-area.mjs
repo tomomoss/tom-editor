@@ -23,8 +23,8 @@ const LineNumberArea = class {
     this.root = document.createElement("div");
     this.root.style.background = "rgb(255, 255, 255)";
     this.root.style.flex = `0 0 ${alphanumericWidth * 4}px`;
-    this.root.style.padding = "0 2rem 0 0";
     this.root.style.overflow = "hidden";
+    this.root.style.padding = "0.5rem 2rem 0 0";
     this.root.style.textAlign = "right";
     this.root.style.zIndex = "1";
     superRoot.appendChild(this.root);

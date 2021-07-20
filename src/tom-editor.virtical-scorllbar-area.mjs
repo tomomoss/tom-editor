@@ -40,14 +40,15 @@ const VirticalScrollbarArea = class {
 
   /**
    * スクロールバーの状態を更新します。
-   * @param {number} textAreaOffsetHeight 文字領域の内容量の縦幅です。
+   * @param {number} textAreaContentHeight 文字領域の内容量の縦幅です。
    * @param {number} textAreaScrollHeight 文字領域の完全な縦幅です。
    * @param {number} textAreaScrollTop 文字領域の縦方向のスクロール量です。
    */
-  resetVirticalScrollbar = (textAreaOffsetHeight, textAreaScrollHeight, textAreaScrollTop) => {
+  resetVirticalScrollbar = (textAreaContentHeight, textAreaScrollHeight, textAreaScrollTop) => {
 
+    console.log(textAreaContentHeight, textAreaScrollHeight);
     // 文字領域内容量の横幅が文字領域横幅に収まっているときはスクロールバーを表示しません。
-    if (!(textAreaOffsetHeight < textAreaScrollHeight)) {
+    if (!(textAreaContentHeight < textAreaScrollHeight)) {
       this.virticalScrollbar.style.display = "none";
       return;
     }
@@ -57,10 +58,10 @@ const VirticalScrollbarArea = class {
     this.virticalScrollbar.style.height = new Intl.NumberFormat("ja", {
       maximumSignificantDigits: 4,
       style: "percent"
-    }).format(textAreaOffsetHeight / textAreaScrollHeight);
+    }).format(textAreaContentHeight / textAreaScrollHeight);
 
     // スクロールバーの位置を更新します。
-    this.virticalScrollbar.style.top = `${textAreaScrollTop * (textAreaOffsetHeight / textAreaScrollHeight)}px`;
+    this.virticalScrollbar.style.top = `${textAreaScrollTop * (textAreaContentHeight / textAreaScrollHeight)}px`;
   };
 };
 
