@@ -25,6 +25,7 @@
     this.root.style.position = "absolute";
     this.root.style.resize = "none";
     this.root.style.top = "0";
+    this.root.style.zIndex = "-1";
     superRoot.appendChild(this.root);
   }
 

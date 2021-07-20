@@ -1,6 +1,40 @@
 @charset "UTF-8";
 
 body {
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  margin: 0;
+}
+html {
+  height: 100%;
+}
+
+.header {
+  border-bottom: solid 0.1rem rgb(238, 238, 238);
+  display: flex;
+  justify-content: space-between;
+}
+.get-content-button {
+  background: rgb(255, 255, 255);
+  margin: 0.5rem;
+}
+.get-content-button:hover {
+  background: rgb(238, 238, 238);
+  cursor: pointer;
+}
+.main {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.title {
+  font: normal 1rem / 1.5rem "";
+  margin: 0.5rem;
+}
+
+
+/*
+body {
   height: 100%;
   margin: 0;
 }
@@ -9,13 +43,14 @@ html {
   height: 100%;
 }
 
+.main {
+  display: flex;
+}
 .tom-editor-container {
   border: solid 0.1rem rgb(204, 204, 204);
   flex: 1 1 auto;
   margin: 3rem;
   overflow: hidden;
 }
-.wrapper {
-  display: flex;
-  height: 100%;
-}
+*/
+

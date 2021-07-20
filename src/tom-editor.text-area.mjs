@@ -235,7 +235,6 @@ const TextArea = class {
     const character = document.createElement("span");
     character.innerHTML = value;
     character.style.display = "inline-block";
-    console.log(getComputedStyle(character));
     return character;
   };
 

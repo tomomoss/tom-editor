@@ -79,6 +79,24 @@ const TOMEditor = class {
     this.addEventListenersIntoCaret();
   }
 
+  /**
+   * 現在入力中の値をstring化して返します。
+   */
+  get value() {
+    let text = "";
+    for (const textLine of this.textArea.characters) {
+      for (const character of textLine) {
+        if (character === textLine[textLine.length - 1]) {
+          text += "\n";
+          continue;
+        }
+        text += character.innerHTML;
+      }
+    }
+    text = text.slice(0, -1);
+    return text;
+  }
+
   /** @type {Caret} キャレットです。 */
   caret;
 
@@ -185,11 +203,6 @@ const TOMEditor = class {
 
     // エディター外をクリックされたときはキャレットを取り除きます。
     window.addEventListener("mousedown", (event) => {
-
-      // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
-      // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
-      event.preventDefault();
-
       this.typingJapanese = undefined;
       for (const element of event.path) {
         if (element === this.root) {
@@ -198,11 +211,8 @@ const TOMEditor = class {
       }
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
-      this.decorationUnderLine.placeDecorationUnderLine(
-        this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
-        this.root.getBoundingClientRect().top
-      );
       this.lineNumberArea.resetLineNumber();
+      this.decorationUnderLine.blurDecorationUnderLine();
     });
 
     // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
@@ -227,6 +237,13 @@ const TOMEditor = class {
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
       this.lineNumberArea.resetLineNumber();
+      this.decorationUnderLine.blurDecorationUnderLine();
+    });
+
+    // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
+    // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
+    this.root.addEventListener("mousedown", (event) => {
+      event.preventDefault();
     });
 
     // マウスホイールが操作されたときはスクロール処理を実行します。
