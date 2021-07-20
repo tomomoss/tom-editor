@@ -200,13 +200,22 @@ const TextArea = class {
     }
 
     // 1文字ずつ取得していきます。
-    for (let i = 0; i < this.selectionRangeEndRowIndex - this.selectionRangeStartRowIndex + 1; i += 1) {
-      for (let j = 0; j < this.selectionRangeEndColumnIndex - this.selectionRangeStartColumnIndex + 1; j += 1) {
-        if (this.selectionRangeEndColumnIndex === this.characters[this.selectionRangeStartRowIndex + i].length - 1) {
-          convertedText += "\n";
-          continue;
-        }
-        convertedText += this.characters[this.selectionRangeStartRowIndex + i][this.selectionRangeStartColumnIndex + j].innerHTML;
+    let checkingRowIndex = this.selectionRangeStartRowIndex;
+    let checkingColumnIndex = this.selectionRangeStartColumnIndex;
+    while (true) {
+      if (checkingColumnIndex === this.characters[checkingRowIndex].length - 1) {
+        convertedText += "\n";
+        checkingRowIndex += 1;
+        checkingColumnIndex = 0;
+      } else {
+        convertedText += this.characters[checkingRowIndex][checkingColumnIndex].innerHTML;
+        checkingColumnIndex += 1;
+      }
+      if (
+        checkingRowIndex > this.selectionRangeEndRowIndex ||
+        (checkingRowIndex === this.selectionRangeEndRowIndex && checkingColumnIndex > this.selectionRangeEndColumnIndex)
+      ) {
+        break;
       }
     }
 
