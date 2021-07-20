@@ -46,7 +46,6 @@ const VirticalScrollbarArea = class {
    */
   resetVirticalScrollbar = (textAreaContentHeight, textAreaScrollHeight, textAreaScrollTop) => {
 
-    console.log(textAreaContentHeight, textAreaScrollHeight);
     // 文字領域内容量の横幅が文字領域横幅に収まっているときはスクロールバーを表示しません。
     if (!(textAreaContentHeight < textAreaScrollHeight)) {
       this.virticalScrollbar.style.display = "none";

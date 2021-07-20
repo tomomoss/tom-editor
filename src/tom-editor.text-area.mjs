@@ -234,6 +234,8 @@ const TextArea = class {
   createCharacter = (value) => {
     const character = document.createElement("span");
     character.innerHTML = value;
+    character.style.display = "inline-block";
+    console.log(getComputedStyle(character));
     return character;
   };
 
@@ -254,6 +256,7 @@ const TextArea = class {
   createEOL = () => {
     const EOL = document.createElement("span");
     EOL.innerHTML = " ";
+    EOL.style.display = "inline-block";
     return EOL;
   };
 
