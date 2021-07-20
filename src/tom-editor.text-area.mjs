@@ -19,6 +19,7 @@ const TextArea = class {
     this.root.style.display = "flex";
     this.root.style.flex = "1 1 auto";
     this.root.style.overflow = "hidden";
+    this.root.style.padding = "0.5rem 0 0";
     this.root.style.position = "relative";
     superRoot.appendChild(this.root);
     this.initializeTextLinesWrapper();
@@ -233,6 +234,8 @@ const TextArea = class {
   createCharacter = (value) => {
     const character = document.createElement("span");
     character.innerHTML = value;
+    character.style.display = "inline-block";
+    console.log(getComputedStyle(character));
     return character;
   };
 
@@ -253,6 +256,7 @@ const TextArea = class {
   createEOL = () => {
     const EOL = document.createElement("span");
     EOL.innerHTML = " ";
+    EOL.style.display = "inline-block";
     return EOL;
   };
 
