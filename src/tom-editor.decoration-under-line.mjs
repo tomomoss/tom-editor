@@ -15,8 +15,9 @@ const DecorationUnderLine = class {
     Object.seal(this);
     this.root = document.createElement("div");
     this.root.style.borderBottom = "solid 0.1rem rgb(238, 238, 238)";
+    this.root.style.cursor = "default";
     this.root.style.display = "none";
-    this.root.style.height = superRoot.style.lineHeight;
+    this.root.style.height = "0";
     this.root.style.left = `${lineNumberAreaWidth}px`;
     this.root.style.margin = "0 0.5rem 0 0";
     this.root.style.position = "absolute";
@@ -42,7 +43,7 @@ const DecorationUnderLine = class {
    */
   placeDecorationUnderLine = (cordinateY) => {
     this.root.style.display = "";
-    this.root.style.top = `${cordinateY}px`;
+    this.root.style.top = `${cordinateY + parseFloat(getComputedStyle(this.root).lineHeight)}px`;
   };
 };
 
