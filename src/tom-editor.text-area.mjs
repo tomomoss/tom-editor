@@ -135,7 +135,7 @@ const TextArea = class {
     this.getFocusedTextLine().appendChild(EOL);
 
     // 余白内にダミー行を追加します。
-    const dummyTextLine = this.createTextLine();
+    const dummyTextLine = this.createDummyTextLine();
     this.dummyTextLines.push(dummyTextLine);
     this.negativeSpace.before(dummyTextLine);
   };
@@ -234,6 +234,16 @@ const TextArea = class {
     const character = document.createElement("span");
     character.innerHTML = value;
     return character;
+  };
+
+  /**
+   * 余白領域に追加するダミー行を表すHTML要素を作成します。
+   * @returns {Element} ダミー行を表すHTML要素です。
+   */
+  createDummyTextLine = () => {
+    const textLine = document.createElement("div");
+    textLine.style.height = `${parseFloat(getComputedStyle(this.root).lineHeight)}px`;
+    return textLine;
   };
 
   /**
@@ -400,7 +410,7 @@ const TextArea = class {
     this.root.appendChild(this.negativeSpaceWrapper);
 
     // ダミー行の1行目を追加します。
-    this.dummyTextLines[0] = this.createTextLine();
+    this.dummyTextLines[0] = this.createDummyTextLine();
     this.negativeSpaceWrapper.appendChild(this.dummyTextLines[0]);
 
     // 余白を挿入します。
@@ -808,7 +818,7 @@ const TextArea = class {
    */
   resetNegativeSpaceHeight = () => {
     const areaHeight = this.root.getBoundingClientRect().height
-    const textLineHeight = parseFloat(getComputedStyle(this.root).fontSize);
+    const textLineHeight = parseFloat(getComputedStyle(this.root).lineHeight);
     this.negativeSpace.style.height = `${areaHeight - textLineHeight}px`;
   };
 

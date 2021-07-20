@@ -4,6 +4,9 @@ import {
   Caret
 } from "./tom-editor.caret.mjs";
 import {
+  DecorationUnderLine
+} from "./tom-editor.decoration-under-line.mjs";
+import {
   HorizontalScrollbarArea
 } from "./tom-editor.horizontal-scorllbar-area.mjs";
 import {
@@ -60,6 +63,11 @@ const TOMEditor = class {
       this.virticalScrollbarArea.root.getBoundingClientRect().width
     );
     this.caret = new Caret(this.root);
+    this.decorationUnderLine = new DecorationUnderLine(
+      this.root,
+      this.lineNumberArea.root.getBoundingClientRect().width,
+      this.virticalScrollbarArea.root.getBoundingClientRect().width
+    );
 
     // イベントリスナーを実装します。
     this.addEventListenersIntoEditor();
@@ -73,6 +81,9 @@ const TOMEditor = class {
 
   /** @type {Caret} キャレットです。 */
   caret;
+
+  /** @type {DecorationUnderLine} 装飾下線です。 */
+  decorationUnderLine;
 
   /** @type {HorizontalScrollbarArea} 横方向のスクロールバー領域です。 */
   horizontalScrollbarArea
@@ -187,6 +198,10 @@ const TOMEditor = class {
       }
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
+      this.decorationUnderLine.placeDecorationUnderLine(
+        this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+        this.root.getBoundingClientRect().top
+      );
       this.lineNumberArea.resetLineNumber();
     });
 
@@ -244,29 +259,6 @@ const TOMEditor = class {
   };
 
   /**
-   * 文字領域を対象としたイベントリスナーを実装します。
-   */
-  addEventListenersIntoTextArea = () => {
-
-    // クリックされた場所に応じてキャレットを配置します。
-    this.textArea.root.addEventListener("mousedown", (event) => {
-      this.textArea.duringSelectionRange = true;
-      this.textArea.resetFocusAndSelectionRange();
-      this.textArea.identifyCharacterForPlacingCaret(event);
-      this.reflectChangesInTextAreaToOtherArea();
-    });
-
-    // ドラッグによる範囲選択処理です。
-    this.textArea.root.addEventListener("mousemove", (event) => {
-      if (this.textArea.duringSelectionRange) {
-        this.textArea.updateSelectionRangeByMouseDragging(event);
-        this.reflectChangesInTextAreaToOtherArea();
-        return;
-      }
-    });
-  };
-
-  /**
    * 水平方向のスクロールバーを対象としたイベントリスナーを実装します。
    */
   addEventListenersIntoHorizontalScrollbar = () => {
@@ -308,6 +300,29 @@ const TOMEditor = class {
         return;
       }
       this.scrollEditor(event.target, "next");
+    });
+  };
+
+  /**
+   * 文字領域を対象としたイベントリスナーを実装します。
+   */
+  addEventListenersIntoTextArea = () => {
+
+    // クリックされた場所に応じてキャレットを配置します。
+    this.textArea.root.addEventListener("mousedown", (event) => {
+      this.textArea.duringSelectionRange = true;
+      this.textArea.resetFocusAndSelectionRange();
+      this.textArea.identifyCharacterForPlacingCaret(event);
+      this.reflectChangesInTextAreaToOtherArea();
+    });
+
+    // ドラッグによる範囲選択処理です。
+    this.textArea.root.addEventListener("mousemove", (event) => {
+      if (this.textArea.duringSelectionRange) {
+        this.textArea.updateSelectionRangeByMouseDragging(event);
+        this.reflectChangesInTextAreaToOtherArea();
+        return;
+      }
     });
   };
 
@@ -370,6 +385,7 @@ const TOMEditor = class {
     this.textArea.autoScroll(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
 
     this.resetScrollbar();
+    this.decorationUnderLine.placeDecorationUnderLine(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
   };
 
   /**
@@ -382,6 +398,7 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
+    this.decorationUnderLine.placeDecorationUnderLine(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
   };
 
   /**
@@ -513,6 +530,10 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
+    this.decorationUnderLine.placeDecorationUnderLine(
+      this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+      this.root.getBoundingClientRect().top
+    );
   };
 
   /**
@@ -565,6 +586,10 @@ const TOMEditor = class {
     this.caret.placeCaret(
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
+    );
+    this.decorationUnderLine.placeDecorationUnderLine(
+      this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
+      this.root.getBoundingClientRect().top
     );
   };
 };
