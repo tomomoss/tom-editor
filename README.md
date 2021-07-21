@@ -6,13 +6,20 @@ TOM EditorはJavaScriptだけで構築されたエディターライブラリで
 
 [TOM Editor 1.0.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
-## 取り扱い説明
+## 導入手順
 
 `src` ディレクトリに格納されている `.mjs` ファイルがTOM Editorを構成するファイルとなります。
 
 それらファイルを同じ階層に配置し、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
 
 ```javascript
+// ./script/main.js
+import {
+  TOMEditor
+} from "./tom-editor/tom-editor.mjs";
+```
+
+```html
 <script defer src="./script/main.js" type="module"></script>
 ```
 
@@ -22,6 +29,14 @@ TOM EditorはJavaScriptだけで構築されたエディターライブラリで
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 ```
+
+### overflowプロパティ
+
+奇妙な挙動、特にエディターの縦幅が伸び続ける現象が起きたときはエディターを格納する親要素に対して `overflow: hidden;` を適用してみてください。
+
+## パブリックAPI
+
+### TOMEditor.value
 
 入力された内容を取得したい場合は `value` プロパティを参照してください。なお、このプロパティは読み取り専用です。
 
