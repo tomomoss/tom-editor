@@ -8,7 +8,9 @@ TOM EditorはJavaScriptだけで構築されたエディターライブラリで
 
 ## 取り扱い説明
 
-TOM Editorを構成する全てのファイルを同じ階層に配置し、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
+`src` ディレクトリに格納されている `.mjs` ファイルがTOM Editorを構成するファイルとなります。
+
+それらファイルを同じ階層に配置し、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
 
 ```javascript
 <script defer src="./script/main.js" type="module"></script>
