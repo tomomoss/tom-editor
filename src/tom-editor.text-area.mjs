@@ -822,7 +822,7 @@ const TextArea = class {
   resetNegativeSpaceHeight = () => {
     const areaHeight = this.root.getBoundingClientRect().height
     const textLineHeight = parseFloat(getComputedStyle(this.root).lineHeight);
-    this.negativeSpace.style.height = `${areaHeight - textLineHeight}px`;
+    this.negativeSpace.style.height = `${areaHeight - parseFloat(getComputedStyle(this.root).paddingTop) - textLineHeight}px`;
   };
 
   /**
