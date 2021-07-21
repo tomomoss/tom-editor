@@ -154,7 +154,7 @@ const LineNumberArea = class {
     this.root.appendChild(sampleLineNumber);
     const lineNumberHeight = sampleLineNumber.getBoundingClientRect().height;
     sampleLineNumber.remove();
-    const negativeSpaceHeight = `${areaHeight - lineNumberHeight}px`;
+    const negativeSpaceHeight = `${areaHeight - parseFloat(getComputedStyle(this.root).paddingTop) - lineNumberHeight}px`;
     this.negativeSpace.style.height = negativeSpaceHeight;
   };
 
