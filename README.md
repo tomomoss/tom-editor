@@ -30,10 +30,6 @@ const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 ```
 
-### overflowプロパティ
-
-奇妙な挙動、特にエディターの縦幅が伸び続ける現象が起きたときはエディターを格納する親要素に対して `overflow: hidden;` を適用してみてください。
-
 ## パブリックAPI
 
 ### TOMEditor.value
