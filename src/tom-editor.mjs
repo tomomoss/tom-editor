@@ -109,15 +109,55 @@ const TOMEditor = class {
   }
 
   /**
+   * エディターに入力されている値を外部から指定するためのメソッドです。
+   * @param {string} newValue 新しい文章です。
+   */
+  set value(newValue) {
+    if (typeof newValue !== "string") {
+      throw new Error("代入する値が文字列ではありません。");
+    }
+
+    // まずは入力されている情報を全て削除します。
+    for (let i = 0; i < this.lineNumberArea.lineNumbers.length - 1; i += 1) {
+      this.lineNumberArea.lineNumbers[1].remove();
+      this.lineNumberArea.lineNumbers.splice(1, -1);
+    }
+    for (let i = 0; this.textArea.textLines.length - 1; i += 1) {
+      this.textArea.textLines[1].remove();
+      this.textArea.textLines.splice(1, -1);
+      this.textArea.characters.splice(1, -1);
+    }
+    for (let i = 0; this.textArea.characters[0].length - 1; i += 1) {
+      this.textArea.characters[0][0].remove();
+      this.textArea.characters[0].splice(0, -1);
+    }
+
+    // 新たに入力を行います。
+    this.textArea.focusedRowIndex = 0;
+    this.textArea.focusedColumnIndex = 0;
+    for (const character of newValue) {
+      if (character === "\n") {
+        this.textArea.appendTextLine();
+        continue;
+      }
+      this.textArea.appendCharacter(character);
+    }
+    this.textArea.focusedRowIndex = 0;
+    this.textArea.focusedColumnIndex = 0;
+    this.reflectChangesInTextAreaToOtherArea();
+    this.textArea.resetFocusAndSelectionRange();
+    this.caret.blurCaret();
+    this.lineNumberArea.resetLineNumber();
+    this.decorationUnderLine.blurDecorationUnderLine();
+  }
+
+  /**
    * 入力内容に変化が生じるたびに引数で指定された関数を実行します。
    * @param {Function} handler 呼び出される関数です。
    */
   set valueObserver(handler) {
-    if (typeof handler === "undefined") {
-      throw new Error("第1引数が指定されていません。");
-    }
     if (typeof handler !== "function") {
-      throw new Error("第1引数が関数ではありません。");
+      throw new Error("代入する値が関数ではありません。");
     }
     const mutationObserver = new MutationObserver(() => {
       handler(this.value);
