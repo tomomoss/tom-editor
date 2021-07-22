@@ -2,9 +2,9 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン1.1.0です。以下より動作確認ができます。
+現在、バージョン1.1.1です。以下より動作確認ができます。
 
-[TOM Editor 1.1.0 動作確認ページ](https://tomomoss.github.io/tom-editor/)
+[TOM Editor 1.1.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
 ## 導入手順
 
