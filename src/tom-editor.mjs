@@ -580,7 +580,7 @@ const TOMEditor = class {
     // 文字領域のoffsetサイズとscrollサイズを基準にして、スクロールバーのサイズを更新します。
     // また、フォーカスしている位置を基準にスクロールバーのスライド具合も更新します。
     this.virticalScrollbarArea.resetVirticalScrollbar(
-      this.textArea.root.offsetHeight,
+      this.textArea.root.offsetHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
       this.textArea.root.scrollHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
       this.textArea.root.scrollTop
     );
