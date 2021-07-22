@@ -113,11 +113,8 @@ const TOMEditor = class {
    * @param {Function} handler 呼び出される関数です。
    */
   set valueObserver(handler) {
-    if (typeof handler === "undefined") {
-      throw new Error("第1引数が指定されていません。");
-    }
     if (typeof handler !== "function") {
-      throw new Error("第1引数が関数ではありません。");
+      throw new Error("代入する値が関数ではありません。");
     }
     const mutationObserver = new MutationObserver(() => {
       handler(this.value);
