@@ -2,9 +2,9 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン1.0.1です。以下より動作確認ができます。
+現在、バージョン1.1.0です。以下より動作確認ができます。
 
-[TOM Editor 1.0.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
+[TOM Editor 1.1.0 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
 ## 導入手順
 
@@ -45,4 +45,19 @@ const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 
 const inputtedValue = tomEditor.value;
+```
+
+### TOMEditor.valueObserver
+
+入力内容に変化があるたびに呼び出したい関数があるときは `valueObserver` プロパティに当該関数を代入してください。
+
+渡された関数の第1引数（以下例での `value` ）には変化後の入力内容が格納されています。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const tomEditor = new TOMEditor(tomEditorContainer);
+
+tomEditor.valueObserver = (value)) => {
+  console.log(value);
+};
 ```
