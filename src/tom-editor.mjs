@@ -117,38 +117,27 @@ const TOMEditor = class {
       throw new Error("代入する値が文字列ではありません。");
     }
 
-    // まずは入力されている情報を全て削除します。
-    for (let i = 0; i < this.lineNumberArea.lineNumbers.length - 1; i += 1) {
-      this.lineNumberArea.lineNumbers[1].remove();
-      this.lineNumberArea.lineNumbers.splice(1, -1);
+    // 入力されている文字を全て削除します。
+    this.textArea.focusedRowIndex = this.textArea.characters.length - 1;
+    this.textArea.focusedColumnIndex = this.textArea.characters[this.textArea.focusedRowIndex].length - 1;
+    while (!(this.textArea.focusedRowIndex === 0 && this.textArea.focusedColumnIndex === 0)) {
+      this.textArea.removeCharacter("Backspace");
     }
-    for (let i = 0; this.textArea.textLines.length - 1; i += 1) {
-      this.textArea.textLines[1].remove();
-      this.textArea.textLines.splice(1, -1);
-      this.textArea.characters.splice(1, -1);
-    }
-    for (let i = 0; this.textArea.characters[0].length - 1; i += 1) {
-      this.textArea.characters[0][0].remove();
-      this.textArea.characters[0].splice(0, -1);
-    }
+    this.lineNumberArea.resetLineNumber();
 
-    // 新たに入力を行います。
-    this.textArea.focusedRowIndex = 0;
-    this.textArea.focusedColumnIndex = 0;
+    // 文字を入力します。
     for (const character of newValue) {
       if (character === "\n") {
         this.textArea.appendTextLine();
-        continue;
+      } else {
+        this.textArea.appendCharacter(character);
       }
-      this.textArea.appendCharacter(character);
     }
-    this.textArea.focusedRowIndex = 0;
-    this.textArea.focusedColumnIndex = 0;
-    this.reflectChangesInTextAreaToOtherArea();
-    this.textArea.resetFocusAndSelectionRange();
-    this.caret.blurCaret();
+
+    this.lineNumberArea.resetLineNumber(this.textArea.textLines.length, this.textArea.focusedRowIndex);
+    this.resetScrollbar();
     this.lineNumberArea.resetLineNumber();
-    this.decorationUnderLine.blurDecorationUnderLine();
+    this.textArea.resetFocusAndSelectionRange();
   }
 
   /**
