@@ -2,9 +2,9 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン1.1.1です。以下より動作確認ができます。
+現在、バージョン1.2.0です。以下より動作確認ができます。
 
-[TOM Editor 1.1.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
+[TOM Editor 1.2.0 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
 ## 導入手順
 
@@ -32,9 +32,9 @@ const tomEditor = new TOMEditor(tomEditorContainer);
 
 ## パブリックAPI
 
-### TOMEditor.value
+### getter: value
 
-入力された内容を取得したい場合は `value` プロパティを参照してください。なお、このプロパティは読み取り専用です。
+入力された内容を取得したい場合は `value` プロパティを参照してください。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
@@ -43,7 +43,18 @@ const tomEditor = new TOMEditor(tomEditorContainer);
 const inputtedValue = tomEditor.value;
 ```
 
-### TOMEditor.valueObserver
+### setter: value
+
+エディターの内容を更新したい場合は `value` プロパティに更新する値を代入してください。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const tomEditor = new TOMEditor(tomEditorContainer);
+
+tomEditor.value = "Hello world.";
+```
+
+### setter: valueObserver
 
 入力内容に変化があるたびに呼び出したい関数があるときは `valueObserver` プロパティに当該関数を代入してください。
 
@@ -53,7 +64,7 @@ const inputtedValue = tomEditor.value;
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 
-tomEditor.valueObserver = (value)) => {
+tomEditor.valueObserver = (value) => {
   console.log(value);
 };
 ```
