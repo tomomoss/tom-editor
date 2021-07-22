@@ -44,14 +44,25 @@ const TOMEditor = class {
     }
     Object.seal(this);
 
+    // エディター本体のラッパー要素です。
+    // これがないと入力内容によってエディターの実際の寸法が変化したときに見た目の寸法も変化してしまいます。
+    const editorWrapper = document.createElement("div");
+    editorWrapper.style.height = "100%";
+    editorWrapper.style.position = "relative";
+    editorWrapper.style.width = "100%";
+    editorContainer.appendChild(editorWrapper);
+
     // エディター本体を初期化します。
     this.root = document.createElement("div");
+    this.root.style.bottom = "0";
     this.root.style.display = "flex";
     this.root.style.font = "normal 1rem/1.25rem Consolas, 'Courier New', monospace";
-    this.root.style.height = "100%";
-    this.root.style.position = "relative";
+    this.root.style.left = "0";
+    this.root.style.position = "absolute";
+    this.root.style.right = "0";
+    this.root.style.top = "0";
     this.root.style.whiteSpace = "pre";
-    editorContainer.appendChild(this.root);
+    editorWrapper.appendChild(this.root);
 
     // エディターを構成する各領域を初期化します。
     this.lineNumberArea = new LineNumberArea(this.root);
