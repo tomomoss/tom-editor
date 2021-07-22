@@ -97,6 +97,26 @@ const TOMEditor = class {
     return text;
   }
 
+  /**
+   * 入力内容に変化が生じるたびに引数で指定された関数を実行します。
+   * @param {Function} handler 呼び出される関数です。
+   */
+  set valueObserver(handler) {
+    if (typeof handler === "undefined") {
+      throw new Error("第1引数が指定されていません。");
+    }
+    if (typeof handler !== "function") {
+      throw new Error("第1引数が関数ではありません。");
+    }
+    const mutationObserver = new MutationObserver(() => {
+      handler(this.value);
+    });
+    mutationObserver.observe(this.textArea.textLinesWrapper, {
+      childList: true,
+      subtree: true
+    });
+  }
+
   /** @type {Caret} キャレットです。 */
   caret;
 
