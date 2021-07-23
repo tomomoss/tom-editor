@@ -30,14 +30,28 @@ const TOMEditor = class {
    * エディターを初期化します。
    * 当コンストラクタは外部に露出するため引数検査を実施します。
    * @param {Element} editorContainer エディター機能を実装するHTML要素です。
+   * @param {object} option エディターの挙動を制御する引数です。省略可能です。
    * @param {...any} rest 引数検査のためだけに存在する引数です。
    */
-  constructor(editorContainer, ...rest) {
+  constructor(editorContainer, option, ...rest) {
     if (typeof editorContainer === "undefined") {
       throw new Error("第1引数が指定されていません。");
     }
     if (!(editorContainer instanceof Element)) {
       throw new Error("第1引数がHTML要素ではありません。");
+    }
+    if (typeof option === "object") {
+      for (const key in option) {
+        if (key === "readonly") {
+          if (typeof option.readonly !== "boolean") {
+            throw new Error("キー「readonly」には真偽値を指定してください。");
+          }
+          continue;
+        }
+        if (key !== "readonly") {
+          throw new Error(`キー「${key}」はキー名として許可されていません。`);
+        }
+      }
     }
     if (rest.length !== 0) {
       throw new Error("引数の数が不正です。");
@@ -81,6 +95,11 @@ const TOMEditor = class {
     );
 
     // イベントリスナーを実装します。
+    // 読み取り専用として初期化されたときは実装するイベントリスナーを制限したり、スタイルを一部変更します。
+    if (typeof option !== "undefined" && option.readonly) {
+      this.addEventListenersForReadonly();
+      return;
+    }
     this.addEventListenersIntoEditor();
     this.addEventListenersIntoTextArea();
     this.addEventListenersIntoVirticalScrollbar();
@@ -113,42 +132,32 @@ const TOMEditor = class {
    * @param {string} newValue 新しい文章です。
    */
   set value(newValue) {
+    console.log(newValue);
     if (typeof newValue !== "string") {
       throw new Error("代入する値が文字列ではありません。");
     }
 
-    // まずは入力されている情報を全て削除します。
-    for (let i = 0; i < this.lineNumberArea.lineNumbers.length - 1; i += 1) {
-      this.lineNumberArea.lineNumbers[1].remove();
-      this.lineNumberArea.lineNumbers.splice(1, -1);
+    // 入力されている文字を全て削除します。
+    this.textArea.focusedRowIndex = this.textArea.characters.length - 1;
+    this.textArea.focusedColumnIndex = this.textArea.characters[this.textArea.focusedRowIndex].length - 1;
+    while (!(this.textArea.focusedRowIndex === 0 && this.textArea.focusedColumnIndex === 0)) {
+      this.textArea.removeCharacter("Backspace");
     }
-    for (let i = 0; this.textArea.textLines.length - 1; i += 1) {
-      this.textArea.textLines[1].remove();
-      this.textArea.textLines.splice(1, -1);
-      this.textArea.characters.splice(1, -1);
-    }
-    for (let i = 0; this.textArea.characters[0].length - 1; i += 1) {
-      this.textArea.characters[0][0].remove();
-      this.textArea.characters[0].splice(0, -1);
-    }
+    this.lineNumberArea.resetLineNumber();
 
-    // 新たに入力を行います。
-    this.textArea.focusedRowIndex = 0;
-    this.textArea.focusedColumnIndex = 0;
+    // 文字を入力します。
     for (const character of newValue) {
       if (character === "\n") {
         this.textArea.appendTextLine();
-        continue;
+      } else {
+        this.textArea.appendCharacter(character);
       }
-      this.textArea.appendCharacter(character);
     }
-    this.textArea.focusedRowIndex = 0;
-    this.textArea.focusedColumnIndex = 0;
-    this.reflectChangesInTextAreaToOtherArea();
-    this.textArea.resetFocusAndSelectionRange();
-    this.caret.blurCaret();
+
+    this.lineNumberArea.resetLineNumber(this.textArea.textLines.length, this.textArea.focusedRowIndex);
+    this.resetScrollbar();
     this.lineNumberArea.resetLineNumber();
-    this.decorationUnderLine.blurDecorationUnderLine();
+    this.textArea.resetFocusAndSelectionRange();
   }
 
   /**
@@ -202,6 +211,78 @@ const TOMEditor = class {
   virticalScrollbarIsDragging;
 
   /**
+   * 読み取り専用として初期化したとき用のイベントリスナーを実装します。
+   */
+  addEventListenersForReadonly = () => {
+    this.textArea.root.style.cursor = "default";
+
+    // ResizeObserverクラスを使用して、エディターの寸法変更イベントを検知します。
+    // 行番号領域・文字領域の余白の縦幅を調整します。
+    const resizeObserver = new ResizeObserver(() => {
+      this.lineNumberArea.resetNegativeSpaceHeight();
+      this.textArea.resetNegativeSpaceHeight();
+      this.resetScrollbar();
+    });
+    resizeObserver.observe(this.root);
+
+    // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
+    window.addEventListener("mouseup", (event) => {
+      this.textArea.duringSelectionRange = false;
+      this.virticalScrollbarIsDragging = undefined;
+      if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      this.horizontalScrollbarIsDragging = undefined;
+    });
+
+    // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
+    // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
+    this.root.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+
+    // マウスホイールが操作されたときはスクロール処理を実行します。
+    this.root.addEventListener("wheel", (event) => {
+      if (Math.sign(event.deltaY) === -1) {
+        this.scrollEditor(event.target, "previous");
+        return;
+      }
+      if (Math.sign(event.deltaY) === 1) {
+        this.scrollEditor(event.target, "next");
+        return;
+      }
+    });
+
+    // ドラッグ系の処理の制御を行っています。
+    this.root.addEventListener("mousemove", (event) => {
+
+      // 垂直スクロールバーのドラッグ処理です。
+      if (typeof this.virticalScrollbarIsDragging !== "undefined") {
+        this.scrollEditorByDraggingVirticalScrollbar(event.y);
+        return;
+      }
+
+      // 水平スクロールバーのドラッグ処理です。
+      if (typeof this.horizontalScrollbarIsDragging !== "undefined") {
+        this.scrollEditorByDraggingHorizontalScrollbar(event.x);
+        return;
+      }
+    });
+
+    this.addEventListenersIntoVirticalScrollbar();
+    this.addEventListenersIntoVirticalScrollbarArea();
+    this.addEventListenersIntoHorizontalScrollbar();
+    this.addEventListenersIntoHorizontalScrollbarArea();
+  };
+
+  /**
    * キャレットを対象としたイベントリスナーを実装します。
    */
   addEventListenersIntoCaret = () => {
@@ -236,7 +317,7 @@ const TOMEditor = class {
       if (typeof this.typingJapanese === "undefined") {
         return;
       }
-        
+
       // まずは既存の文字列を全て削除します。
       for (let i = 0; i < this.typingJapaneseIndex; i += 1) {
         this.textArea.resetFocusAndSelectionRange("ArrowLeft");
@@ -677,7 +758,7 @@ const TOMEditor = class {
       this.textArea.root.offsetHeight,
       this.textArea.root.scrollHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
       this.textArea.root.scrollTop)
-    ;
+      ;
 
     // フォーカス中ならばキャレットの位置も更新します。
     if (typeof this.textArea.focusedRowIndex === "undefined") {
