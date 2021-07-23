@@ -132,7 +132,6 @@ const TOMEditor = class {
    * @param {string} newValue 新しい文章です。
    */
   set value(newValue) {
-    console.log(newValue);
     if (typeof newValue !== "string") {
       throw new Error("代入する値が文字列ではありません。");
     }
