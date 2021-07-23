@@ -2,9 +2,9 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン1.2.1です。以下より動作確認ができます。
+現在、バージョン1.3.0です。以下より動作確認ができます。
 
-[TOM Editor 1.2.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
+[TOM Editor 1.3.0 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
 ## 導入手順
 
@@ -30,7 +30,56 @@ const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 ```
 
-## パブリックAPI
+## 設定
+
+インスタンス化時にエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。省略された場合は基本設定が適用されます。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = {
+  readonly: true
+};
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+```
+
+### readonly
+
+TOM Editorを入力するための領域ではなく、文章を表示するための読み取り専用領域として使用したい場合は `readonly` プロパティに `true` を設定してください。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = {
+  readonly: true
+};
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+```
+
+この設定を適用するとキーボードによる文字の入力を行うことができなくなります。 `value` プロパティを介してのみ入力内容を変更することができます。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = {
+  readonly: true
+};
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+
+tomEditor.value = "Hello world.";
+```
+
+また、マウス操作も受け付けなくなりますので入力内容を取得する場合は `value` プロパティを参照してください。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = {
+  readonly: true
+};
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+
+tomEditor.value = "Hello world.";
+console.log(tomEditor.value);
+```
+
+## API
 
 ### getter: value
 
