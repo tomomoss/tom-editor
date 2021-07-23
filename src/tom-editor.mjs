@@ -97,72 +97,7 @@ const TOMEditor = class {
     // イベントリスナーを実装します。
     // 読み取り専用として初期化されたときは実装するイベントリスナーを制限したり、スタイルを一部変更します。
     if (typeof option !== "undefined" && option.readonly) {
-      this.textArea.root.style.cursor = "default";
-
-      // ResizeObserverクラスを使用して、エディターの寸法変更イベントを検知します。
-      // 行番号領域・文字領域の余白の縦幅を調整します。
-      const resizeObserver = new ResizeObserver(() => {
-        this.lineNumberArea.resetNegativeSpaceHeight();
-        this.textArea.resetNegativeSpaceHeight();
-        this.resetScrollbar();
-      });
-      resizeObserver.observe(this.root);
-
-      // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
-      window.addEventListener("mouseup", (event) => {
-        this.textArea.duringSelectionRange = false;
-        this.virticalScrollbarIsDragging = undefined;
-        if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
-          this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
-        } else {
-          this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
-        }
-        if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
-          this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
-        } else {
-          this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
-        }
-        this.horizontalScrollbarIsDragging = undefined;
-      });
-
-      // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
-      // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
-      this.root.addEventListener("mousedown", (event) => {
-        event.preventDefault();
-      });
-
-      // マウスホイールが操作されたときはスクロール処理を実行します。
-      this.root.addEventListener("wheel", (event) => {
-        if (Math.sign(event.deltaY) === -1) {
-          this.scrollEditor(event.target, "previous");
-          return;
-        }
-        if (Math.sign(event.deltaY) === 1) {
-          this.scrollEditor(event.target, "next");
-          return;
-        }
-      });
-
-      // ドラッグ系の処理の制御を行っています。
-      this.root.addEventListener("mousemove", (event) => {
-
-        // 垂直スクロールバーのドラッグ処理です。
-        if (typeof this.virticalScrollbarIsDragging !== "undefined") {
-          this.scrollEditorByDraggingVirticalScrollbar(event.y);
-          return;
-        }
-
-        // 水平スクロールバーのドラッグ処理です。
-        if (typeof this.horizontalScrollbarIsDragging !== "undefined") {
-          this.scrollEditorByDraggingHorizontalScrollbar(event.x);
-          return;
-        }
-      });
-
-      this.addEventListenersIntoVirticalScrollbar();
-      this.addEventListenersIntoVirticalScrollbarArea();
-      this.addEventListenersIntoHorizontalScrollbar();
-      this.addEventListenersIntoHorizontalScrollbarArea();
+      this.addEventListenersForReadonly();
       return;
     }
     this.addEventListenersIntoEditor();
@@ -274,6 +209,78 @@ const TOMEditor = class {
 
   /** @type {number} ドラッグ中ならば数値が入ります。 */
   virticalScrollbarIsDragging;
+
+  /**
+   * 読み取り専用として初期化したとき用のイベントリスナーを実装します。
+   */
+  addEventListenersForReadonly = () => {
+    this.textArea.root.style.cursor = "default";
+
+    // ResizeObserverクラスを使用して、エディターの寸法変更イベントを検知します。
+    // 行番号領域・文字領域の余白の縦幅を調整します。
+    const resizeObserver = new ResizeObserver(() => {
+      this.lineNumberArea.resetNegativeSpaceHeight();
+      this.textArea.resetNegativeSpaceHeight();
+      this.resetScrollbar();
+    });
+    resizeObserver.observe(this.root);
+
+    // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
+    window.addEventListener("mouseup", (event) => {
+      this.textArea.duringSelectionRange = false;
+      this.virticalScrollbarIsDragging = undefined;
+      if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
+      } else {
+        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
+      }
+      this.horizontalScrollbarIsDragging = undefined;
+    });
+
+    // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
+    // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
+    this.root.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+
+    // マウスホイールが操作されたときはスクロール処理を実行します。
+    this.root.addEventListener("wheel", (event) => {
+      if (Math.sign(event.deltaY) === -1) {
+        this.scrollEditor(event.target, "previous");
+        return;
+      }
+      if (Math.sign(event.deltaY) === 1) {
+        this.scrollEditor(event.target, "next");
+        return;
+      }
+    });
+
+    // ドラッグ系の処理の制御を行っています。
+    this.root.addEventListener("mousemove", (event) => {
+
+      // 垂直スクロールバーのドラッグ処理です。
+      if (typeof this.virticalScrollbarIsDragging !== "undefined") {
+        this.scrollEditorByDraggingVirticalScrollbar(event.y);
+        return;
+      }
+
+      // 水平スクロールバーのドラッグ処理です。
+      if (typeof this.horizontalScrollbarIsDragging !== "undefined") {
+        this.scrollEditorByDraggingHorizontalScrollbar(event.x);
+        return;
+      }
+    });
+
+    this.addEventListenersIntoVirticalScrollbar();
+    this.addEventListenersIntoVirticalScrollbarArea();
+    this.addEventListenersIntoHorizontalScrollbar();
+    this.addEventListenersIntoHorizontalScrollbarArea();
+  };
 
   /**
    * キャレットを対象としたイベントリスナーを実装します。
