@@ -30,14 +30,28 @@ const TOMEditor = class {
    * エディターを初期化します。
    * 当コンストラクタは外部に露出するため引数検査を実施します。
    * @param {Element} editorContainer エディター機能を実装するHTML要素です。
+   * @param {object} option エディターの挙動を制御する引数です。省略可能です。
    * @param {...any} rest 引数検査のためだけに存在する引数です。
    */
-  constructor(editorContainer, ...rest) {
+  constructor(editorContainer, option, ...rest) {
     if (typeof editorContainer === "undefined") {
       throw new Error("第1引数が指定されていません。");
     }
     if (!(editorContainer instanceof Element)) {
       throw new Error("第1引数がHTML要素ではありません。");
+    }
+    if (typeof option === "object") {
+      for (const key in option) {
+        if (key === "readonly") {
+          if (typeof option.readonly !== "boolean") {
+            throw new Error("キー「readonly」には真偽値を指定してください。");
+          }
+          continue;
+        }
+        if (key !== "readonly") {
+          throw new Error(`キー「${key}」はキー名として許可されていません。`);
+        }
+      }
     }
     if (rest.length !== 0) {
       throw new Error("引数の数が不正です。");
@@ -81,6 +95,76 @@ const TOMEditor = class {
     );
 
     // イベントリスナーを実装します。
+    // 読み取り専用として初期化されたときは実装するイベントリスナーを制限したり、スタイルを一部変更します。
+    if (typeof option !== "undefined" && option.readonly) {
+      this.textArea.root.style.cursor = "default";
+
+      // ResizeObserverクラスを使用して、エディターの寸法変更イベントを検知します。
+      // 行番号領域・文字領域の余白の縦幅を調整します。
+      const resizeObserver = new ResizeObserver(() => {
+        this.lineNumberArea.resetNegativeSpaceHeight();
+        this.textArea.resetNegativeSpaceHeight();
+        this.resetScrollbar();
+      });
+      resizeObserver.observe(this.root);
+
+      // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
+      window.addEventListener("mouseup", (event) => {
+        this.textArea.duringSelectionRange = false;
+        this.virticalScrollbarIsDragging = undefined;
+        if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
+          this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
+        } else {
+          this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
+        }
+        if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
+          this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
+        } else {
+          this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
+        }
+        this.horizontalScrollbarIsDragging = undefined;
+      });
+
+      // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
+      // フォーカスを外したりと悪さをするのでこの命令文で変な挙動を中止させています。
+      this.root.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+
+      // マウスホイールが操作されたときはスクロール処理を実行します。
+      this.root.addEventListener("wheel", (event) => {
+        if (Math.sign(event.deltaY) === -1) {
+          this.scrollEditor(event.target, "previous");
+          return;
+        }
+        if (Math.sign(event.deltaY) === 1) {
+          this.scrollEditor(event.target, "next");
+          return;
+        }
+      });
+
+      // ドラッグ系の処理の制御を行っています。
+      this.root.addEventListener("mousemove", (event) => {
+
+        // 垂直スクロールバーのドラッグ処理です。
+        if (typeof this.virticalScrollbarIsDragging !== "undefined") {
+          this.scrollEditorByDraggingVirticalScrollbar(event.y);
+          return;
+        }
+
+        // 水平スクロールバーのドラッグ処理です。
+        if (typeof this.horizontalScrollbarIsDragging !== "undefined") {
+          this.scrollEditorByDraggingHorizontalScrollbar(event.x);
+          return;
+        }
+      });
+
+      this.addEventListenersIntoVirticalScrollbar();
+      this.addEventListenersIntoVirticalScrollbarArea();
+      this.addEventListenersIntoHorizontalScrollbar();
+      this.addEventListenersIntoHorizontalScrollbarArea();
+      return;
+    }
     this.addEventListenersIntoEditor();
     this.addEventListenersIntoTextArea();
     this.addEventListenersIntoVirticalScrollbar();
@@ -113,6 +197,7 @@ const TOMEditor = class {
    * @param {string} newValue 新しい文章です。
    */
   set value(newValue) {
+    console.log(newValue);
     if (typeof newValue !== "string") {
       throw new Error("代入する値が文字列ではありません。");
     }
@@ -225,7 +310,7 @@ const TOMEditor = class {
       if (typeof this.typingJapanese === "undefined") {
         return;
       }
-        
+
       // まずは既存の文字列を全て削除します。
       for (let i = 0; i < this.typingJapaneseIndex; i += 1) {
         this.textArea.resetFocusAndSelectionRange("ArrowLeft");
@@ -666,7 +751,7 @@ const TOMEditor = class {
       this.textArea.root.offsetHeight,
       this.textArea.root.scrollHeight - parseFloat(getComputedStyle(this.textArea.root).paddingTop),
       this.textArea.root.scrollTop)
-    ;
+      ;
 
     // フォーカス中ならばキャレットの位置も更新します。
     if (typeof this.textArea.focusedRowIndex === "undefined") {
