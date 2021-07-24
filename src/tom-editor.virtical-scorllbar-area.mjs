@@ -14,6 +14,7 @@ const VirticalScrollbarArea = class {
 
     // 領域を初期化します。
     this.root = document.createElement("div");
+    this.root.style.background = "rgb(255, 255, 255)";
     this.root.style.borderLeft = "solid 0.1rem rgb(238, 238, 238)";
     this.root.style.flex = "0 0 1rem";
     this.root.style.position = "relative";
