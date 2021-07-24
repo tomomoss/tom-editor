@@ -62,6 +62,7 @@ const TOMEditor = class {
     // これがないと入力内容によってエディターの実際の寸法が変化したときに見た目の寸法も変化してしまいます。
     const editorWrapper = document.createElement("div");
     editorWrapper.style.height = "100%";
+    editorWrapper.style.overflow = "hidden";
     editorWrapper.style.position = "relative";
     editorWrapper.style.width = "100%";
     editorContainer.appendChild(editorWrapper);
