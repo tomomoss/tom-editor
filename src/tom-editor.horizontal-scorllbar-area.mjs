@@ -16,7 +16,6 @@ const HorizontalScrollbarArea = class {
 
     // 領域を初期化します。
     this.root = document.createElement("div");
-    this.root.style.background = "transparent";
     this.root.style.bottom = "0";
     this.root.style.display = "none";
     this.root.style.height = "1rem";
@@ -27,11 +26,11 @@ const HorizontalScrollbarArea = class {
 
     // スクロールバーを初期化します。
     this.horizontalScrollbar = document.createElement("div");
-    this.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
     this.horizontalScrollbar.style.height = "100%";
     this.horizontalScrollbar.style.left = "0";
     this.horizontalScrollbar.style.position = "absolute";
     this.horizontalScrollbar.style.width = "100%";
+    this.root.style.zIndex = "1";
     this.root.appendChild(this.horizontalScrollbar);
   }
 
