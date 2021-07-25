@@ -12,7 +12,6 @@
   constructor(superRoot) {
     Object.seal(this);
     this.root = document.createElement("textarea");
-    this.root.style.background = "transparent";
     this.root.style.border = "none";
     this.root.style.color = "transparent";
     this.root.style.display = "none";
@@ -25,7 +24,6 @@
     this.root.style.position = "absolute";
     this.root.style.resize = "none";
     this.root.style.top = "0";
-    this.root.style.zIndex = "-1";
     superRoot.appendChild(this.root);
   }
 

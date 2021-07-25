@@ -28,6 +28,7 @@ html {
   margin: 0.5rem;
 }
 .tom-editor-container {
+  background: black;
   flex: 1 1 auto;
   overflow: hidden;
 }

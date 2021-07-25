@@ -14,6 +14,7 @@ const TextArea = class {
 
     // 文字領域を初期化します。
     this.root = document.createElement("div");
+    this.root.style.background = "rgb(255, 255, 255)";
     this.root.style.color = "rgb(51, 51, 51)";
     this.root.style.cursor = "text";
     this.root.style.display = "flex";
