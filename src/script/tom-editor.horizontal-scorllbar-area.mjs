@@ -16,21 +16,14 @@ const HorizontalScrollbarArea = class {
 
     // 領域を初期化します。
     this.root = document.createElement("div");
-    this.root.style.bottom = "0";
-    this.root.style.display = "none";
-    this.root.style.height = "1rem";
+    this.root.classList.add("tom-editor__horizontal-scrollbar-area");
     this.root.style.left = `${lineNumberAreaWidth}px`;
-    this.root.style.position = "absolute";
     this.root.style.right = `${virticalScrollbarAreaWidth}px`;
     superRoot.appendChild(this.root);
 
     // スクロールバーを初期化します。
     this.horizontalScrollbar = document.createElement("div");
-    this.horizontalScrollbar.style.height = "100%";
-    this.horizontalScrollbar.style.left = "0";
-    this.horizontalScrollbar.style.position = "absolute";
-    this.horizontalScrollbar.style.width = "100%";
-    this.root.style.zIndex = "1";
+    this.horizontalScrollbar.classList.add("tom-editor__horizontal-scrollbar__horizontal-scrollbar");
     this.root.appendChild(this.horizontalScrollbar);
   }
 
@@ -50,12 +43,12 @@ const HorizontalScrollbarArea = class {
 
     // 文字領域内容量の横幅が文字領域横幅に収まっているときはスクロールバーを表示しません。
     if (!(textAreaOffsetWidth < textAreaScrollWidth)) {
-      this.root.style.display = "none";
+      this.root.classList.remove("tom-editor__horizontal-scrollbar-area--active");
       return;
     }
 
     // スクロールバーのスタイルを更新します。
-    this.root.style.display = "block";
+    this.root.classList.add("tom-editor__horizontal-scrollbar-area--active");
     this.horizontalScrollbar.style.width = new Intl.NumberFormat("ja", {
       maximumSignificantDigits: 4,
       style: "percent"

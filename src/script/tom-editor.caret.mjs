@@ -12,18 +12,8 @@
   constructor(superRoot) {
     Object.seal(this);
     this.root = document.createElement("textarea");
-    this.root.style.border = "none";
-    this.root.style.color = "transparent";
-    this.root.style.display = "none";
+    this.root.classList.add("tom-editor__caret");
     this.root.style.height = superRoot.style.lineHeight;
-    this.root.style.left = "0";
-    this.root.style.maxWidth = "0.01px";
-    this.root.style.outline = "none";
-    this.root.style.overflow = "hidden"
-    this.root.style.padding = "0";
-    this.root.style.position = "absolute";
-    this.root.style.resize = "none";
-    this.root.style.top = "0";
     superRoot.appendChild(this.root);
   }
 
@@ -34,7 +24,7 @@
    * エディター上からキャレットを取り除きます。
    */
   blurCaret = () => {
-    this.root.style.display = "none";
+    this.root.classList.remove("tom-editor__caret--active");
   };
 
   /**
@@ -43,31 +33,14 @@
    * @param {number} cordinateY 文字領域左上から相対的に求められたキャレットの垂直座標です。
    */
   placeCaret = (coordinateX, cordinateY) => {
-    this.root.style.display = "";
+    this.root.classList.add("tom-editor__caret--active");
+    this.root.classList.remove("tom-editor__caret--blinking-animation-active");
     this.root.style.left = `${coordinateX}px`;
     this.root.style.top = `${cordinateY}px`;
-    this.startBlinkingAnimation();
     this.root.focus();
-  };
-
-  /**
-   * キャレットの点滅処理を実装・開始します。
-   */
-  startBlinkingAnimation = () => {
-    this.root.animate([{
-      borderLeft: "solid 0.125rem rgb(51, 51, 51)"
-    },
-    {
-      borderLeft: "solid 0.125rem transparent"
-    },
-    {
-      borderLeft: "solid 0.125rem transparent"
-    }], {
-      duration: 1250,
-      easing: "steps(2)",
-      fill: "both",
-      iterations: Infinity
-    });
+    setTimeout(() => {
+      this.root.classList.add("tom-editor__caret--blinking-animation-active");
+    }, 1);
   };
 };
 
