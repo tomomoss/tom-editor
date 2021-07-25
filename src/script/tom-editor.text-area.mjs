@@ -706,27 +706,20 @@ const TextArea = class {
       this.selectionRangeEndColumnIndex = this.focusedColumnIndex;
       return;
     }
-    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
-      // 以下、狭まった場合の処理です。
-      if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
+    // 現在フォーカスしている文字が選択範囲に含まれているかどうかで、選択範囲が広がったのか狭まったのかを求めることができます。
+    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
-        // 選択範囲に含まれていた文頭が選択範囲から外れたということは選択範囲そのものが消失したことを意味します。
-        this.selectionRangeStartRowIndex = undefined;
-        this.selectionRangeStartColumnIndex = undefined;
-        this.selectionRangeEndRowIndex = undefined;
-        this.selectionRangeEndColumnIndex = undefined;
-        return;
-      }
-      if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+      // 以下、広がった場合の処理です。
+      this.selectionRangeStartRowIndex = this.focusedRowIndex;
+      this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
+      return;
+    }
 
-        // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれているならば選択範囲の末尾情報のみ更新します。
-        this.selectionRangeEndRowIndex = this.focusedRowIndex;
-        this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
-        return;
-      }
+    // 以下、狭まった場合の処理です。
+    if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
 
-      // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
+      // 選択範囲が狭まったにも関わらず、現在フォーカスしているのが文頭であるということは選択範囲が消失したことを意味します。
       this.selectionRangeStartRowIndex = undefined;
       this.selectionRangeStartColumnIndex = undefined;
       this.selectionRangeEndRowIndex = undefined;
@@ -734,9 +727,20 @@ const TextArea = class {
       return;
     }
 
-    // 以下、広がった場合の処理です。
-    this.selectionRangeStartRowIndex = this.focusedRowIndex;
-    this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
+    // 以下、文頭以外の位置にいる場合の処理です。
+    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+
+      // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれているならば選択範囲の末尾情報のみ更新します。
+      this.selectionRangeEndRowIndex = this.focusedRowIndex;
+      this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
+      return;
+    }
+
+    // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
+    this.selectionRangeStartRowIndex = undefined;
+    this.selectionRangeStartColumnIndex = undefined;
+    this.selectionRangeEndRowIndex = undefined;
+    this.selectionRangeEndColumnIndex = undefined;
     return;
   };
 
