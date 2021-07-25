@@ -855,7 +855,7 @@ const TextArea = class {
 
   /**
    * マウスのドラッグによる選択範囲の更新処理です。
-   * @param {object} event EventTarget.addEventListenerメソッドの
+   * @param {object} event EventTarget.addEventListenerメソッドのイベント情報をまとめたオブジェクトです。
    */
   updateSelectionRangeByMouseDragging = (event) => {
 

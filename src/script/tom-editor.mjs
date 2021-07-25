@@ -92,6 +92,7 @@ const TOMEditor = class {
       return;
     }
     this.addEventListenersIntoEditor();
+    this.addEventListenersIntoLineNumberArea();
     this.addEventListenersIntoTextArea();
     this.addEventListenersIntoVirticalScrollbar();
     this.addEventListenersIntoVirticalScrollbarArea();
@@ -290,6 +291,9 @@ const TOMEditor = class {
       if (this.reflectMousedownKey(event)) {
         this.reflectChangesInTextAreaToOtherArea();
       }
+
+      // 入力処理後はShiftキーフラグを非活性化状態にします。
+      this.textArea.duringSelectionRange = false;
     });
 
     // 日本語入力用の処理です。
@@ -423,6 +427,25 @@ const TOMEditor = class {
         return;
       }
       this.scrollEditor(event.target, "next");
+    });
+  };
+
+  /**
+   * 行番号領域を対象としたイベントリスナーを実装します。
+   */
+  addEventListenersIntoLineNumberArea = () => {
+
+    // 行番号をクリックされたときは当該行をまとめて選択範囲の対象とします。
+    this.lineNumberArea.root.addEventListener("mousedown", (event) => {
+      if (event.target.classList.contains("tom-editor__line-number-area__line-number")) {
+        this.textArea.duringSelectionRange = true;
+        const clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
+        this.textArea.focusedRowIndex = clickedLineNumberIndex;
+        this.textArea.focusedColumnIndex = 0;
+        this.textArea.resetFocusAndSelectionRange("ArrowDown");
+        this.textArea.duringSelectionRange = false;
+        this.reflectChangesInTextAreaToOtherArea();
+      }
     });
   };
 
