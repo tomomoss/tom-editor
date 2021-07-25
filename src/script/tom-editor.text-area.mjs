@@ -650,6 +650,23 @@ const TextArea = class {
       }
       return;
     }
+
+    // その他キーだった場合の処理です。
+    if (option === "End") {
+      let numberOfArrowRight = 0;
+      numberOfArrowRight += this.characters[this.focusedRowIndex].length - 1 - this.focusedColumnIndex;
+      for (let i = 0; i < numberOfArrowRight; i += 1) {
+        this.resetFocusAndSelectionRangeByArrowRight();
+      }
+      return;
+    }
+    if (option === "Home") {
+      let numberOfArrowLeft = 0;
+      numberOfArrowLeft += this.focusedColumnIndex;
+      for (let i = 0; i < numberOfArrowLeft; i += 1) {
+        this.resetFocusAndSelectionRangeByArrowLeft();
+      }
+    }
   };
 
   /**

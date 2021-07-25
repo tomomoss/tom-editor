@@ -578,7 +578,9 @@ const TOMEditor = class {
       [event.key === "ArrowUp", this.textArea.resetFocusAndSelectionRange, "ArrowUp"],
       [event.key === "Backspace", this.textArea.removeCharacter, "Backspace"],
       [event.key === "Delete", this.textArea.removeCharacter, "Delete"],
-      [event.key === "Enter", this.textArea.appendTextLine, undefined]
+      [event.key === "End", this.textArea.resetFocusAndSelectionRange, "End"],
+      [event.key === "Enter", this.textArea.appendTextLine, undefined],
+      [event.key === "Home", this.textArea.resetFocusAndSelectionRange, "Home"]
     ]) {
       if (condition) {
         method(argument);
