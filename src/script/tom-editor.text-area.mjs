@@ -14,14 +14,7 @@ const TextArea = class {
 
     // 文字領域を初期化します。
     this.root = document.createElement("div");
-    this.root.style.background = "rgb(255, 255, 255)";
-    this.root.style.color = "rgb(51, 51, 51)";
-    this.root.style.cursor = "text";
-    this.root.style.display = "flex";
-    this.root.style.flex = "1 1 auto";
-    this.root.style.overflow = "hidden";
-    this.root.style.padding = "0.5rem 0 0";
-    this.root.style.position = "relative";
+    this.root.classList.add("tom-editor__text-area");
     superRoot.appendChild(this.root);
     this.initializeTextLinesWrapper();
     this.initializeNegativeSpaceWrapper();
@@ -47,9 +40,6 @@ const TextArea = class {
 
   /** @type {Element} 余白領域を包むHTML要素です。 */
   negativeSpaceWrapper;
-
-  /** @type {number} 範囲選択中の文字の背景色です。 */
-  selectionRangeBackgroundColor = "rgb(187, 221, 255)";
 
   /** @type {number} 範囲選択開始地点となる列のインデックス値です。 */
   selectionRangeEndColumnIndex;
@@ -97,12 +87,12 @@ const TextArea = class {
     this.selectionRangeEndColumnIndex = this.characters[this.characters.length - 1].length - 2;
     for (const textLine of this.characters) {
       for (const character of textLine) {
-        character.style.background = this.selectionRangeBackgroundColor;
+        character.classList.add("tom-editor__text-area__character--select");
       }
     }
     this.focusedRowIndex = this.characters.length - 1;
     this.focusedColumnIndex = this.characters[this.characters.length - 1].length - 1;
-    this.getFocusedCharacter().style.background = "";
+    this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
   };
 
   /**
@@ -234,8 +224,8 @@ const TextArea = class {
    */
   createCharacter = (value) => {
     const character = document.createElement("span");
+    character.classList.add("tom-editor__text-area__character");
     character.innerHTML = value;
-    character.style.display = "inline-block";
     return character;
   };
 
@@ -255,8 +245,8 @@ const TextArea = class {
    */
   createEOL = () => {
     const EOL = document.createElement("span");
+    EOL.classList.add("tom-editor__text-area__character");
     EOL.innerHTML = " ";
-    EOL.style.display = "inline-block";
     return EOL;
   };
 
@@ -279,7 +269,7 @@ const TextArea = class {
     let targetRowIndex = this.selectionRangeStartRowIndex;
     let targetColumnIndex = this.selectionRangeStartColumnIndex;
     while (true) {
-      this.characters[targetRowIndex][targetColumnIndex].style.background = "";
+      this.characters[targetRowIndex][targetColumnIndex].classList.remove("tom-editor__text-area__character--select");
       targetColumnIndex += 1;
       if (typeof this.characters[targetRowIndex][targetColumnIndex] === "undefined") {
         targetRowIndex += 1;
@@ -293,7 +283,7 @@ const TextArea = class {
           break;
         }
       }
-      this.characters[targetRowIndex][targetColumnIndex].style.background = "";
+      this.characters[targetRowIndex][targetColumnIndex].classList.remove("tom-editor__text-area__character--select");
     }
     this.selectionRangeStartRowIndex = undefined;
     this.selectionRangeStartColumnIndex = undefined;
@@ -419,7 +409,7 @@ const TextArea = class {
 
     // 余白を挿入します。
     this.negativeSpace = document.createElement("div");
-    this.negativeSpace.style.width = "2rem";
+    this.negativeSpace.classList.add("tom-editor__text-area__negative-space");
     this.resetNegativeSpaceHeight();
     this.negativeSpaceWrapper.appendChild(this.negativeSpace);
   };
@@ -429,7 +419,7 @@ const TextArea = class {
    */
   initializeTextLinesWrapper = () => {
     this.textLinesWrapper = document.createElement("div");
-    this.textLinesWrapper.style.flex = "1 1 auto";
+    this.textLinesWrapper.classList.add("tom-editor__text-area__text-lines-wrapper");
     this.root.appendChild(this.textLinesWrapper);
     this.textLines[0] = this.createTextLine();
     this.characters.push([]);
@@ -660,6 +650,23 @@ const TextArea = class {
       }
       return;
     }
+
+    // その他キーだった場合の処理です。
+    if (option === "End") {
+      let numberOfArrowRight = 0;
+      numberOfArrowRight += this.characters[this.focusedRowIndex].length - 1 - this.focusedColumnIndex;
+      for (let i = 0; i < numberOfArrowRight; i += 1) {
+        this.resetFocusAndSelectionRangeByArrowRight();
+      }
+      return;
+    }
+    if (option === "Home") {
+      let numberOfArrowLeft = 0;
+      numberOfArrowLeft += this.focusedColumnIndex;
+      for (let i = 0; i < numberOfArrowLeft; i += 1) {
+        this.resetFocusAndSelectionRangeByArrowLeft();
+      }
+    }
   };
 
   /**
@@ -687,7 +694,7 @@ const TextArea = class {
     }
 
     // 選択範囲用背景色の切り替えを行います。
-    this.toggleSelectionRangeBackgroundColor(this.getFocusedCharacter());
+    this.getFocusedCharacter().classList.toggle("tom-editor__text-area__character--select");
 
     // 選択範囲を表すインデックス値を更新します。
     // 範囲選択中でないならば――今回新たに範囲選択が始まった場合は現在フォーカスしている位置が選択範囲の始端であり終端となります。
@@ -699,27 +706,29 @@ const TextArea = class {
       this.selectionRangeEndColumnIndex = this.focusedColumnIndex;
       return;
     }
-    if (this.getFocusedCharacter().style.background === "") {
 
-      // 以下、狭まった場合の処理です。
-      if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
+    // 現在フォーカスしている文字が選択範囲に含まれているかどうかで、選択範囲が広がったのか狭まったのかを求めることができます。
+    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
-        // 選択範囲に含まれていた文頭が選択範囲から外れたということは選択範囲そのものが消失したことを意味します。
-        this.selectionRangeStartRowIndex = undefined;
-        this.selectionRangeStartColumnIndex = undefined;
-        this.selectionRangeEndRowIndex = undefined;
-        this.selectionRangeEndColumnIndex = undefined;
-        return;
-      }
-      if (this.getPreviousFocusedCharacter().style.background === "") {
+      // 以下、広がった場合の処理です。
+      this.selectionRangeStartRowIndex = this.focusedRowIndex;
+      this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
+      return;
+    }
 
-        // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
-        this.selectionRangeStartRowIndex = undefined;
-        this.selectionRangeStartColumnIndex = undefined;
-        this.selectionRangeEndRowIndex = undefined;
-        this.selectionRangeEndColumnIndex = undefined;
-        return;
-      }
+    // 以下、狭まった場合の処理です。
+    if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
+
+      // 選択範囲が狭まったにも関わらず、現在フォーカスしているのが文頭であるということは選択範囲が消失したことを意味します。
+      this.selectionRangeStartRowIndex = undefined;
+      this.selectionRangeStartColumnIndex = undefined;
+      this.selectionRangeEndRowIndex = undefined;
+      this.selectionRangeEndColumnIndex = undefined;
+      return;
+    }
+
+    // 以下、文頭以外の位置にいる場合の処理です。
+    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
       // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれているならば選択範囲の末尾情報のみ更新します。
       this.selectionRangeEndRowIndex = this.focusedRowIndex;
@@ -727,9 +736,11 @@ const TextArea = class {
       return;
     }
 
-    // 以下、広がった場合の処理です。
-    this.selectionRangeStartRowIndex = this.focusedRowIndex;
-    this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
+    // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
+    this.selectionRangeStartRowIndex = undefined;
+    this.selectionRangeStartColumnIndex = undefined;
+    this.selectionRangeEndRowIndex = undefined;
+    this.selectionRangeEndColumnIndex = undefined;
     return;
   };
 
@@ -758,7 +769,7 @@ const TextArea = class {
     }
 
     // 選択範囲用背景色の切り替えを行います。
-    this.toggleSelectionRangeBackgroundColor(this.getPreviousFocusedCharacter());
+    this.getPreviousFocusedCharacter().classList.toggle("tom-editor__text-area__character--select");
 
     // 選択範囲を表すインデックス値を更新します。
     // 範囲選択中でないならば――今回新たに範囲選択が始まった場合は現在フォーカスしている位置の1つ前の文字が選択範囲の始端であり終端となります。
@@ -777,28 +788,31 @@ const TextArea = class {
       this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
       return;
     }
-    if (this.getPreviousFocusedCharacter().style.background === "") {
+    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
-      // 以下、狭まった場合の処理です。
-      if (this.isEndOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-
-        // 現在フォーカスしているのが文末であるということは先ほど選択範囲から外れた文字は文末の1つ直前の文字ということになります。
-        // 文末は選択範囲に入りませんので、これは選択範囲そのものが消失したことを意味します。
-        this.selectionRangeStartRowIndex = undefined;
-        this.selectionRangeStartColumnIndex = undefined;
-        this.selectionRangeEndRowIndex = undefined;
-        this.selectionRangeEndColumnIndex = undefined;
+      // 以下、広がった場合の処理です。
+      if (this.focusedColumnIndex === 0) {
+        this.selectionRangeEndRowIndex = this.focusedRowIndex - 1;
+        this.selectionRangeEndColumnIndex = this.characters[this.focusedRowIndex - 1].length - 1;
         return;
       }
-      if (this.getFocusedCharacter().style.background === "") {
+      this.selectionRangeEndRowIndex = this.focusedRowIndex;
+      this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
+      return;
+    }
 
-        // 現在フォーカスしている文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
-        this.selectionRangeStartRowIndex = undefined;
-        this.selectionRangeStartColumnIndex = undefined;
-        this.selectionRangeEndRowIndex = undefined;
-        this.selectionRangeEndColumnIndex = undefined;
-        return;
-      }
+    // 以下、狭まった場合の処理です。
+    if (this.isEndOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
+
+      // 現在フォーカスしているのが文末であるということは先ほど選択範囲から外れた文字は文末の1つ直前の文字ということになります。
+      // 文末は選択範囲に入りませんので、これは選択範囲そのものが消失したことを意味します。
+      this.selectionRangeStartRowIndex = undefined;
+      this.selectionRangeStartColumnIndex = undefined;
+      this.selectionRangeEndRowIndex = undefined;
+      this.selectionRangeEndColumnIndex = undefined;
+      return;
+    }
+    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
 
       // 現在フォーカスしている文字が選択範囲に含まれているならば選択範囲の先頭情報のみ更新します。
       this.selectionRangeStartRowIndex = this.focusedRowIndex;
@@ -806,14 +820,11 @@ const TextArea = class {
       return;
     }
 
-    // 以下、広がった場合の処理です。
-    if (this.focusedColumnIndex === 0) {
-      this.selectionRangeEndRowIndex = this.focusedRowIndex - 1;
-      this.selectionRangeEndColumnIndex = this.characters[this.focusedRowIndex - 1].length - 1;
-      return;
-    }
-    this.selectionRangeEndRowIndex = this.focusedRowIndex;
-    this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
+    // 現在フォーカスしている文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
+    this.selectionRangeStartRowIndex = undefined;
+    this.selectionRangeStartColumnIndex = undefined;
+    this.selectionRangeEndRowIndex = undefined;
+    this.selectionRangeEndColumnIndex = undefined;
     return;
   };
 
@@ -843,20 +854,8 @@ const TextArea = class {
   };
 
   /**
-   * 引数で指定された行と列のインデックス値に該当する文字に対して、範囲選択用スタイルの切り替えを実行します。
-   * @param {Element} targetCharacter スタイルの切り替え対象となる文字です。
-   */
-  toggleSelectionRangeBackgroundColor = (targetCharacter) => {
-    if (targetCharacter.style.background === "") {
-      targetCharacter.style.background = this.selectionRangeBackgroundColor;
-    } else {
-      targetCharacter.style.background = "";
-    }
-  };
-
-  /**
    * マウスのドラッグによる選択範囲の更新処理です。
-   * @param {object} event EventTarget.addEventListenerメソッドの
+   * @param {object} event EventTarget.addEventListenerメソッドのイベント情報をまとめたオブジェクトです。
    */
   updateSelectionRangeByMouseDragging = (event) => {
 
@@ -869,7 +868,6 @@ const TextArea = class {
     const goalFocusedColumnIndex = this.focusedColumnIndex;
     this.focusedRowIndex = temporarilyStoredFocusedRowIndex;
     this.focusedColumnIndex = temporarilyStoredFocusedColumnIndex;
-    // console.log(`${this.focusedRowIndex}:${this.focusedColumnIndex}`);
 
     // 移動先となる文字まで移動します。
     // まずは行移動で一気に距離を詰めます。

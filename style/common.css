@@ -28,7 +28,7 @@ html {
   margin: 0.5rem;
 }
 .tom-editor-container {
-  background: black;
+  background: red;
   flex: 1 1 auto;
   overflow: hidden;
 }

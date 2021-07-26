@@ -14,20 +14,12 @@ const VirticalScrollbarArea = class {
 
     // 領域を初期化します。
     this.root = document.createElement("div");
-    this.root.style.background = "rgb(255, 255, 255)";
-    this.root.style.borderLeft = "solid 0.1rem rgb(238, 238, 238)";
-    this.root.style.flex = "0 0 1rem";
-    this.root.style.position = "relative";
-    this.root.style.zIndex = "1";
+    this.root.classList.add("tom-editor__virtical-scrollbar-area");
     superRoot.appendChild(this.root);
 
     // スクロールバーを初期化します。
     this.virticalScrollbar = document.createElement("div");
-    this.virticalScrollbar.style.display = "none";
-    this.virticalScrollbar.style.height = "100%";
-    this.virticalScrollbar.style.position = "absolute";
-    this.virticalScrollbar.style.top = "0";
-    this.virticalScrollbar.style.width = "100%";
+    this.virticalScrollbar.classList.add("tom-editor__virtical-scrollbar-area__virtical-scrollbar");
     this.root.appendChild(this.virticalScrollbar);
   }
 
@@ -47,12 +39,12 @@ const VirticalScrollbarArea = class {
 
     // 文字領域内容量の横幅が文字領域横幅に収まっているときはスクロールバーを表示しません。
     if (!(textAreaContentHeight < textAreaScrollHeight)) {
-      this.virticalScrollbar.style.display = "none";
+      this.virticalScrollbar.classList.remove("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active");
       return;
     }
 
     // スクロールバーのスタイルを更新します。
-    this.virticalScrollbar.style.display = "";
+    this.virticalScrollbar.classList.add("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active");
     this.virticalScrollbar.style.height = new Intl.NumberFormat("ja", {
       maximumSignificantDigits: 4,
       style: "percent"

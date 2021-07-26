@@ -4,7 +4,7 @@ import {
   Caret
 } from "./tom-editor.caret.mjs";
 import {
-  DecorationUnderLine
+  DecorationUnderline
 } from "./tom-editor.decoration-under-line.mjs";
 import {
   HorizontalScrollbarArea
@@ -61,22 +61,12 @@ const TOMEditor = class {
     // エディター本体のラッパー要素です。
     // これがないと入力内容によってエディターの実際の寸法が変化したときに見た目の寸法も変化してしまいます。
     const editorWrapper = document.createElement("div");
-    editorWrapper.style.height = "100%";
-    editorWrapper.style.overflow = "hidden";
-    editorWrapper.style.position = "relative";
-    editorWrapper.style.width = "100%";
+    editorWrapper.classList.add("tom-editor__editor-wrapper");
     editorContainer.appendChild(editorWrapper);
 
     // エディター本体を初期化します。
     this.root = document.createElement("div");
-    this.root.style.bottom = "0";
-    this.root.style.display = "flex";
-    this.root.style.font = "normal 1rem/1.25rem Consolas, 'Courier New', monospace";
-    this.root.style.left = "0";
-    this.root.style.position = "absolute";
-    this.root.style.right = "0";
-    this.root.style.top = "0";
-    this.root.style.whiteSpace = "pre";
+    this.root.classList.add("tom-editor");
     editorWrapper.appendChild(this.root);
 
     // エディターを構成する各領域を初期化します。
@@ -89,7 +79,7 @@ const TOMEditor = class {
       this.virticalScrollbarArea.root.getBoundingClientRect().width
     );
     this.caret = new Caret(this.root);
-    this.decorationUnderLine = new DecorationUnderLine(
+    this.decorationUnderLine = new DecorationUnderline(
       this.root,
       this.lineNumberArea.root.getBoundingClientRect().width,
       this.virticalScrollbarArea.root.getBoundingClientRect().width
@@ -102,6 +92,7 @@ const TOMEditor = class {
       return;
     }
     this.addEventListenersIntoEditor();
+    this.addEventListenersIntoLineNumberArea();
     this.addEventListenersIntoTextArea();
     this.addEventListenersIntoVirticalScrollbar();
     this.addEventListenersIntoVirticalScrollbarArea();
@@ -183,6 +174,9 @@ const TOMEditor = class {
   /** @type {DecorationUnderLine} 装飾下線です。 */
   decorationUnderLine;
 
+  /** @type {number} 行番号領域をドラッグ中であるならばドラッグ開始位置となる行番号を指すインデックス値が入ります。 */
+  draggingStartLineNumberIndex;
+
   /** @type {HorizontalScrollbarArea} 横方向のスクロールバー領域です。 */
   horizontalScrollbarArea
 
@@ -214,7 +208,7 @@ const TOMEditor = class {
    * 読み取り専用として初期化したとき用のイベントリスナーを実装します。
    */
   addEventListenersForReadonly = () => {
-    this.textArea.root.style.cursor = "default";
+    this.textArea.root.classList.add("tom-editor__text-area--read-only");
 
     // ResizeObserverクラスを使用して、エディターの寸法変更イベントを検知します。
     // 行番号領域・文字領域の余白の縦幅を調整します。
@@ -226,19 +220,9 @@ const TOMEditor = class {
     resizeObserver.observe(this.root);
 
     // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
-    window.addEventListener("mouseup", (event) => {
+    window.addEventListener("mouseup", () => {
       this.textArea.duringSelectionRange = false;
       this.virticalScrollbarIsDragging = undefined;
-      if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
-        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
-      } else {
-        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
-      if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
-        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
-      } else {
-        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
       this.horizontalScrollbarIsDragging = undefined;
     });
 
@@ -310,6 +294,9 @@ const TOMEditor = class {
       if (this.reflectMousedownKey(event)) {
         this.reflectChangesInTextAreaToOtherArea();
       }
+
+      // 入力処理後はShiftキーフラグを非活性化状態にします。
+      this.textArea.duringSelectionRange = false;
     });
 
     // 日本語入力用の処理です。
@@ -364,23 +351,14 @@ const TOMEditor = class {
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
       this.lineNumberArea.resetLineNumber();
-      this.decorationUnderLine.blurDecorationUnderLine();
+      this.decorationUnderLine.blurDecorationUnderline();
     });
 
     // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
-    window.addEventListener("mouseup", (event) => {
+    window.addEventListener("mouseup", () => {
+      this.draggingStartLineNumberIndex = undefined;
       this.textArea.duringSelectionRange = false;
       this.virticalScrollbarIsDragging = undefined;
-      if (event.target === this.virticalScrollbarArea.virticalScrollbar) {
-        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
-      } else {
-        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
-      if (event.target === this.horizontalScrollbarArea.horizontalScrollbar) {
-        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
-      } else {
-        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
       this.horizontalScrollbarIsDragging = undefined;
     });
 
@@ -389,7 +367,7 @@ const TOMEditor = class {
       this.textArea.resetFocusAndSelectionRange();
       this.caret.blurCaret();
       this.lineNumberArea.resetLineNumber();
-      this.decorationUnderLine.blurDecorationUnderLine();
+      this.decorationUnderLine.blurDecorationUnderline();
     });
 
     // どこかをクリックするたびに勝手にキャレット（textareaタグ）にフォーカスしたり、
@@ -435,22 +413,6 @@ const TOMEditor = class {
     // スクロールバーのドラッグ移動処理のフラグを起動します。
     this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mousedown", (event) => {
       this.horizontalScrollbarIsDragging = event.x;
-      this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(204, 204, 204)";
-    });
-
-    // マウス重なり時のスタイルを適用します。
-    this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mouseenter", () => {
-      if (this.horizontalScrollbarArea.horizontalScrollbar.style.background === "rgb(204, 204, 204)") {
-        return;
-      }
-      this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(221, 221, 221)";
-    });
-
-    // マウスを外したときは普通のスタイルに戻します。
-    this.horizontalScrollbarArea.horizontalScrollbar.addEventListener("mouseleave", () => {
-      if (typeof this.horizontalScrollbarIsDragging === "undefined") {
-        this.horizontalScrollbarArea.horizontalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
     });
   };
 
@@ -469,6 +431,67 @@ const TOMEditor = class {
         return;
       }
       this.scrollEditor(event.target, "next");
+    });
+  };
+
+  /**
+   * 行番号領域を対象としたイベントリスナーを実装します。
+   */
+  addEventListenersIntoLineNumberArea = () => {
+
+    // 行番号、あるいは余白をクリックされたときは該当する行をまとめて選択範囲の対象とします。
+    this.lineNumberArea.root.addEventListener("mousedown", (event) => {
+
+      // クリックしたのが行番号か余白かで挙動を少し変えます。
+      let clickedLineNumberIndex;
+      if (event.target.classList.contains("tom-editor__line-number-area__line-number")) {
+        clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
+      } else if (event.target === this.lineNumberArea.negativeSpace) {
+        clickedLineNumberIndex = this.lineNumberArea.lineNumbers.length - 1;
+      } else {
+        return;
+      }
+
+      this.draggingStartLineNumberIndex = clickedLineNumberIndex;
+      this.textArea.resetFocusAndSelectionRange();
+      this.textArea.duringSelectionRange = true;
+      this.textArea.focusedRowIndex = clickedLineNumberIndex;
+      this.textArea.focusedColumnIndex = 0;
+      this.textArea.resetFocusAndSelectionRange("ArrowDown");
+      this.reflectChangesInTextAreaToOtherArea();
+    });
+
+    // 行版行領域内でドラッグが開始された場合のみ行番号を対象とする範囲選択処理を実行します。
+    this.lineNumberArea.root.addEventListener("mousemove", (event) => {
+      if (typeof this.draggingStartLineNumberIndex === "undefined") {
+        return;
+      }
+
+      // クリックしたのが行番号か余白かで挙動を少し変えます。
+      let clickedLineNumberIndex;
+      if (event.target.classList.contains("tom-editor__line-number-area__line-number")) {
+        clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
+      } else if (event.target === this.lineNumberArea.negativeSpace) {
+        clickedLineNumberIndex = this.lineNumberArea.lineNumbers.length - 1;
+      } else {
+        return;
+      }
+
+      this.textArea.duringSelectionRange = true;
+
+      // 範囲選択処理を実行します。
+      if (clickedLineNumberIndex < this.draggingStartLineNumberIndex) {
+        for (let i = 0; i < this.draggingStartLineNumberIndex - clickedLineNumberIndex; i += 1) {
+          this.textArea.resetFocusAndSelectionRange("ArrowUp");
+        }
+      } else if (clickedLineNumberIndex > this.draggingStartLineNumberIndex) {
+        for (let i = 0; i < clickedLineNumberIndex - this.draggingStartLineNumberIndex; i += 1) {
+          this.textArea.resetFocusAndSelectionRange("ArrowDown");
+        }
+      }
+
+      this.draggingStartLineNumberIndex = clickedLineNumberIndex;
+      this.reflectChangesInTextAreaToOtherArea();
     });
   };
 
@@ -504,24 +527,6 @@ const TOMEditor = class {
     // また、ドラッグ状態になったことを表すためにスタイルを適用します。
     this.virticalScrollbarArea.virticalScrollbar.addEventListener("mousedown", (event) => {
       this.virticalScrollbarIsDragging = event.y;
-      this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(204, 204, 204)";
-    });
-
-    // マウスの重なり時用スタイルを適用します。
-    // ただし、ドラッグ状態であればドラッグ用のスタイルを優先します。
-    this.virticalScrollbarArea.virticalScrollbar.addEventListener("mouseenter", () => {
-      if (this.virticalScrollbarArea.virticalScrollbar.style.background === "rgb(204, 204, 204)") {
-        return;
-      }
-      this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(221, 221, 221)";
-    });
-
-    // マウスが外れた時は通常時用のスタイルを適用します。
-    // ただし、ドラッグ中ならばスタイルを残します。
-    this.virticalScrollbarArea.virticalScrollbar.addEventListener("mouseleave", () => {
-      if (typeof this.virticalScrollbarIsDragging === "undefined") {
-        this.virticalScrollbarArea.virticalScrollbar.style.background = "rgb(238, 238, 238)";
-      }
     });
   };
 
@@ -554,7 +559,7 @@ const TOMEditor = class {
     this.textArea.autoScroll(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
 
     this.resetScrollbar();
-    this.decorationUnderLine.placeDecorationUnderLine(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
+    this.decorationUnderLine.placeDecorationUnderline(this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top);
   };
 
   /**
@@ -568,9 +573,9 @@ const TOMEditor = class {
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
     if (typeof this.textArea.selectionRangeEndRowIndex === "undefined") {
-      this.decorationUnderLine.placeDecorationUnderLine(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
+      this.decorationUnderLine.placeDecorationUnderline(this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top);
     } else {
-      this.decorationUnderLine.blurDecorationUnderLine();
+      this.decorationUnderLine.blurDecorationUnderline();
     }
   };
 
@@ -642,7 +647,9 @@ const TOMEditor = class {
       [event.key === "ArrowUp", this.textArea.resetFocusAndSelectionRange, "ArrowUp"],
       [event.key === "Backspace", this.textArea.removeCharacter, "Backspace"],
       [event.key === "Delete", this.textArea.removeCharacter, "Delete"],
-      [event.key === "Enter", this.textArea.appendTextLine, undefined]
+      [event.key === "End", this.textArea.resetFocusAndSelectionRange, "End"],
+      [event.key === "Enter", this.textArea.appendTextLine, undefined],
+      [event.key === "Home", this.textArea.resetFocusAndSelectionRange, "Home"]
     ]) {
       if (condition) {
         method(argument);
@@ -707,7 +714,7 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
-    this.decorationUnderLine.placeDecorationUnderLine(
+    this.decorationUnderLine.placeDecorationUnderline(
       this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
       this.root.getBoundingClientRect().top
     );
@@ -768,7 +775,7 @@ const TOMEditor = class {
       this.textArea.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left,
       this.textArea.getFocusedTextLine().getBoundingClientRect().top - this.root.getBoundingClientRect().top
     );
-    this.decorationUnderLine.placeDecorationUnderLine(
+    this.decorationUnderLine.placeDecorationUnderline(
       this.lineNumberArea.lineNumbers[this.lineNumberArea.focusedLineNumberIndex].getBoundingClientRect().top -
       this.root.getBoundingClientRect().top
     );
