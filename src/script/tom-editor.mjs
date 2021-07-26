@@ -174,6 +174,9 @@ const TOMEditor = class {
   /** @type {DecorationUnderLine} 装飾下線です。 */
   decorationUnderLine;
 
+  /** @type {number} 行番号領域をドラッグ中であるならばドラッグ開始位置となる行番号を指すインデックス値が入ります。 */
+  draggingStartLineNumberIndex;
+
   /** @type {HorizontalScrollbarArea} 横方向のスクロールバー領域です。 */
   horizontalScrollbarArea
 
@@ -353,6 +356,7 @@ const TOMEditor = class {
 
     // ドラッグ処理各種のフラグを解除したり、スクロールバーのスタイルを変更したりします。
     window.addEventListener("mouseup", () => {
+      this.draggingStartLineNumberIndex = undefined;
       this.textArea.duringSelectionRange = false;
       this.virticalScrollbarIsDragging = undefined;
       this.horizontalScrollbarIsDragging = undefined;
@@ -435,17 +439,59 @@ const TOMEditor = class {
    */
   addEventListenersIntoLineNumberArea = () => {
 
-    // 行番号をクリックされたときは当該行をまとめて選択範囲の対象とします。
+    // 行番号、あるいは余白をクリックされたときは該当する行をまとめて選択範囲の対象とします。
     this.lineNumberArea.root.addEventListener("mousedown", (event) => {
+
+      // クリックしたのが行番号か余白かで挙動を少し変えます。
+      let clickedLineNumberIndex;
       if (event.target.classList.contains("tom-editor__line-number-area__line-number")) {
-        this.textArea.duringSelectionRange = true;
-        const clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
-        this.textArea.focusedRowIndex = clickedLineNumberIndex;
-        this.textArea.focusedColumnIndex = 0;
-        this.textArea.resetFocusAndSelectionRange("ArrowDown");
-        this.textArea.duringSelectionRange = false;
-        this.reflectChangesInTextAreaToOtherArea();
+        clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
+      } else if (event.target === this.lineNumberArea.negativeSpace) {
+        clickedLineNumberIndex = this.lineNumberArea.lineNumbers.length - 1;
+      } else {
+        return;
       }
+
+      this.draggingStartLineNumberIndex = clickedLineNumberIndex;
+      this.textArea.resetFocusAndSelectionRange();
+      this.textArea.duringSelectionRange = true;
+      this.textArea.focusedRowIndex = clickedLineNumberIndex;
+      this.textArea.focusedColumnIndex = 0;
+      this.textArea.resetFocusAndSelectionRange("ArrowDown");
+      this.reflectChangesInTextAreaToOtherArea();
+    });
+
+    // 行版行領域内でドラッグが開始された場合のみ行番号を対象とする範囲選択処理を実行します。
+    this.lineNumberArea.root.addEventListener("mousemove", (event) => {
+      if (typeof this.draggingStartLineNumberIndex === "undefined") {
+        return;
+      }
+
+      // クリックしたのが行番号か余白かで挙動を少し変えます。
+      let clickedLineNumberIndex;
+      if (event.target.classList.contains("tom-editor__line-number-area__line-number")) {
+        clickedLineNumberIndex = Number(event.target.innerHTML) - 1;
+      } else if (event.target === this.lineNumberArea.negativeSpace) {
+        clickedLineNumberIndex = this.lineNumberArea.lineNumbers.length - 1;
+      } else {
+        return;
+      }
+
+      this.textArea.duringSelectionRange = true;
+
+      // 範囲選択処理を実行します。
+      if (clickedLineNumberIndex < this.draggingStartLineNumberIndex) {
+        for (let i = 0; i < this.draggingStartLineNumberIndex - clickedLineNumberIndex; i += 1) {
+          this.textArea.resetFocusAndSelectionRange("ArrowUp");
+        }
+      } else if (clickedLineNumberIndex > this.draggingStartLineNumberIndex) {
+        for (let i = 0; i < clickedLineNumberIndex - this.draggingStartLineNumberIndex; i += 1) {
+          this.textArea.resetFocusAndSelectionRange("ArrowDown");
+        }
+      }
+
+      this.draggingStartLineNumberIndex = clickedLineNumberIndex;
+      this.reflectChangesInTextAreaToOtherArea();
     });
   };
 
