@@ -30,11 +30,13 @@
 }
 .tom-editor__caret {
   animation: 1.25s steps(1) infinite both;
+  background: transparent;
   border: none;
   border-left: solid 0.125rem;
   color: transparent;
   display: none;
   height: var(--default-line-height);
+  margin: 0;
   max-width: 0.01px;
   outline: none;
   overflow: hidden;
