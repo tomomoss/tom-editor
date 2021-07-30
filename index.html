@@ -10,12 +10,18 @@
   <script defer src="./main.js" type="module"></script>
 </head>
 
-<body>
+<body class="body">
   <header class="header">
-    <h1 class="title">TOM Editor 2.0.1</h1>
-    <button class="get-content-button">入力内容を取得して表示</button>
+    <h1 class="header__title">TOM Editor 2.0.1</h1>
+    <button class="header__getting-editor-value-button">入力内容を取得して表示</button>
   </header>
   <main class="tom-editor-container"></main>
+  <footer class="footer">
+    <label>実装:</label>
+    <select class="footer__architecture-selector">
+      <option value="vanilla">Vanilla.js (ECMAScript)</option>
+    </select>
+  </footer>
 </body>
 
 </html>
