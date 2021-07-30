@@ -2,7 +2,7 @@
 
 import {
   TOMEditor
-} from "../src/script/tom-editor.mjs";
+} from "./src/script/tom-editor.mjs";
 
 // TOM Editorを初期化・配置します。
 const tomEditorContainer = document.querySelector(".tom-editor-container");
