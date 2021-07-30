@@ -3,6 +3,9 @@
 import {
   TOMEditor
 } from "./src/tom-editor.mjs";
+import {
+  TOMEditorByjQuery
+} from "./src-jquery/tom-editor.mjs";
 
 /**
  * TOM Editorの実装を切り替えます。
@@ -16,6 +19,10 @@ const changeArchitecture = (architecture) => {
   if (architecture === "vannila") {
     architectureStylesheetTagPath = "./src/tom-editor.css";
     instanceTOMEditorObject = TOMEditor;
+  }
+  if (architecture === "jquery") {
+    architectureStylesheetTagPath = "./src-jquery/tom-editor.css";
+    instanceTOMEditorObject = TOMEditorByjQuery;
   }
 
   // スタイルシートを読み込むlinkタグを生成・挿入します。
