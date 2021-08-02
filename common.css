@@ -10,14 +10,6 @@ html {
   height: 100%;
   margin: 0;
 }
-.footer {
-  border-top: solid 0.1rem rgb(238, 238, 238);
-  font: normal 1rem / 1rem "";
-  text-align: end;
-}
-.footer__architecture-selector {
-  margin: 0.5rem 1rem 0.5rem 0rem;
-}
 .header {
   align-items: center;
   border-bottom: solid 0.1rem rgb(238, 238, 238);
