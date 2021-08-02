@@ -300,6 +300,11 @@ const TOMEditor = class {
 
       // 入力処理後はShiftキーフラグを非活性化状態にします。
       this.textArea.duringSelectionRange = false;
+
+      // Tabキーが押されたときはフォーカス位置の移動が発生しないようにします。
+      if (event.key === "Tab") {
+        event.preventDefault();
+      }
     });
 
     // 日本語入力用の処理です。
@@ -652,7 +657,12 @@ const TOMEditor = class {
       [event.key === "Delete", this.textArea.removeCharacter, "Delete"],
       [event.key === "End", this.textArea.resetFocusAndSelectionRange, "End"],
       [event.key === "Enter", this.textArea.appendTextLine, undefined],
-      [event.key === "Home", this.textArea.resetFocusAndSelectionRange, "Home"]
+      [event.key === "Home", this.textArea.resetFocusAndSelectionRange, "Home"],
+      [event.key === "Tab", () => {
+        for (let i = 0; i < 4; i += 1) {
+          this.textArea.appendCharacter(" ");
+        }
+      }, undefined]
     ]) {
       if (condition) {
         method(argument);
