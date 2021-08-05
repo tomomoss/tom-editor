@@ -56,7 +56,6 @@ const TOMEditor = class {
     if (rest.length) {
       throw new Error("引数の数が不正です。");
     }
-    Object.seal(this);
 
     // 1つのHTML要素の直下にTOM Editorが複数実装されないように、実装前に当該HTML要素の内容を消去します。
     tomEditorContainer.innerHTML = "";

@@ -10,7 +10,6 @@
    * @param {Element} superRoot エディター本体を表すHTML要素です。
    */
   constructor(superRoot) {
-    Object.seal(this);
     this.root = document.createElement("textarea");
     this.root.classList.add("tom-editor__caret");
     this.root.style.height = superRoot.style.lineHeight;

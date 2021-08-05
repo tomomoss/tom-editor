@@ -12,7 +12,6 @@ const HorizontalScrollbarArea = class {
    * @param {number} virticalScrollbarAreaWidth 水平方向のスクロールバー領域の横幅です。
    */
   constructor(superRoot, lineNumberAreaWidth, virticalScrollbarAreaWidth) {
-    Object.seal(this);
 
     // 領域を初期化します。
     this.root = document.createElement("div");
