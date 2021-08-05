@@ -10,7 +10,6 @@ const LineNumberArea = class {
    * @param {Element} superRoot エディター本体を表すHTML要素です。
    */
   constructor(superRoot) {
-    Object.seal(this);
 
     // 行番号領域の横幅を決めるために、半角英数字の横幅を求めます。
     const temporaryElement = document.createElement("span");

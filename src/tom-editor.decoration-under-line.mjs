@@ -12,7 +12,6 @@ const DecorationUnderline = class {
    * @param {number} virticalScrollbarAreaWidth 水平方向のスクロールバー領域の横幅です。
    */
   constructor(superRoot, lineNumberAreaWidth, virticalScrollbarAreaWidth) {
-    Object.seal(this);
     this.root = document.createElement("div");
     this.root.classList.add("tom-editor__decoration-underline");
     this.root.style.left = `${lineNumberAreaWidth}px`;

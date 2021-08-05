@@ -10,7 +10,6 @@ const TextArea = class {
    * @param {Element} superRoot エディター本体を表すHTML要素です。
    */
   constructor(superRoot) {
-    Object.seal(this);
 
     // 文字領域を初期化します。
     this.root = document.createElement("div");
