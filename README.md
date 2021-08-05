@@ -2,15 +2,17 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン2.0.1です。以下より動作確認ができます。
+現在、バージョン2.1.0です。以下より動作確認ができます。
 
-[TOM Editor 2.0.1 動作確認ページ](https://tomomoss.github.io/tom-editor/)
+[TOM Editor 2.1.0 動作確認ページ](https://tomomoss.github.io/tom-editor/)
 
 ## 導入手順
 
-`src` ディレクトリに格納されている `.mjs` ファイルがTOM Editorを構成するファイルとなります。
+`src` ディレクトリに格納されているファイルがTOM Editorを構成するファイルとなります。
 
-それらファイルを同じ階層に配置し、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
+`tom-editor.css` は適当な階層に配置し `<style>` タグなどで読み込んでください。
+
+`.mjs` ファイルは全て同じ階層に配置してください。その後、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
 
 ```javascript
 // ./script/main.js
