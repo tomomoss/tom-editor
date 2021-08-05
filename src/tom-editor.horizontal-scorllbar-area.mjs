@@ -23,7 +23,7 @@ const HorizontalScrollbarArea = class {
 
     // スクロールバーを初期化します。
     this.horizontalScrollbar = document.createElement("div");
-    this.horizontalScrollbar.classList.add("tom-editor__horizontal-scrollbar__horizontal-scrollbar");
+    this.horizontalScrollbar.classList.add("tom-editor__horizontal-scrollbar-area__horizontal-scrollbar");
     this.root.appendChild(this.horizontalScrollbar);
   }
 

@@ -76,16 +76,16 @@
 .tom-editor__horizontal-scrollbar-area--active {
   display: block;
 }
-.tom-editor__horizontal-scrollbar__horizontal-scrollbar {
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar {
   background: var(--sub-color-level-1);
   height: 100%;
   position: absolute;
   z-index: 1;
 }
-.tom-editor__horizontal-scrollbar__horizontal-scrollbar:hover {
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:hover {
   background: var(--sub-color-level-2);
 }
-.tom-editor__horizontal-scrollbar__horizontal-scrollbar:active {
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:active {
   background: var(--sub-color-level-3);
 }
 .tom-editor__line-number-area {
