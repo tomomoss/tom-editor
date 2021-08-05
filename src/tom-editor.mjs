@@ -37,7 +37,7 @@ const TOMEditor = class {
     if (typeof tomEditorContainer === "undefined") {
       throw new Error("第1引数が指定されていません。");
     }
-    if (!(tomEditorContainer instanceof Element)) {
+    if (!tomEditorContainer instanceof Element) {
       throw new Error("第1引数がHTML要素ではありません。");
     }
     if (typeof option === "object") {
@@ -53,7 +53,7 @@ const TOMEditor = class {
         }
       }
     }
-    if (rest.length !== 0) {
+    if (rest.length) {
       throw new Error("引数の数が不正です。");
     }
     Object.seal(this);
