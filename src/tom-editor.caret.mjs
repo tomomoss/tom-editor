@@ -69,6 +69,7 @@ const Caret = class {
 
     // キー入力を検知したら文字領域に押されたキー情報を通知します。
     this.caret.addEventListener("keydown", (event) => {
+      event.preventDefault();
       if (event.key === "Shift") {
         return;
       }

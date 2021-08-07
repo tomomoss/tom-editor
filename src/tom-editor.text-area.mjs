@@ -76,19 +76,11 @@ const TextArea = class {
   convertSelectedRangeIntoText = (cutFlag) => {
     let convertedText;
     if (this.selectionRange.length) {
-      for (const textLine of this.selectionRange) {
-        for (const character of textLine) {
-          convertedText += character.innerHTML;
-        }
-      }
-
-      /*
       convertedText = this.selectionRange.reduce((accumulator, currentValue) => {
         return accumulator + currentValue.reduce((accumulator, currentValue) => {
           return accumulator + currentValue.innerHTML;
-        }) + "\n";
-      });
-      */
+        }, "") + "\n";
+      }, "");
     } else {
       convertedText = "";
     }
@@ -216,11 +208,11 @@ const TextArea = class {
 
   /**
    * 矢印キーによるフォーカス位置と選択範囲の更新処理です。
-   * @param {string} arrowKey 押された方向です。
+   * @param {string} key 押された方向です。
    * @param {boolean} shiftKey Shiftキーが押されているときはtrueになります。
    */
-  moveFocusPointByArrowKey = (arrowKey, shiftKey) => {
-    if (arrowKey === "ArrowDown") {
+  moveFocusPointByArrowKey = (key, shiftKey) => {
+    if (key === "ArrowDown") {
       const goalRowIndex = this.focusedRowIndex + 1;
       const goalColumnIndex = this.focusedColumnIndex;
       while (
@@ -231,7 +223,7 @@ const TextArea = class {
       }
       return true;
     }
-    if (arrowKey === "ArrowLeft") {
+    if (key === "ArrowLeft") {
       if (this.focusedColumnIndex === 0) {
         if (this.focusedRowIndex === 0) {
 
@@ -301,7 +293,7 @@ const TextArea = class {
       }
       return;
     }
-    if (arrowKey === "ArrowRight") {
+    if (key === "ArrowRight") {
       if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
         if (this.focusedRowIndex === this.getRowsLastIndex()) {
 
@@ -375,7 +367,7 @@ const TextArea = class {
       }
       return;
     }
-    if (arrowKey === "ArrowUp") {
+    if (key === "ArrowUp") {
       const goalRowIndex = this.focusedRowIndex - 1;
       const goalColumnIndex = this.focusedColumnIndex;
       while (
@@ -387,6 +379,7 @@ const TextArea = class {
       }
       return true;
     }
+    throw new Error(`想定外の引数です（${key}）。`);
   };
 
   /**
@@ -398,16 +391,19 @@ const TextArea = class {
   reflectKey = (key, shiftKey) => {
 
     // 文字入力処理です。
+    // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
     if (key.length === 1) {
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
       this.inputCharacter(key);
       return true;
     }
 
     // 矢印キーによるフォーカス位置の変更と範囲選択の更新処理です。
+    // 範囲選択がされている状態でShiftキーを押さずに矢印キーが押された場合は、選択範囲の解除だけを行います。
     if (key.includes("Arrow")) {
-      if (this.selectionRange.length && !shiftKey) {
-
-        // 範囲選択がされている状態で、Shiftキーを押さずに矢印キーが押された場合は選択範囲の解除だけを行います。
+      if (!shiftKey && this.selectionRange.length) {
         this.unselctRange();
         return true;
       }
@@ -416,47 +412,54 @@ const TextArea = class {
     }
 
     // BackspaceキーとDeleteキーによる、文字あるいは選択範囲の削除処理です。
+    // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
     if (key === "Backspace") {
-      if (this.focusedColumnIndex === 0) {
-        if (this.focusedRowIndex === 0) {
-          return true;
-        }
-        this.focusedRowIndex -= 1;
-        this.focusedColumnIndex = this.getColumnsLastIndex();
-        this.removeTextLine();
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
         return true;
       }
-      this.focusedColumnIndex -= 1;
-      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
+      this.removeCharacter("Backspace");
       return true;
     }
     if (key === "Delete") {
-      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
-        if (this.focusedRowIndex === this.getRowsLastIndex()) {
-          return true;
-        }
-        this.removeTextLine();
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
         return true;
       }
-      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
+      this.removeCharacter("Delete");
       return true;
     }
 
     // その他キーの処理です。
     if (key === "End") {
+      if (!shiftKey && this.selectionRange.length) {
+        this.unselctRange();
+      }
       this.focusedColumnIndex = this.getColumnsLastIndex();
       return true;
     }
     if (key === "Enter") {
+      if (!shiftKey && this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
       const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
       this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
       return true;
     }
     if (key === "Home") {
+      if (!shiftKey && this.selectionRange.length) {
+        this.unselctRange();
+      }
       this.focusedColumnIndex = 0;
       return true;
     }
     if (key === "Tab") {
+      if (shiftKey) {
+        return false;
+      }
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
       const tab = "    ";
       for (const character of tab) {
         this.inputCharacter(character);
@@ -465,6 +468,60 @@ const TextArea = class {
     }
 
     return false;
+  };
+
+  /**
+   * Backspaceキー、あるいはDeleteキーによる文字削除処理を実行します。
+   * @param {string} key 押されたキーです。
+   */
+  removeCharacter = (key) => {
+    if (key === "Backspace") {
+      if (this.focusedColumnIndex === 0) {
+        if (this.focusedRowIndex === 0) {
+          return;
+        }
+        this.focusedRowIndex -= 1;
+        this.focusedColumnIndex = this.getColumnsLastIndex();
+        this.removeTextLine();
+        return;
+      }
+      this.focusedColumnIndex -= 1;
+      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
+      return;
+    }
+    if (key === "Delete") {
+      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        if (this.focusedRowIndex === this.getRowsLastIndex()) {
+          return;
+        }
+        this.removeTextLine();
+        return;
+      }
+      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
+      return;
+    }
+    throw new Error(`想定外の引数です（${key}）。`);
+  };
+
+  /**
+   * 範囲選択された文字を全て削除します。
+   */
+  removeCharactersInSelectionRange = () => {
+    let numberOfCharacters = 0;
+    for (const row of this.selectionRange) {
+      numberOfCharacters += row.length;
+    }
+    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+      for (let i = 0; i < numberOfCharacters; i += 1) {
+        this.removeCharacter("Delete");
+      }
+    } else {
+      for (let i = 0; i < numberOfCharacters; i += 1) {
+        this.removeCharacter("Backspace");
+      }
+    }
+    this.selectionRange = [];
+    return;
   };
 
   /**
@@ -509,6 +566,7 @@ const TextArea = class {
 
     // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
     this.textArea.addEventListener("blurCaret", () => {
+      this.unselctRange();
       this.focusedRowIndex = null;
       this.focusedColumnIndex = null;
     });
@@ -520,6 +578,7 @@ const TextArea = class {
       if (!this.reflectKey(event.detail.key, event.detail.shiftKey)) {
         return;
       }
+      console.log(`${this.focusedRowIndex} : ${this.focusedColumnIndex}`);
       this.dispatchTextAreaStatusToOtherArea("keydownCaret2", lineNumberArea, caret);
     });
   };
