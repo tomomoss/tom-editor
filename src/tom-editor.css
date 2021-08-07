@@ -33,8 +33,10 @@
   resize: none;
   width: 0;
 }
-.tom-editor__caret--place {
+.tom-editor__caret--active {
   animation: caret-blinking 1.25s steps(1) infinite both;
+}
+.tom-editor__caret--focus {
   display: inline-block;
 }
 .tom-editor__line-number-area {

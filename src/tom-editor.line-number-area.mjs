@@ -25,6 +25,26 @@ const LineNumberArea = class {
   lineNumbers = [];
 
   /**
+   * 行数を文字領域の行数に合わせます。
+   * @param {number} textLinesLength 文字領域に入力されている行の数です。
+   */
+  adjustNumberOfLineNumbers = (textLinesLength) => {
+    const lineDifference = textLinesLength - this.lineNumbers.length;
+    if (Math.sign(lineDifference) === 1) {
+      for (let i = 0; i < lineDifference; i += 1) {
+        this.appendLineNumber();
+      }
+      return;
+    }
+    if (Math.sign(lineDifference) === -1) {
+      for (let i = 0; i < Math.abs(lineDifference); i += 1) {
+        this.removeLineNumber();
+      }
+      return;
+    }
+  };
+
+  /**
    * 行番号を1つ追加します。
    */
   appendLineNumber = () => {
@@ -72,12 +92,20 @@ const LineNumberArea = class {
   };
 
   /**
+   * 行番号を1つ減らします。
+   */
+  removeLineNumber = () => {
+    this.lineNumbers.pop().remove();
+  };
+
+  /**
    * イベントリスナーを実装します。
    */
   setEventListeners = () => {
 
     // 文字領域でフォーカスの更新処理が実施されたのでフォーカスする行番号を更新します。
     this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
     });
 
@@ -92,7 +120,7 @@ const LineNumberArea = class {
    * @param {null|number} newIndex フォーカスする行番号を指すインデックスです。
    */
   updateFocusLineNumber = (newIndex) => {
-    if (this.focusedLineNumberIndex !== null) {
+    if (this.focusedLineNumberIndex !== null && this.lineNumbers[this.focusedLineNumberIndex]) {
       this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
     }
     this.focusedLineNumberIndex = newIndex;
@@ -101,84 +129,6 @@ const LineNumberArea = class {
     }
     this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /**
-   * 行数を文字領域の行数に合わせます。
-   * @param {number} textLinesLength 文字領域に入力されている行の数です。
-   */
-  adjustNumberOfLineNumbers = (textLinesLength) => {
-    const lineDifference = textLinesLength - this.lineNumbers.length;
-    if (Math.sign(lineDifference) === 1) {
-      for (let i = 0; i < lineDifference; i += 1) {
-        this.appendLineNumber();
-      }
-      return;
-    }
-    if (Math.sign(lineDifference) === -1) {
-      for (let i = 0; i < Math.abs(lineDifference); i += 1) {
-        this.removeLineNumber();
-      }
-      return;
-    }
-  };
-
-
-
-
-
-
-
-
-
-  /**
-   * 行番号を1つ減らします。
-   */
-  removeLineNumber = () => {
-    this.lineNumbers.pop().remove();
-  };
-
-
-
-
 };
 
 export {

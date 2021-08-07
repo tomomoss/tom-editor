@@ -33,14 +33,13 @@ const Caret = class {
    * @param {number} positionTop 垂直座標です。
    */
   putCaret = (positionLeft, positionTop) => {
-    this.caret.classList.add("tom-editor__caret--place");
+    this.caret.classList.add("tom-editor__caret--focus");
     this.caret.style.left = `${positionLeft}px`;
     this.caret.style.top = `${positionTop}px`;
-
-    // mousedownイベントのイベントリスナー内でfocusイベントを起こすと、
-    // どういうわけかすぐにblueしてしまうのでsetTimeoutメソッドで非同期処理化しています。
+    this.caret.focus();
+    this.caret.classList.remove("tom-editor__caret--active");
     setTimeout(() => {
-      this.caret.focus();
+      this.caret.classList.add("tom-editor__caret--active");
     }, 0);
   };
 
@@ -48,7 +47,7 @@ const Caret = class {
    * キャレットの除外処理です。
    */
   takeCaret = () => {
-    this.caret.classList.remove("tom-editor__caret--place");
+    this.caret.classList.remove("tom-editor__caret--active", "tom-editor__caret--focus");
   };
 
   /**
@@ -66,31 +65,19 @@ const Caret = class {
       lineNumberArea.dispatchEvent(new CustomEvent("blurCaret"));
     });
 
-    // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
-    this.caret.addEventListener("mousedownTextArea", (event) => {
-      this.takeCaret();
-      setTimeout(() => {
-        this.putCaret(event.detail.left, event.detail.top);
-      }, 0);
+    // キー入力を検知したら文字領域に押されたキー情報を通知します。
+    this.caret.addEventListener("keydown", (event) => {
+      textArea.dispatchEvent(new CustomEvent("keydownCaret", {
+        detail: {
+          key: event.key
+        }
+      }));
     });
 
-    // // 押されたキー情報を文字領域に送信します。
-    // this.caret.addEventListener("keydown", (event) => {
-    //   if (event.key === "Tab") {
-    //     event.preventDefault();
-    //   }
-    //   textArea.dispatchEvent(new CustomEvent("custom-presskey", {
-    //     detail: event.key
-    //   }));
-    // });
-
-    // // キャレットの配置位置を更新します。
-    // this.caret.addEventListener("custom-changefocus", (event) => {
-    //   this.takeCaret();
-    //   setTimeout(() => {
-    //     this.putCaret(event.detail.left, event.detail.top);
-    //   }, 0);
-    // });
+    // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
+    this.caret.addEventListener("mousedownTextArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
   };
 };
 

@@ -66,8 +66,20 @@ const TextArea = class {
   };
 
   /**
+   * 文字を生成します。
+   * @param {number|string} innerText 文字となるHTML要素に入れる値です。
+   * @returns {HTMLSpanElement} 文字です。
+   */
+  createCharacter = (innerHTML) => {
+    const character = document.createElement("span");
+    character.classList.add("tom-editor__text-area__character");
+    character.innerHTML = innerHTML;
+    return character
+  };
+
+  /**
    * 行末文字を生成します。
-   * @returns {HTMLDivElement} 行末文字です。
+   * @returns {HTMLSpanElement} 行末文字です。
    */
   createEOL = () => {
     const EOL = document.createElement("span");
@@ -114,138 +126,6 @@ const TextArea = class {
   getCharactersLastIndex = () => {
     return this.characters[this.focusedRowIndex].length - 1;
   };
-
-  /**
-   * イベントリスナーを実装します。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} caret キャレットです。
-   */
-  setEventListeners = (lineNumberArea, caret) => {
-
-    // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
-    // 更新後の位置を行番号領域とキャレットに通知します。
-    this.textArea.addEventListener("mousedown", (event) => {
-      this.updateFocusIndexByMousedownTarget(event);
-      lineNumberArea.dispatchEvent(new CustomEvent("mousedownTextArea", {
-        detail: {
-          index: this.focusedRowIndex
-        }
-      }));
-      const focusedCharacter = this.characters[this.focusedRowIndex][this.focusedColumnIndex].getBoundingClientRect();
-      const textArea = this.textArea.getBoundingClientRect();
-      caret.dispatchEvent(new CustomEvent("mousedownTextArea", {
-        detail: {
-          left: focusedCharacter.left - textArea.left,
-          top: focusedCharacter.top - textArea.top
-        }
-      }));
-    });
-
-    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
-    this.textArea.addEventListener("blurCaret", () => {
-      this.focusedRowIndex = null;
-      this.focusedColumnIndex = null;
-    });
-  };
-
-  /**
-   * mousedownイベントが発生したHTML要素に応じてフォーカス位置を更新します。
-   * @param {Event} event mousedownイベントのEventオブジェクトです。
-   */
-  updateFocusIndexByMousedownTarget = (event) => {
-
-    // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
-    if (event.target.classList.contains("tom-editor__text-area__character")) {
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.path[1];
-      });
-      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
-        return character === event.target;
-      });
-      return;
-    }
-    
-    // 行先頭の空間がクリックされたときは次行の先頭をフォーカス位置とします。
-    // 次行がない場合は当該空間が挿入されている行の行末文字をフォーカス位置とします。
-    if (event.target.classList.contains("tom-editor__text-area__leading-space")) {
-      const mousedownedTextLineIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.path[1];
-      });
-      if (this.textLines[mousedownedTextLineIndex + 1]) {
-        this.focusedRowIndex = mousedownedTextLineIndex + 1;
-        this.focusedColumnIndex = 0
-      } else {
-        this.focusedRowIndex = mousedownedTextLineIndex;
-        this.focusedColumnIndex = this.getCharactersLastIndex();
-      }
-      return;
-    }
-    
-    // 行がクリックされたときは当該行の行末文字をフォーカス位置とします。
-    if (event.target.classList.contains("tom-editor__text-area__text-line")) {
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.target;
-      });
-      this.focusedColumnIndex = this.getCharactersLastIndex();
-      return;
-    }
-
-    throw new Error(`想定外のHTML要素がクリックされました（${event.target.classList}）。`);
-  };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /**
-   * フォーカス中の文字の座標をキャレットに送信します。
-   * @param {HTMLDivElement} caret キャレットです。
-   */
-  dispatchFocusedCharacterPosition = (caret) => {
-    const focusedCharacterRect = this.characters[this.focusedRowIndex][this.focusedColumnIndex].getBoundingClientRect();
-    const textAreaRect = this.textArea.getBoundingClientRect();
-    caret.dispatchEvent(new CustomEvent("custom-changefocus", {
-      detail: {
-        left: focusedCharacterRect.left,
-        top: focusedCharacterRect.top - textAreaRect.top + parseFloat(getComputedStyle(this.textArea).marginTop)
-      }
-    }));
-  };
-
-  /**
-   * 文字領域に入力されている行の情報・状態を行番号領域に送信します。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   */
-  dispatchTextLinesStatus = (lineNumberArea) => {
-    lineNumberArea.dispatchEvent(new CustomEvent("custom-changetextline", {
-      detail: {
-        index: this.focusedRowIndex,
-        length: this.textLines.length
-      }
-    }));
-  };
-
-
 
   /**
    * Webページに挿入中の行のうち、最後の行のインデックスを返します。
@@ -389,6 +269,95 @@ const TextArea = class {
 
     // このままだと1つの行に2つのEOLが混在するので元々入っていたほうのEOLを削除します。
     this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
+  };
+
+  /**
+   * イベントリスナーを実装します。
+   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   * @param {HTMLDivElement} caret キャレットです。
+   */
+  setEventListeners = (lineNumberArea, caret) => {
+
+    // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
+    // 更新後の位置を行番号領域とキャレットに通知します。
+    this.textArea.addEventListener("mousedown", (event) => {
+      this.updateFocusIndexByMousedownTarget(event);
+      lineNumberArea.dispatchEvent(new CustomEvent("mousedownTextArea", {
+        detail: {
+          index: this.focusedRowIndex,
+          length: this.textLines.length
+        }
+      }));
+      setTimeout(() => {
+        const focusedCharacter = this.characters[this.focusedRowIndex][this.focusedColumnIndex].getBoundingClientRect();
+        const textArea = this.textArea.getBoundingClientRect();
+        caret.dispatchEvent(new CustomEvent("mousedownTextArea", {
+          detail: {
+            left: focusedCharacter.left - textArea.left,
+            top: focusedCharacter.top - textArea.top
+          }
+        }));
+      }, 0);
+    });
+
+    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
+    this.textArea.addEventListener("blurCaret", () => {
+      this.focusedRowIndex = null;
+      this.focusedColumnIndex = null;
+    });
+
+    // キャレットにキー入力があったので押されたキーに応じた処理を実行します。
+    // 有効なキー入力だった場合はフォーカス位置や行数が変わっている可能性があります。
+    // そこで文字領域に対してmousedownイベントを発信することで行番号領域とキャレットに変更後の状態を通知します。
+    this.textArea.addEventListener("keydownCaret", (event) => {
+      if (!this.reflectKey(event.detail.key)) {
+        return;
+      }
+      this.textArea.dispatchEvent(new Event("mousedown"));
+    });
+  };
+
+  /**
+   * mousedownイベントが発生したHTML要素に応じてフォーカス位置を更新します。
+   * @param {Event} event mousedownイベントのEventオブジェクトです。
+   */
+  updateFocusIndexByMousedownTarget = (event) => {
+
+    // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
+    if (event.target.classList.contains("tom-editor__text-area__character")) {
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.path[1];
+      });
+      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
+        return character === event.target;
+      });
+      return;
+    }
+    
+    // 行先頭の空間がクリックされたときは次行の先頭をフォーカス位置とします。
+    // 次行がない場合は当該空間が挿入されている行の行末文字をフォーカス位置とします。
+    if (event.target.classList.contains("tom-editor__text-area__leading-space")) {
+      const mousedownedTextLineIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.path[1];
+      });
+      if (this.textLines[mousedownedTextLineIndex + 1]) {
+        this.focusedRowIndex = mousedownedTextLineIndex + 1;
+        this.focusedColumnIndex = 0
+      } else {
+        this.focusedRowIndex = mousedownedTextLineIndex;
+        this.focusedColumnIndex = this.getCharactersLastIndex();
+      }
+      return;
+    }
+    
+    // 行がクリックされたときは当該行の行末文字をフォーカス位置とします。
+    if (event.target.classList.contains("tom-editor__text-area__text-line")) {
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.target;
+      });
+      this.focusedColumnIndex = this.getCharactersLastIndex();
+      return;
+    }
   };
 };
 
