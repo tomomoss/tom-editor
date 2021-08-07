@@ -56,8 +56,9 @@ const TOMEditor = class {
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
-    textArea.setEventListeners();
-    caret.setEventListeners(textArea);
+    textArea.setEventListeners(lineNumberArea.lineNumberArea, caret.caret);
+    lineNumberArea.setEventListeners();
+    caret.setEventListeners();
 
 
     // lineNumberArea.setEventListeners();

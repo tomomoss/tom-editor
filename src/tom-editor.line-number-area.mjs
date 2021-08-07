@@ -15,17 +15,21 @@ const LineNumberArea = class {
     this.appendLineNumber();
   }
 
+  /** @type {number} フォーカスしている行番号を指すインデックスです。 */
+  focusedLineNumberIndex = null;
+
   /** @type {HTMLDivElement} 行番号領域です */
   lineNumberArea = null;
 
-  /** @type {number} 現在Webページに挿入されている行番号の数です。 */
-  numberOfLineNumbers = 0;
+  /** @type {Array<HTMLDivElement>} 現在Webページに挿入されている行番号の数です。 */
+  lineNumbers = [];
 
   /**
    * 行番号を1つ追加します。
    */
   appendLineNumber = () => {
     const lineNumber = this.createLineNumber();
+    this.lineNumbers.push(lineNumber);
     this.lineNumberArea.appendChild(lineNumber);
   };
 
@@ -36,8 +40,7 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.classList.add("tom-editor__line-number-area__line-number");
-    this.numberOfLineNumbers += 1;
-    lineNumber.innerHTML = this.numberOfLineNumbers;
+    lineNumber.innerHTML = this.lineNumbers.length + 1;
     return lineNumber;
   };
 
@@ -68,6 +71,31 @@ const LineNumberArea = class {
     return lineNumberArea;
   };
 
+  /**
+   * イベントリスナーを実装します。
+   */
+  setEventListeners = () => {
+
+    // 文字領域でフォーカスの更新処理が実施されたのでフォーカスする行番号を更新します。
+    this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
+      this.updateFocusLineNumber(event.detail.index);
+    });
+  };
+
+  /**
+   * 行番号のフォーカス状態を更新します。
+   * @param {null|number} newIndex フォーカスする行番号を指すインデックスです。
+   */
+  updateFocusLineNumber = (newIndex) => {
+    if (this.focusedLineNumberIndex !== null) {
+      this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
+    }
+    this.focusedLineNumberIndex = newIndex;
+    if (newIndex === null) {
+      return;
+    }
+    this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
+  };
 
 
 
@@ -101,10 +129,6 @@ const LineNumberArea = class {
 
 
 
-
-
-  /** @type {number} フォーカスしている行番号を指すインデックスです。 */
-  focusedLineNumberIndex = null;
 
 
 
@@ -147,31 +171,9 @@ const LineNumberArea = class {
     this.lineNumbers.pop().remove();
   };
 
-  /**
-   * イベントリスナーを実装します。
-   */
-  setEventListeners = () => {
-    this.lineNumberArea.addEventListener("custom-changetextline", (event) => {
-      this.adjustNumberOfLineNumbers(event.detail.length);
-      this.updateFocusLineNumber(event.detail.index);
-    });
-  };
 
-  /**
-   * 行番号のフォーカス状態を更新します。
-   * @param {number|undefined} newIndex フォーカスする行番号を指すインデックスです。
-   */
-  updateFocusLineNumber = (newIndex) => {
-    if (this.focusedLineNumberIndex !== null) {
-      this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
-    }
-    if (typeof newIndex === "undefined") {
-      this.focusedLineNumberIndex = null;
-      return;
-    }
-    this.focusedLineNumberIndex = newIndex;
-    this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
-  };
+
+
 };
 
 export {

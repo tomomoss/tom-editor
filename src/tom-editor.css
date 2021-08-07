@@ -52,6 +52,9 @@
 .tom-editor__line-number-area__line-number:last-of-type {
   height: 100%;
 }
+.tom-editor__line-number-area__line-number--focus {
+  color: rgb(102, 102, 102);
+}
 .tom-editor__line-number-area__negative-space { }
 .tom-editor__text-area {
   cursor: text;
@@ -64,7 +67,6 @@
 .tom-editor__text-area__character--eol {
   margin: 0 3rem 0 0;
 }
-.tom-editor__text-area__character--focus { }
 .tom-editor__text-area__leading-space {
   display: inline-block;
   height: 100%;

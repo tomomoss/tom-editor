@@ -53,22 +53,17 @@ const Caret = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {TextArea} textArea 文字領域です。
    */
-  setEventListeners = (textArea) => {
-    const mutationObserver = new MutationObserver((mutationList) => {
+  setEventListeners = () => {
+
+    // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
+    this.caret.addEventListener("mousedownTextArea", (event) => {
       this.takeCaret();
       setTimeout(() => {
-        const caretLeft = mutationList[0].target.getBoundingClientRect().left - textArea.textArea.getBoundingClientRect().left;
-        const caretTop = mutationList[0].target.getBoundingClientRect().top - textArea.textArea.getBoundingClientRect().top;
-        this.putCaret(caretLeft, caretTop);
+        this.putCaret(event.detail.left, event.detail.top);
       }, 0);
     });
-    mutationObserver.observe(textArea.textArea, {
-      attributes: true,
-      childList: true,
-      subtree: true
-    });
+
 
     // // キャレットからフォーカスを外します。
     // this.caret.addEventListener("blur", () => {
