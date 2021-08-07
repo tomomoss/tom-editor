@@ -42,7 +42,7 @@ const Caret = class {
     this.caret.classList.remove("tom-editor__caret--active");
     setTimeout(() => {
       this.caret.classList.add("tom-editor__caret--active");
-    }, 0);
+    }, 50);
   };
 
   /**
@@ -69,12 +69,18 @@ const Caret = class {
 
     // キー入力を検知したら文字領域に押されたキー情報を通知します。
     this.caret.addEventListener("keydown", (event) => {
-      event.preventDefault();
+      if (event.key === "Tab") {
+        event.preventDefault();
+      }
+      if (event.key === "Ctrl") {
+        return;
+      }
       if (event.key === "Shift") {
         return;
       }
       textArea.dispatchEvent(new CustomEvent("keydownCaret1", {
         detail: {
+          ctrlKey: event.ctrlKey,
           key: event.key,
           shiftKey: event.shiftKey
         }
