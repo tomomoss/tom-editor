@@ -140,6 +140,12 @@ const TextArea = class {
         }
       }));
     });
+
+    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
+    this.textArea.addEventListener("blurCaret", () => {
+      this.focusedRowIndex = null;
+      this.focusedColumnIndex = null;
+    });
   };
 
   /**

@@ -53,8 +53,18 @@ const Caret = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {HTMLDivElement} textArea 文字領域です。
+   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    */
-  setEventListeners = () => {
+  setEventListeners = (textArea, lineNumberArea) => {
+
+    // キャレットからフォーカスを外します。
+    // 文字領域と行番号領域にフォーカスが外れた旨を通知します。
+    this.caret.addEventListener("blur", () => {
+      this.takeCaret();
+      textArea.dispatchEvent(new CustomEvent("blurCaret"));
+      lineNumberArea.dispatchEvent(new CustomEvent("blurCaret"));
+    });
 
     // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
     this.caret.addEventListener("mousedownTextArea", (event) => {
@@ -63,12 +73,6 @@ const Caret = class {
         this.putCaret(event.detail.left, event.detail.top);
       }, 0);
     });
-
-
-    // // キャレットからフォーカスを外します。
-    // this.caret.addEventListener("blur", () => {
-    //   this.takeCaret();
-    // });
 
     // // 押されたキー情報を文字領域に送信します。
     // this.caret.addEventListener("keydown", (event) => {

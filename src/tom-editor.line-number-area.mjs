@@ -80,6 +80,11 @@ const LineNumberArea = class {
     this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
       this.updateFocusLineNumber(event.detail.index);
     });
+
+    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
+    this.lineNumberArea.addEventListener("blurCaret", () => {
+      this.updateFocusLineNumber(null);
+    });
   };
 
   /**
