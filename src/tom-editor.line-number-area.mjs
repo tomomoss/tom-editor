@@ -12,35 +12,21 @@ const LineNumberArea = class {
   constructor(editor) {
     this.lineNumberArea = this.createLineNumberArea(editor);
     editor.appendChild(this.lineNumberArea);
-    this.negativeSpace = this.createNegativeSpace();
-    this.lineNumberArea.appendChild(this.negativeSpace);
     this.appendLineNumber();
-    this.adjustNegativeSpaceHeight();
   }
 
   /** @type {HTMLDivElement} 行番号領域です */
   lineNumberArea = null;
 
-  /** @type {Array<HTMLDivElement>} Webページに表示中の行です。 */
-  lineNumbers = [];
-
-  /** @type {HTMLDivElement} 行番号領域下部の余白です。 */
-  negativeSpace = null;
-
-  /**
-   * 余白の高さを調整します。
-   */
-  adjustNegativeSpaceHeight = () => {
-    this.negativeSpace.style.height = `${this.lineNumberArea.getBoundingClientRect().height - this.lineNumbers[0].getBoundingClientRect().height}px`;
-  };
+  /** @type {number} 現在Webページに挿入されている行番号の数です。 */
+  numberOfLineNumbers = 0;
 
   /**
    * 行番号を1つ追加します。
    */
   appendLineNumber = () => {
     const lineNumber = this.createLineNumber();
-    this.lineNumbers.push(lineNumber);
-    this.negativeSpace.before(lineNumber);
+    this.lineNumberArea.appendChild(lineNumber);
   };
 
   /**
@@ -50,7 +36,8 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.classList.add("tom-editor__line-number-area__line-number");
-    lineNumber.innerHTML = this.lineNumbers.length + 1;
+    this.numberOfLineNumbers += 1;
+    lineNumber.innerHTML = this.numberOfLineNumbers;
     return lineNumber;
   };
 
@@ -79,16 +66,6 @@ const LineNumberArea = class {
     lineNumberArea.style.width = `${alphanumericWidth * (maximumNumberOfDigits + 0.5)}px`;
 
     return lineNumberArea;
-  };
-
-  /**
-   * 行番号領域下部の余白を作成します。
-   * @returns {HTMLDivElement} 行番号領域下部の余白です。
-   */
-  createNegativeSpace = () => {
-    const negativeSpace = document.createElement("div");
-    negativeSpace.classList.add("tom-editor__line-number-area__negative-space");
-    return negativeSpace;
   };
 
 

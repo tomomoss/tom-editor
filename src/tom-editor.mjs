@@ -47,7 +47,7 @@ const TOMEditor = class {
     // エディターを構成する主要な要素を初期化します。
     const editor = this.createEditor();
     editorContainer.appendChild(editor);
-    // const textArea = new TextArea(tomEditor);
+    const textArea = new TextArea(editor);
     const lineNumberArea = new LineNumberArea(editor);
     const virticalScrollbarArea = new VirticalScrollbarArea(editor);
     // const textAreaBoundingClientRect = textArea.textArea.getBoundingClientRect();

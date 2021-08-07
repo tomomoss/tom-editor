@@ -7,23 +7,23 @@ const TextArea = class {
 
   /**
    * 文字領域を初期化します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
+   * @param {HTMLDivElement} editor エディター本体です。
    */
-  constructor(tomEditor) {
+  constructor(editor) {
     this.textArea = this.createTextArea();
-    tomEditor.appendChild(this.textArea);
-    this.negativeSpace = this.createNegativeSpace();
-    this.textArea.appendChild(this.negativeSpace);
+    editor.appendChild(this.textArea);
+    
+    // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
     const textLine = this.createTextLine();
-    this.textLines.splice(this.focusedRowIndex + 1, 0, textLine);
-    this.characters.splice(this.focusedRowIndex + 1, 0, []);
+    this.textLines.push(textLine);
+    this.textArea.appendChild(textLine);
+    this.characters.push([]);
     const EOL = this.createEOL();
-    textLine.appendChild(EOL);
     this.characters[0].push(EOL);
-    this.negativeSpace.before(textLine);
+    textLine.appendChild(EOL);
   }
 
-  /** @type {Array<Array<HTMLSpanElement>>} Webページに表示中の文字です。 */
+  /** @type {Array<Array<HTMLDivElement>>} Webページに挿入されている文字です。 */
   characters = [];
 
   /** @type {number} 現在フォーカス中の列を指すインデックスです。 */
@@ -32,13 +32,10 @@ const TextArea = class {
   /** @type {number} 現在フォーカス中の行を指すインデックスです。 */
   focusedRowIndex = null;
 
-  /** @type {HTMLDivElement} 文字領域下部の余白です。 */
-  negativeSpace = null;
-
   /** @type {HTMLDivElement} 文字領域です。 */
   textArea = null;
 
-  /** @type {Array<HTMLDivElement>} Webページに表示中の行です。 */
+  /** @type {Array<HTMLDivElement>} Webページに挿入されている行です。 */
   textLines = [];
 
   /**
@@ -69,36 +66,24 @@ const TextArea = class {
   };
 
   /**
-   * 文字を生成します。
-   * @param {string} innerCharacter 文字を表すHTML要素に入れるstring型データです。
-   * @returns {HTMLDivElement} 文字です。
-   */
-  createCharacter = (innerCharacter) => {
-    const character = document.createElement("span");
-    character.classList.add("tom-editor__text-area__character");
-    character.innerHTML = innerCharacter;
-    return character;
-  };
-
-  /**
    * 行末文字を生成します。
    * @returns {HTMLDivElement} 行末文字です。
    */
   createEOL = () => {
     const EOL = document.createElement("span");
-    EOL.classList.add("tom-editor__text-area__eol");
+    EOL.classList.add("tom-editor__text-area__character", "tom-editor__text-area__character--eol");
     EOL.innerHTML = " ";
     return EOL;
   };
 
   /**
-   * 文字領域下部の余白を生成します。
-   * @returns {HTMLDivElement} 文字領域下部の余白です。
+   * 行の先頭に配置する空間を生成します。
+   * @returns {HTMLDivElement} 行頭文字です。
    */
-  createNegativeSpace = () => {
-    const negativeSpace = document.createElement("div");
-    negativeSpace.classList.add("tom-editor__text-area__negative-space");
-    return negativeSpace;
+  createLeadingSpace = () => {
+    const leadingSpace = document.createElement("span");
+    leadingSpace.classList.add("tom-editor__text-area__leading-space");
+    return leadingSpace;
   };
 
   /**
@@ -118,8 +103,33 @@ const TextArea = class {
   createTextLine = () => {
     const textLine = document.createElement("div");
     textLine.classList.add("tom-editor__text-area__text-line");
+    const leadingSpace = this.createLeadingSpace();
+    textLine.appendChild(leadingSpace);
     return textLine;
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /**
    * フォーカス中の文字の座標をキャレットに送信します。

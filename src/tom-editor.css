@@ -1,12 +1,15 @@
 @charset "UTF-8";
 
+:root {
+  --character-height: 1.25rem;
+}
+
 .tom-editor {
-  font: normal 1rem / 1.25rem Consolas, "Courier New", monospace;
+  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
   height: 100%;
   overflow: hidden;
   position: relative;
   white-space: pre;
-  width: 100%;
 }
 .tom-editor__line-number-area {
   border-right: 0.1rem solid rgb(238, 238, 238);
@@ -19,7 +22,32 @@
 .tom-editor__line-number-area__line-number {
   color: rgb(204, 204, 204)
 }
+.tom-editor__line-number-area__line-number:last-of-type {
+  height: 100%;
+}
 .tom-editor__line-number-area__negative-space { }
+.tom-editor__text-area {
+  cursor: text;
+  height: 100%;
+}
+.tom-editor__text-area__character {
+  display: inline-block;
+  vertical-align: top;
+}
+.tom-editor__text-area__character--eol {
+  margin: 0 3rem 0 0;
+}
+.tom-editor__text-area__leading-space {
+  display: inline-block;
+  height: 100%;
+  width: 4rem;
+}
+.tom-editor__text-area__text-line {
+  height: var(--character-height);
+}
+.tom-editor__text-area__text-line:last-of-type {
+  height: 100%;
+}
 .tom-editor__virtical-scrollbar-area {
   border-left: 0.1rem solid rgb(238, 238, 238);
   bottom: 0;
@@ -30,6 +58,11 @@
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar {
   width: 1rem;
 }
+
+
+
+
+
 
 
 
@@ -46,7 +79,7 @@
 }
 
 :root {
-  --character-height: 1.25rem;
+  
 }
 
 .tom-editor__caret {
