@@ -108,6 +108,10 @@ const LineNumberArea = class {
       this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
     });
+    this.lineNumberArea.addEventListener("keydownCaret2", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
+      this.updateFocusLineNumber(event.detail.index);
+    });
 
     // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
     this.lineNumberArea.addEventListener("blurCaret", () => {

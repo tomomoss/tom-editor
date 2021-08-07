@@ -37,10 +37,12 @@ const Caret = class {
     this.caret.style.left = `${positionLeft}px`;
     this.caret.style.top = `${positionTop}px`;
     this.caret.focus();
+
+    // クラスの付け替えによるkeyframesの再実行のために非同期処理にして少しずらしています。
     this.caret.classList.remove("tom-editor__caret--active");
     setTimeout(() => {
       this.caret.classList.add("tom-editor__caret--active");
-    }, 100);
+    }, 0);
   };
 
   /**
@@ -70,7 +72,7 @@ const Caret = class {
       if (event.key === "Shift") {
         return;
       }
-      textArea.dispatchEvent(new CustomEvent("keydownCaret", {
+      textArea.dispatchEvent(new CustomEvent("keydownCaret1", {
         detail: {
           key: event.key,
           shiftKey: event.shiftKey
@@ -80,6 +82,9 @@ const Caret = class {
 
     // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
     this.caret.addEventListener("mousedownTextArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+    this.caret.addEventListener("keydownCaret2", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
   };
