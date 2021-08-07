@@ -7,11 +7,11 @@ const Caret = class {
 
   /**
    * キャレットを初期化します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
+   * @param {HTMLDivElement} editor エディター本体です。
    */
-  constructor(tomEditor) {
+  constructor(editor) {
     this.caret = this.createCaret();
-    tomEditor.appendChild(this.caret);
+    editor.appendChild(this.caret);
   }
 
   /** @type {HTMLDivElement} キャレットです。 */
@@ -53,32 +53,45 @@ const Caret = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です。
+   * @param {TextArea} textArea 文字領域です。
    */
   setEventListeners = (textArea) => {
-
-    // キャレットからフォーカスを外します。
-    this.caret.addEventListener("blur", () => {
-      this.takeCaret();
-    });
-
-    // 押されたキー情報を文字領域に送信します。
-    this.caret.addEventListener("keydown", (event) => {
-      if (event.key === "Tab") {
-        event.preventDefault();
-      }
-      textArea.dispatchEvent(new CustomEvent("custom-presskey", {
-        detail: event.key
-      }));
-    });
-
-    // キャレットの配置位置を更新します。
-    this.caret.addEventListener("custom-changefocus", (event) => {
+    const mutationObserver = new MutationObserver((mutationList) => {
       this.takeCaret();
       setTimeout(() => {
-        this.putCaret(event.detail.left, event.detail.top);
+        const caretLeft = mutationList[0].target.getBoundingClientRect().left - textArea.textArea.getBoundingClientRect().left;
+        const caretTop = mutationList[0].target.getBoundingClientRect().top - textArea.textArea.getBoundingClientRect().top;
+        this.putCaret(caretLeft, caretTop);
       }, 0);
     });
+    mutationObserver.observe(textArea.textArea, {
+      attributes: true,
+      childList: true,
+      subtree: true
+    });
+
+    // // キャレットからフォーカスを外します。
+    // this.caret.addEventListener("blur", () => {
+    //   this.takeCaret();
+    // });
+
+    // // 押されたキー情報を文字領域に送信します。
+    // this.caret.addEventListener("keydown", (event) => {
+    //   if (event.key === "Tab") {
+    //     event.preventDefault();
+    //   }
+    //   textArea.dispatchEvent(new CustomEvent("custom-presskey", {
+    //     detail: event.key
+    //   }));
+    // });
+
+    // // キャレットの配置位置を更新します。
+    // this.caret.addEventListener("custom-changefocus", (event) => {
+    //   this.takeCaret();
+    //   setTimeout(() => {
+    //     this.putCaret(event.detail.left, event.detail.top);
+    //   }, 0);
+    // });
   };
 };
 

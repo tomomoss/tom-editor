@@ -12,7 +12,7 @@ const TextArea = class {
   constructor(editor) {
     this.textArea = this.createTextArea();
     editor.appendChild(this.textArea);
-    
+
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
     const textLine = this.createTextLine();
     this.textLines.push(textLine);
@@ -108,6 +108,72 @@ const TextArea = class {
     return textLine;
   };
 
+  /**
+   * 現在フォーカスしている行の最後の文字のインデックスを返します。
+   */
+  getCharactersLastIndex = () => {
+    return this.characters[this.focusedRowIndex].length - 1;
+  };
+
+  /**
+   * イベントリスナーを実装します。
+   */
+  setEventListeners = () => {
+
+    // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
+    this.textArea.addEventListener("mousedown", this.updateFocusIndexByMousedownTarget);
+  };
+
+  /**
+   * mousedownイベントが発生したHTML要素に応じてフォーカス位置を更新します。
+   * @param {Event} event mousedownイベントのEventオブジェクトです。
+   */
+  updateFocusIndexByMousedownTarget = (event) => {
+
+    // フォーカスしているならば一旦取り消します。
+    if (this.focusedRowIndex) {
+      this.characters[this.focusedRowIndex][this.focusedColumnIndex].classList.remove("tom-editor__text-area__character--focus");
+      this.focusedRowIndex = null;
+      this.focusedColumnIndex = null;
+    }
+
+    if (event.target.classList.contains("tom-editor__text-area__character")) {
+
+      // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.path[1];
+      });
+      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
+        return character === event.target;
+      });
+    } else if (event.target.classList.contains("tom-editor__text-area__leading-space")) {
+
+      // 行先頭の空間がクリックされたときは次行の先頭をフォーカス位置とします。
+      // 次行がない場合は当該空間が挿入されている行の行末文字をフォーカス位置とします。
+      const mousedownedTextLineIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.path[1];
+      });
+      if (this.textLines[mousedownedTextLineIndex + 1]) {
+        this.focusedRowIndex = mousedownedTextLineIndex + 1;
+        this.focusedColumnIndex = 0
+      } else {
+        this.focusedRowIndex = mousedownedTextLineIndex;
+        this.focusedColumnIndex = this.getCharactersLastIndex();
+      }
+    } else if (event.target.classList.contains("tom-editor__text-area__text-line")) {
+
+      // 行がクリックされたときは当該行の行末文字をフォーカス位置とします。
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.target;
+      });
+      this.focusedColumnIndex = this.getCharactersLastIndex();
+    } else {
+      throw new Error(`想定外のHTML要素がクリックされました（${event.target.classList}）。`);
+    }
+    this.characters[this.focusedRowIndex][this.focusedColumnIndex].classList.add("tom-editor__text-area__character--focus");
+  };
+
+
 
 
 
@@ -159,12 +225,7 @@ const TextArea = class {
     }));
   };
 
-  /**
-   * 現在フォーカスしている行の最後の文字のインデックスを返します。
-   */
-  getCharactersLastIndex = () => {
-    return this.characters[this.focusedRowIndex].length - 1;
-  };
+
 
   /**
    * Webページに挿入中の行のうち、最後の行のインデックスを返します。
@@ -308,63 +369,6 @@ const TextArea = class {
 
     // このままだと1つの行に2つのEOLが混在するので元々入っていたほうのEOLを削除します。
     this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
-  };
-
-  /**
-   * イベントリスナーを実装します。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} caret キャレットです。
-   */
-  setEventListeners = (lineNumberArea, caret) => {
-
-    // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
-    this.textArea.addEventListener("mousedown", (event) => {
-      if (!this.updateFocusIndexByMousedownTarget(event.target, event.path[1])) {
-        return;
-      }
-      this.dispatchTextLinesStatus(lineNumberArea);
-      this.dispatchFocusedCharacterPosition(caret);
-    });
-
-    // キャレットに何らかのキー入力があったときは押されたキーに応じた処理を実行します。
-    this.textArea.addEventListener("custom-presskey", (event) => {
-      if (!this.reflectKey(event.detail)) {
-        return;
-      }
-      this.dispatchTextLinesStatus(lineNumberArea);
-      this.dispatchFocusedCharacterPosition(caret);
-    });
-  };
-
-  /**
-   * mousedownイベントの対象となるHTML要素に応じてフォーカス位置を更新します。
-   * @param {Element} mousedownTarget mousedownイベントの対象となるHTML要素です。
-   * @param {Element} mousedownTargetParent mousedownイベントの対象となるHTML要素の親要素です。
-   * @returns {boolean} 更新が行われたらtrueを返します。
-   */
-  updateFocusIndexByMousedownTarget = (mousedownTarget, mousedownTargetParent) => {
-    if (mousedownTarget.classList.contains("tom-editor__text-area")) {
-      this.focusedRowIndex = this.getTextLinesLastIndex();
-      this.focusedColumnIndex = this.getCharactersLastIndex();
-      return true;
-    }
-    if (mousedownTarget.classList.contains("tom-editor__text-area__text-line")) {
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === mousedownTarget;
-      });
-      this.focusedColumnIndex = this.getCharactersLastIndex();
-      return true;
-    }
-    if (mousedownTarget.classList.contains("tom-editor__text-area__character") || mousedownTarget.classList.contains("tom-editor__text-area__eol")) {
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === mousedownTargetParent;
-      });
-      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
-        return character === mousedownTarget;
-      });
-      return true;
-    }
-    return false;
   };
 };
 

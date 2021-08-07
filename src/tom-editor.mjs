@@ -52,13 +52,16 @@ const TOMEditor = class {
     const virticalScrollbarArea = new VirticalScrollbarArea(editor);
     // const textAreaBoundingClientRect = textArea.textArea.getBoundingClientRect();
     // const horizontalScrollbarArea = new HorizontalScrollbarArea(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
-    // const caret = new Caret(tomEditor);
+    const caret = new Caret(editor);
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
+    textArea.setEventListeners();
+    caret.setEventListeners(textArea);
+
+
     // lineNumberArea.setEventListeners();
     // textArea.setEventListeners(lineNumberArea.lineNumberArea, caret.caret);
-    // caret.setEventListeners(textArea.textArea);
   };
 
   /**
