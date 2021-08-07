@@ -20,10 +20,10 @@ const HorizontalScrollbarArea = class {
   }
 
   /** @type {HTMLDivElement} 水平方向のスクロールバーです。 */
-  horizontalScrollbar;
+  horizontalScrollbar = null;
 
   /** @type {HTMLDivElement} 水平方向のスクロールバー領域です。 */
-  horizontalScrollbarArea;
+  horizontalScrollbarArea = null;
 
   /**
    * 水平方向のスクロールバー領域の配置位置や寸法を調整します。

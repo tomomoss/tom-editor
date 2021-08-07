@@ -7,24 +7,32 @@ const LineNumberArea = class {
 
   /**
    * 行番号領域を初期化します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
+   * @param {HTMLDivElement} editor エディター本体です。
    */
-  constructor(tomEditor) {
-    this.lineNumberArea = this.createLineNumberArea(tomEditor);
-    tomEditor.appendChild(this.lineNumberArea);
+  constructor(editor) {
+    this.lineNumberArea = this.createLineNumberArea(editor);
+    editor.appendChild(this.lineNumberArea);
     this.negativeSpace = this.createNegativeSpace();
     this.lineNumberArea.appendChild(this.negativeSpace);
     this.appendLineNumber();
+    this.adjustNegativeSpaceHeight();
   }
 
   /** @type {HTMLDivElement} 行番号領域です */
-  lineNumberArea;
+  lineNumberArea = null;
 
   /** @type {Array<HTMLDivElement>} Webページに表示中の行です。 */
   lineNumbers = [];
 
   /** @type {HTMLDivElement} 行番号領域下部の余白です。 */
-  negativeSpace;
+  negativeSpace = null;
+
+  /**
+   * 余白の高さを調整します。
+   */
+  adjustNegativeSpaceHeight = () => {
+    this.negativeSpace.style.height = `${this.lineNumberArea.getBoundingClientRect().height - this.lineNumbers[0].getBoundingClientRect().height}px`;
+  };
 
   /**
    * 行番号を1つ追加します。
@@ -48,15 +56,15 @@ const LineNumberArea = class {
 
   /**
    * 行番号領域を生成します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
+   * @param {HTMLDivElement} editor エディター本体です。
    * @returns {HTMLDivElement} 行番号領域です。
    */
-  createLineNumberArea = (tomEditor) => {
+  createLineNumberArea = (editor) => {
 
     // 半角英数字の横幅を求めます。
     const temporaryElement = document.createElement("span");
     temporaryElement.innerHTML = "0";
-    tomEditor.appendChild(temporaryElement);
+    editor.appendChild(temporaryElement);
     const alphanumericWidth = temporaryElement.getBoundingClientRect().width;
     temporaryElement.remove();
 
@@ -65,9 +73,10 @@ const LineNumberArea = class {
     const maximumNumberOfDigits = 4;
 
     // 行番号領域を生成します。
+    // 横幅は表示桁数分の横幅に0.5文字分の横幅を加えることで視覚的に少し余裕をもたせます。
     const lineNumberArea = document.createElement("div");
     lineNumberArea.classList.add("tom-editor__line-number-area");
-    lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits}px`;
+    lineNumberArea.style.width = `${alphanumericWidth * (maximumNumberOfDigits + 0.5)}px`;
 
     return lineNumberArea;
   };
@@ -80,6 +89,111 @@ const LineNumberArea = class {
     const negativeSpace = document.createElement("div");
     negativeSpace.classList.add("tom-editor__line-number-area__negative-space");
     return negativeSpace;
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /** @type {number} フォーカスしている行番号を指すインデックスです。 */
+  focusedLineNumberIndex = null;
+
+
+
+
+
+
+
+  /**
+   * 行数を文字領域の行数に合わせます。
+   * @param {number} textLinesLength 文字領域に入力されている行の数です。
+   */
+  adjustNumberOfLineNumbers = (textLinesLength) => {
+    const lineDifference = textLinesLength - this.lineNumbers.length;
+    if (Math.sign(lineDifference) === 1) {
+      for (let i = 0; i < lineDifference; i += 1) {
+        this.appendLineNumber();
+      }
+      return;
+    }
+    if (Math.sign(lineDifference) === -1) {
+      for (let i = 0; i < Math.abs(lineDifference); i += 1) {
+        this.removeLineNumber();
+      }
+      return;
+    }
+  };
+
+
+
+
+
+
+
+
+
+  /**
+   * 行番号を1つ減らします。
+   */
+  removeLineNumber = () => {
+    this.lineNumbers.pop().remove();
+  };
+
+  /**
+   * イベントリスナーを実装します。
+   */
+  setEventListeners = () => {
+    this.lineNumberArea.addEventListener("custom-changetextline", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
+      this.updateFocusLineNumber(event.detail.index);
+    });
+  };
+
+  /**
+   * 行番号のフォーカス状態を更新します。
+   * @param {number|undefined} newIndex フォーカスする行番号を指すインデックスです。
+   */
+  updateFocusLineNumber = (newIndex) => {
+    if (this.focusedLineNumberIndex !== null) {
+      this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
+    }
+    if (typeof newIndex === "undefined") {
+      this.focusedLineNumberIndex = null;
+      return;
+    }
+    this.focusedLineNumberIndex = newIndex;
+    this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
   };
 };
 

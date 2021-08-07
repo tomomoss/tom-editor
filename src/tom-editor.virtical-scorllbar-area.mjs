@@ -7,20 +7,20 @@ const VirticalScrollbarArea = class {
 
   /**
    * 垂直方向のスクロールバー領域を初期化します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
+   * @param {HTMLDivElement} editor エディター本体です。
    */
-  constructor(tomEditor) {
+  constructor(editor) {
     this.virticalScrollbarArea = this.createVirticalScrollbarArea();
-    tomEditor.appendChild(this.virticalScrollbarArea);
+    editor.appendChild(this.virticalScrollbarArea);
     this.virticalScrollbar = this.createVirticalScrollbar();
     this.virticalScrollbarArea.appendChild(this.virticalScrollbar);
   }
 
   /** @type {HTMLDivElement} 垂直方向のスクロールバーです。 */
-  virticalScrollbar;
+  virticalScrollbar = null;
 
   /** @type {HTMLDivElement} 垂直方向のスクロールバー領域です。 */
-  virticalScrollbarArea;
+  virticalScrollbarArea = null;
 
   /**
    * 垂直方向のスクロールバーを生成します。

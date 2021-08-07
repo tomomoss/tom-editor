@@ -1,33 +1,6 @@
 @charset "UTF-8";
 
-html {
-  height: 100%;
-}
-
-.body {
-  display: flex;
-  flex-flow: column nowrap;
-  height: 100%;
-  margin: 0;
-}
-.header {
-  align-items: center;
-  border-bottom: solid 0.1rem rgb(238, 238, 238);
-  display: flex;
-  justify-content: space-between;
-}
-.header__getting-editor-value-button {
-  background: rgb(255, 255, 255);
-  margin: 0.5rem;
-}
-.header__getting-editor-value-button:hover {
-  background: rgb(238, 238, 238);
-  cursor: pointer;
-}
-.header__title {
-  font: normal 1rem / 1rem "";
-  margin: 0.5rem 1rem;
-}
 .tom-editor-container {
-  flex: 1 1 auto;
+  border: solid .1rem rgb(238, 238, 238);
+  height: 10rem;
 }

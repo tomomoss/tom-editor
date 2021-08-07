@@ -18,7 +18,7 @@ const DecorationUnderline = class {
   }
 
   /** @type {HTMLDivElement} 装飾下線です。 */
-  decorationUnderline;
+  decorationUnderline = null;
 
   /**
  * 水平方向のスクロールバー領域の配置位置や寸法を調整します。

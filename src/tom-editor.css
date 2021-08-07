@@ -1,13 +1,71 @@
 @charset "UTF-8";
 
 .tom-editor {
-  display: flex;
   font: normal 1rem / 1.25rem Consolas, "Courier New", monospace;
   height: 100%;
+  overflow: hidden;
   position: relative;
   white-space: pre;
+  width: 100%;
 }
-.tom-editor__caret { }
+.tom-editor__line-number-area {
+  border-right: 0.1rem solid rgb(238, 238, 238);
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  text-align: right;
+  top: 0;
+}
+.tom-editor__line-number-area__line-number {
+  color: rgb(204, 204, 204)
+}
+.tom-editor__line-number-area__negative-space { }
+.tom-editor__virtical-scrollbar-area {
+  border-left: 0.1rem solid rgb(238, 238, 238);
+  bottom: 0;
+  right: 0;
+  position: absolute;
+  top: 0;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar {
+  width: 1rem;
+}
+
+
+
+
+
+/*
+@keyframes caret-blinking {
+  0% {
+    border-left-color: rgb(51, 51, 51);
+  }
+  50% {
+    border-left-color: transparent;
+  }
+}
+
+:root {
+  --character-height: 1.25rem;
+}
+
+.tom-editor__caret {
+  background: transparent;
+  border: none;
+  border-left: solid 0.15rem;
+  display: none;
+  height: var(--character-height);
+  outline: none;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  resize: none;
+  width: 0;
+}
+.tom-editor__caret--place {
+  animation: caret-blinking 1.25s steps(1) infinite both;
+  display: inline-block;
+}
 .tom-editor__decoration-underline {
   position: absolute;
 }
@@ -23,16 +81,32 @@
 .tom-editor__line-number-area__line-number {
   color: rgb(204, 204, 204);
 }
+.tom-editor__line-number-area__line-number--focus {
+  color: rgb(102, 102, 102);
+}
 .tom-editor__line-number-area__negative-space { }
 .tom-editor__text-area {
   color: rgb(51, 51, 51);
   flex: 1 1 auto;
   margin: .5rem 0 0;
 }
-.tom-editor__text-area__character { }
-.tom-editor__text-area__character--eol { }
+.tom-editor__text-area__character {
+  display: inline-block;
+}
+.tom-editor__text-area__eol {
+  display: inline-block;
+  pa
+}
 .tom-editor__text-area__negative-space { }
 .tom-editor__text-area__text-line { }
+.tom-editor__tom-editor {
+  display: flex;
+  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
+  height: 100%;
+  position: relative;
+  white-space: pre;
+}
+.tom-editor__tom-editor-wrapper { }
 .tom-editor__virtical-scrollbar-area {
   border-left: 0.1rem solid rgb(238, 238, 238);
   flex: 0 0 1rem;
