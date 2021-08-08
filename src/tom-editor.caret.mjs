@@ -99,6 +99,12 @@ const Caret = class {
       this.putCaret(event.detail.left, event.detail.top);
     });
 
+    // 行番号領域がクリックされたことで1行範囲選択処理が実行されたので、
+    // 実行後のフォーカス位置にキャレットを動かします。
+    this.caret.addEventListener("mousedownLineNumberArea-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
     // 垂直方向のスクロールバー領域の余白がクリックされたことによるスクロール処理が実行されたので、
     // 実行後のフォーカス位置にキャレットを動かします。
     this.caret.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {

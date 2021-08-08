@@ -151,6 +151,7 @@ const TextArea = class {
     }
     if ([
       "keydownCaret-textArea",
+      "mousedownLineNumberArea-textArea",
       "mousedownTextArea",
       "wheelEditor-textArea"
     ].includes(eventName)) {
@@ -710,6 +711,17 @@ const TextArea = class {
       this.updateFocusIndexByMousedownTarget(event);
       this.scrollAutomatically();
       this.dispatchEvents("mousedownTextArea");
+    });
+
+    // 行番号領域のどこかがクリックされたときは、押された行番号に対応した行を範囲選択して次行の先頭にフォーカスを移動します。
+    // 次行がない場合は末尾文字で止まります。
+    this.textArea.addEventListener("mousedownLineNumberArea", (event) => {
+      this.unselctRange();
+      this.focusedRowIndex = event.detail.index;
+      this.focusedColumnIndex = 0;
+      this.moveFocusPointByArrowKey("ArrowDown", true);
+      this.scrollAutomatically();
+      this.dispatchEvents("mousedownLineNumberArea-textArea");
     });
 
     // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、

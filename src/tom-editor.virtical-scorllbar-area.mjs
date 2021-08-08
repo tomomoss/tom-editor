@@ -100,6 +100,12 @@ const VirticalScrollbarArea = class {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
+    // 行番号領域がクリックされたことで1行範囲選択処理が実行されたので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("mousedownLineNumberArea-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
     // 当領域の余白がクリックされたことによるスクロール処理によって文字領域のスクロール量に変化があったので、
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.virticalScrollbarArea.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {

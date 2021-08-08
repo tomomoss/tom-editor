@@ -100,8 +100,9 @@ const LineNumberArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {HTMLDivElement} textArea 文字領域です
    */
-  setEventListeners = () => {
+  setEventListeners = (textArea) => {
 
     // キャレットのフォーカスが外れたので、フォーカス状態を消去します。
     this.lineNumberArea.addEventListener("blurCaret", () => {
@@ -111,6 +112,25 @@ const LineNumberArea = class {
     // キャレットに入力されたキーによって文字領域の状態が変化したので、
     // 変化後のフォーカス状態にあわせて強調する行番号を更新します。
     this.lineNumberArea.addEventListener("keydownCaret-textArea", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
+      this.updateFocusLineNumber(event.detail.index);
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
+
+    // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
+    this.lineNumberArea.addEventListener("mousedown", (event) => {
+      textArea.dispatchEvent(new CustomEvent("mousedownLineNumberArea", {
+        detail: {
+          index: this.lineNumbers.findIndex((lineNumber) => {
+            return lineNumber === event.target;
+          })
+        }
+      }));
+    });
+
+    // 行番号がクリックされて1行範囲選択処理が実行されたので、
+    // 更新後のフォーカス状態にあわせて強調する行番号を更新します。
+    this.lineNumberArea.addEventListener("mousedownLineNumberArea-textArea", (event) => {
       this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
       this.lineNumberArea.scrollTop = event.detail.scrollTop;

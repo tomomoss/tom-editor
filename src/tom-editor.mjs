@@ -57,7 +57,7 @@ const TOMEditor = class {
 
     // 各要素にイベントリスナーを実装します。
     this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea);
-    lineNumberArea.setEventListeners();
+    lineNumberArea.setEventListeners(textArea.textArea);
     textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
