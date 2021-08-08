@@ -154,7 +154,14 @@ const TextArea = class {
    * @param {string} eventName イベント名です。
    */
   dispatchEvents = (eventName) => {
-    if (eventName === "keydownCaret-textArea") {
+    if ([
+      "keydownCaret-textArea",
+      "mousedownTextArea",
+      "mousedownVirticalScrollbarArea-textArea",
+      "wheelEditor-textArea"
+    ].includes(eventName)) {
+
+      // 行番号領域に通知します。
       this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           index: this.focusedRowIndex,
@@ -162,6 +169,8 @@ const TextArea = class {
           scrollTop: this.textArea.scrollTop
         }
       }));
+
+      // 垂直方向のスクロールバー領域に通知します。
       this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           clientHeight: this.textArea.clientHeight,
@@ -169,6 +178,11 @@ const TextArea = class {
           scrollTop: this.textArea.scrollTop
         }
       }));
+
+      // キャレットに通知します。
+      if (this.getFocusedCharacter() === null) {
+        return;
+      }
       const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
       const textArea = this.textArea.getBoundingClientRect();
       this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
@@ -177,43 +191,6 @@ const TextArea = class {
           top: focusedCharacter.top - textArea.top
         }
       }));
-      return;
-    }
-    if (eventName === "mousedownTextArea") {
-      this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
-        detail: {
-          index: this.focusedRowIndex,
-          length: this.textLines.length,
-          scrollTop: this.textArea.scrollTop
-        }
-      }));
-      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-      const textArea = this.textArea.getBoundingClientRect();
-      this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
-        detail: {
-          left: focusedCharacter.left - textArea.left,
-          top: focusedCharacter.top - textArea.top
-        }
-      }));
-      return;
-    }
-    if (eventName === "wheelEditor-textArea") {
-      this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
-        detail: {
-          clientHeight: this.textArea.clientHeight,
-          scrollHeight: this.textArea.scrollHeight,
-          scrollTop: this.textArea.scrollTop
-        }
-      }));
-      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-      const textArea = this.textArea.getBoundingClientRect();
-      this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
-        detail: {
-          left: focusedCharacter.left - textArea.left,
-          top: focusedCharacter.top - textArea.top
-        }
-      }));
-      return;
     }
   };
 
@@ -709,15 +686,17 @@ const TextArea = class {
     // 文字領域のどこかをクリックされたときは、押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除します。
     // その後、行番号領域とキャレットにフォーカス情報を通知します。
     this.textArea.addEventListener("mousedown", (event) => {
-
-      // これがないとキャレット（textareaタグ）にフォーカス状態のときに、
-      // 当イベントリスナーが走ると勝手にblurしてしまいます。
-      event.preventDefault();
-
       this.unselctRange();
       this.updateFocusIndexByMousedownTarget(event);
       this.scrollAutomatically();
       this.dispatchEvents("mousedownTextArea");
+    });
+
+    // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、
+    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
+    this.textArea.addEventListener("mousedownVirticalScrollbarArea", (event) => {
+      this.textArea.scrollTop += event.detail.scrollSize;
+      this.dispatchEvents("mousedownVirticalScrollbarArea-textArea");
     });
 
     // エディター上でマウスホイールが回転されましたので、回転方向に合わせて文字領域をスクロールします。

@@ -60,8 +60,31 @@ const VirticalScrollbarArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {HTMLDivElement} textArea 文字領域です。
+   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    */
-  setEventListeners = () => {
+  setEventListeners = (textArea, lineNumberArea) => {
+
+    // 領域上をクリックされたときは、マウスホイール操作と同様に一定量のスクロールを実行します。
+    this.virticalScrollbarArea.addEventListener("mousedown", (event) => {
+      if (event.target !== this.virticalScrollbarArea) {
+        return;
+      }
+      let scrollSize = parseFloat(getComputedStyle(this.virticalScrollbarArea).fontSize) * 3;
+      if (event.y < this.virticalScrollbar.getBoundingClientRect().top) {
+        scrollSize *= -1;
+      }
+      textArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+      lineNumberArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+    });
 
     // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
     // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
@@ -69,8 +92,14 @@ const VirticalScrollbarArea = class {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
+    // 当領域の余白がクリックされたことによるスクロール処理によって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
     // エディター上でホイールが回されて文字領域のスクロール量に変化があったので、
-    // それら値に合わせてこちらのスクロールバーの位置を更新します。
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.virticalScrollbarArea.addEventListener("wheelEditor-textArea", (event) => {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });

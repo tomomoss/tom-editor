@@ -59,7 +59,7 @@ const TOMEditor = class {
     this.setEventListeners(editor, textArea.textArea, lineNumberArea.lineNumberArea);
     textArea.setEventListeners(lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
     lineNumberArea.setEventListeners();
-    virticalScrollbarArea.setEventListeners();
+    virticalScrollbarArea.setEventListeners(textArea.textArea, lineNumberArea.lineNumberArea);
     caret.setEventListeners(textArea.textArea, lineNumberArea.lineNumberArea);
   };
 
@@ -80,6 +80,12 @@ const TOMEditor = class {
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    */
   setEventListeners = (editor, textArea, lineNumberArea) => {
+
+    // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
+    // mousedownイベントの標準動作を停止させます。
+    editor.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
 
     // ホイールされた方向に応じて一定量のスクロールを各要素に通知します。
     editor.addEventListener("wheel", (event) => {

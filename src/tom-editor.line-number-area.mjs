@@ -124,6 +124,12 @@ const LineNumberArea = class {
       this.lineNumberArea.scrollTop = event.detail.scrollTop;
     });
 
+    // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、
+    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
+    this.lineNumberArea.addEventListener("mousedownVirticalScrollbarArea", (event) => {
+      this.lineNumberArea.scrollTop += event.detail.scrollSize;
+    });
+
     // エディター上でマウスホイールが回転されましたので、
     // 回転方向に合わせて行番号領域をスクロールします。
     this.lineNumberArea.addEventListener("wheelEditor", (event) => {
