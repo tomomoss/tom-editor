@@ -7,14 +7,11 @@ const HorizontalScrollbarArea = class {
 
   /**
    * 水平方向のスクロールバー領域を初期化します。
-   * @param {HTMLDivElement} tomEditor エディター本体です。
-   * @param {number} textAreaLeft 文字領域のウィンドウ左端からの配置距離です。
-   * @param {number} textAreaWidth 文字領域の横幅です。
+   * @param {HTMLDivElement} editor エディター本体です。
    */
-  constructor(tomEditor, textAreaLeft, textAreaWidth) {
+  constructor(editor) {
     this.horizontalScrollbarArea = this.createHorizontalScrollbarArea();
-    this.adjustHorizontalScrollbarAreaBoundingClientRect(textAreaLeft, textAreaWidth);
-    tomEditor.appendChild(this.horizontalScrollbarArea);
+    editor.appendChild(this.horizontalScrollbarArea);
     this.horizontalScrollbar = this.createHorizontalScrollbar();
     this.horizontalScrollbarArea.appendChild(this.horizontalScrollbar);
   }
@@ -24,16 +21,6 @@ const HorizontalScrollbarArea = class {
 
   /** @type {HTMLDivElement} 水平方向のスクロールバー領域です。 */
   horizontalScrollbarArea = null;
-
-  /**
-   * 水平方向のスクロールバー領域の配置位置や寸法を調整します。
-   * @param {number} textAreaLeft 文字領域のウィンドウ左端からの配置距離です。
-   * @param {number} textAreaWidth 文字領域の横幅です。
-   */
-  adjustHorizontalScrollbarAreaBoundingClientRect = (textAreaLeft, textAreaWidth) => {
-    this.horizontalScrollbarArea.style.left = `${textAreaLeft}px`;
-    this.horizontalScrollbarArea.style.width = `${textAreaWidth}px`;
-  };
 
   /**
    * 水平方向のスクロールバーを生成します。

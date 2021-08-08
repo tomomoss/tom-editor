@@ -40,6 +40,26 @@
 .tom-editor__caret--focus {
   display: inline-block;
 }
+.tom-editor__horizontal-scrollbar-area {
+  bottom: 0;
+  display: none;
+  height: 1rem;
+  position: absolute;
+}
+.tom-editor__horizontal-scrollbar-area--active {
+  display: block;
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar {
+  background: rgb(238, 238, 238);
+  height: 100%;
+  position: absolute;
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:hover {
+  background: rgb(221, 221, 221);
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:active {
+  background: rgb(204, 204, 204);
+}
 .tom-editor__line-number-area {
   cursor: default;
   flex: 0 0;
@@ -94,68 +114,3 @@
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar:active {
   background: rgb(204, 204, 204);
 }
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-:root {
-  
-}
-
-
-
-.tom-editor__decoration-underline {
-  position: absolute;
-}
-.tom-editor__horizontal-scrollbar-area {
-  position: absolute;
-}
-.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar { }
-.tom-editor__line-number-area {
-  flex: 0 0;
-  margin: .5rem 2rem 0 0;
-  text-align: right;
-}
-.tom-editor__line-number-area__line-number {
-  color: rgb(204, 204, 204);
-}
-.tom-editor__line-number-area__line-number--focus {
-  color: rgb(102, 102, 102);
-}
-.tom-editor__line-number-area__negative-space { }
-.tom-editor__text-area {
-  color: rgb(51, 51, 51);
-  flex: 1 1 auto;
-  margin: .5rem 0 0;
-}
-.tom-editor__text-area__character {
-  display: inline-block;
-}
-.tom-editor__text-area__eol {
-  display: inline-block;
-  pa
-}
-.tom-editor__text-area__negative-space { }
-.tom-editor__text-area__text-line { }
-.tom-editor__tom-editor {
-  display: flex;
-  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
-  height: 100%;
-  position: relative;
-  white-space: pre;
-}
-.tom-editor__tom-editor-wrapper { }
-.tom-editor__virtical-scrollbar-area {
-  border-left: 0.1rem solid rgb(238, 238, 238);
-  flex: 0 0 1rem;
-}
-.tom-editor__virtical-scrollbar-area__virtical-scrollbar { }

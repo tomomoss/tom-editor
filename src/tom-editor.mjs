@@ -50,8 +50,7 @@ const TOMEditor = class {
     const lineNumberArea = new LineNumberArea(editor);
     const textArea = new TextArea(editor);
     const virticalScrollbarArea = new VirticalScrollbarArea(editor);
-    // const textAreaBoundingClientRect = textArea.textArea.getBoundingClientRect();
-    // const horizontalScrollbarArea = new HorizontalScrollbarArea(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
+    const horizontalScrollbarArea = new HorizontalScrollbarArea(editor);
     const caret = new Caret(editor);
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
