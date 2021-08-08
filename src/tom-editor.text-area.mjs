@@ -158,7 +158,8 @@ const TextArea = class {
       this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           index: this.focusedRowIndex,
-          length: this.textLines.length
+          length: this.textLines.length,
+          scrollTop: this.textArea.scrollTop
         }
       }));
       this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
@@ -182,7 +183,8 @@ const TextArea = class {
       this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           index: this.focusedRowIndex,
-          length: this.textLines.length
+          length: this.textLines.length,
+          scrollTop: this.textArea.scrollTop
         }
       }));
       const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
@@ -201,6 +203,14 @@ const TextArea = class {
           clientHeight: this.textArea.clientHeight,
           scrollHeight: this.textArea.scrollHeight,
           scrollTop: this.textArea.scrollTop
+        }
+      }));
+      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
+      const textArea = this.textArea.getBoundingClientRect();
+      this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
+        detail: {
+          left: focusedCharacter.left - textArea.left,
+          top: focusedCharacter.top - textArea.top
         }
       }));
       return;
@@ -644,6 +654,28 @@ const TextArea = class {
   };
 
   /**
+   * 現在のフォーカス位置がビューポート外や見えにくい位置にあるときは自動的に補正します。
+   */
+  scrollAutomatically = () => {
+    const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
+    const textAreaRect = this.textArea.getBoundingClientRect();
+
+    // フォーカスされた文字の上辺が、文字領域上辺より0.5文字分よりも上にあるときは、
+    // フォーカスされた文字が文字領域上辺より0.5文字分下の位置になるように文字領域をスクロールします。
+    if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * 0.5) {
+      this.textArea.scrollTop -= (textAreaRect.top + focusedCharacterRect.height * 0.5) - focusedCharacterRect.top;
+      return;
+    }
+
+    // フォーカスされた文字の下辺が、文字領域下辺よりも0.5分よりも下にあるときは、
+    // フォーカスされた文字が文字領域下辺より0.5文字分上の位置になるように文字領域をスクロールします。
+    if (focusedCharacterRect.top + focusedCharacterRect.height > textAreaRect.top + textAreaRect.height - focusedCharacterRect.height * 0.5) {
+      this.textArea.scrollTop += focusedCharacterRect.top + focusedCharacterRect.height - (textAreaRect.top + textAreaRect.height - focusedCharacterRect.height * 0.5);
+      return;
+    }
+  };
+
+  /**
    * イベントリスナーを実装します。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
@@ -670,6 +702,7 @@ const TextArea = class {
       if (!this.reflectKey(event)) {
         return;
       }
+      this.scrollAutomatically();
       this.dispatchEvents("keydownCaret-textArea");
     });
 
@@ -683,6 +716,7 @@ const TextArea = class {
 
       this.unselctRange();
       this.updateFocusIndexByMousedownTarget(event);
+      this.scrollAutomatically();
       this.dispatchEvents("mousedownTextArea");
     });
 

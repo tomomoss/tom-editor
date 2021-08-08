@@ -113,6 +113,7 @@ const LineNumberArea = class {
     this.lineNumberArea.addEventListener("keydownCaret-textArea", (event) => {
       this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
     });
 
     // 文字領域のどこかがクリックされてフォーカス位置が更新されたので、
@@ -120,6 +121,7 @@ const LineNumberArea = class {
     this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
       this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
     });
 
     // エディター上でマウスホイールが回転されましたので、

@@ -82,9 +82,8 @@ const TOMEditor = class {
   setEventListeners = (editor, textArea, lineNumberArea) => {
 
     // ホイールされた方向に応じて一定量のスクロールを各要素に通知します。
-    // 1回転につき、2.5文字分垂直方向にスクロールするようにします。
     editor.addEventListener("wheel", (event) => {
-      const scrollSIze = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 2.5;
+      const scrollSIze = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 3;
       for (const editorComponent of [textArea, lineNumberArea]) {
         editorComponent.dispatchEvent(new CustomEvent("wheelEditor", {
           detail: {
