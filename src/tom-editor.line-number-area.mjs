@@ -103,19 +103,29 @@ const LineNumberArea = class {
    */
   setEventListeners = () => {
 
-    // 文字領域でフォーカスの更新処理が実施されたのでフォーカスする行番号を更新します。
-    this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
-      this.adjustNumberOfLineNumbers(event.detail.length);
-      this.updateFocusLineNumber(event.detail.index);
+    // キャレットのフォーカスが外れたので、フォーカス状態を消去します。
+    this.lineNumberArea.addEventListener("blurCaret", () => {
+      this.updateFocusLineNumber(null);
     });
-    this.lineNumberArea.addEventListener("keydownCaret2", (event) => {
+
+    // キャレットに入力されたキーによって文字領域の状態が変化したので、
+    // 変化後のフォーカス状態にあわせて強調する行番号を更新します。
+    this.lineNumberArea.addEventListener("keydownCaret-textArea", (event) => {
       this.adjustNumberOfLineNumbers(event.detail.length);
       this.updateFocusLineNumber(event.detail.index);
     });
 
-    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
-    this.lineNumberArea.addEventListener("blurCaret", () => {
-      this.updateFocusLineNumber(null);
+    // 文字領域のどこかがクリックされてフォーカス位置が更新されたので、
+    // 更新後のフォーカス状態にあわせて強調する行番号を更新します。
+    this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
+      this.updateFocusLineNumber(event.detail.index);
+    });
+
+    // エディター上でマウスホイールが回転されましたので、
+    // 回転方向に合わせて行番号領域をスクロールします。
+    this.lineNumberArea.addEventListener("wheelEditor", (event) => {
+      this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });
   };
 

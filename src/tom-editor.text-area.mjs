@@ -153,29 +153,21 @@ const TextArea = class {
    * 他の領域に文字領域の状態を通知します。
    * @param {string} eventName イベント名です。
    */
-  dispatchTextAreaStatusToOtherArea = (eventName) => {
-    if (["mousedownTextArea", "keydownCaret2"].includes(eventName)) {
-
-      // 行番号領域に現在の行数とフォーカスしている行を指すインデックスを送信します。
+  dispatchEvents = (eventName) => {
+    if (eventName === "keydownCaret-textArea") {
       this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           index: this.focusedRowIndex,
           length: this.textLines.length
         }
       }));
-
-      // 垂直方向のスクロールバー領域に文字領域のビューポートの高さと実際の高さを送信します。
-      if (eventName === "keydownCaret2") {
-        this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent("keydownCaret2", {
-          detail: {
-            clientHeight: this.textArea.clientHeight,
-            scrollHeight: this.textArea.scrollHeight,
-            scrollTop: this.textArea.scrollTop
-          }
-        }));
-      }
-
-      // キャレットにフォーカスしている文字の座標を送信します。
+      this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
+        detail: {
+          clientHeight: this.textArea.clientHeight,
+          scrollHeight: this.textArea.scrollHeight,
+          scrollTop: this.textArea.scrollTop
+        }
+      }));
       const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
       const textArea = this.textArea.getBoundingClientRect();
       this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
@@ -184,6 +176,34 @@ const TextArea = class {
           top: focusedCharacter.top - textArea.top
         }
       }));
+      return;
+    }
+    if (eventName === "mousedownTextArea") {
+      this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
+        detail: {
+          index: this.focusedRowIndex,
+          length: this.textLines.length
+        }
+      }));
+      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
+      const textArea = this.textArea.getBoundingClientRect();
+      this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
+        detail: {
+          left: focusedCharacter.left - textArea.left,
+          top: focusedCharacter.top - textArea.top
+        }
+      }));
+      return;
+    }
+    if (eventName === "wheelEditor-textArea") {
+      this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
+        detail: {
+          clientHeight: this.textArea.clientHeight,
+          scrollHeight: this.textArea.scrollHeight,
+          scrollTop: this.textArea.scrollTop
+        }
+      }));
+      return;
     }
   };
 
@@ -457,7 +477,7 @@ const TextArea = class {
           }
 
           // 当メソッドは非同期処理なのでブロック末尾からthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだします。
-          this.dispatchTextAreaStatusToOtherArea("keydownCaret2");
+          this.dispatchEvents("keydownCaret-textArea");
         });
 
         // 上のブロック最後にthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだしているので、
@@ -636,8 +656,25 @@ const TextArea = class {
       virticalScrollbarArea: virticalScrollbarArea
     };
 
-    // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
-    // 更新後の位置を行番号領域とキャレットに通知します。
+    // キャレットからフォーカスが外れましたので、範囲選択を解除するとともにフォーカス情報を消去します。
+    this.textArea.addEventListener("blurCaret", () => {
+      this.unselctRange();
+      this.focusedRowIndex = null;
+      this.focusedColumnIndex = null;
+    });
+
+    // キャレットにキー入力がありましたので、押されたキーに応じた処理を実行します。
+    // 有効なキーだった場合は文字領域の内容が変化した可能性がありますので、
+    // 変化後の状態を行番号領域・垂直方向のスクロールバー領域・キャレットに通知します。
+    this.textArea.addEventListener("keydownCaret", (event) => {
+      if (!this.reflectKey(event)) {
+        return;
+      }
+      this.dispatchEvents("keydownCaret-textArea");
+    });
+
+    // 文字領域のどこかをクリックされたときは、押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除します。
+    // その後、行番号領域とキャレットにフォーカス情報を通知します。
     this.textArea.addEventListener("mousedown", (event) => {
 
       // これがないとキャレット（textareaタグ）にフォーカス状態のときに、
@@ -646,24 +683,13 @@ const TextArea = class {
 
       this.unselctRange();
       this.updateFocusIndexByMousedownTarget(event);
-      this.dispatchTextAreaStatusToOtherArea("mousedownTextArea");
+      this.dispatchEvents("mousedownTextArea");
     });
 
-    // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
-    this.textArea.addEventListener("blurCaret", () => {
-      this.unselctRange();
-      this.focusedRowIndex = null;
-      this.focusedColumnIndex = null;
-    });
-
-    // キャレットにキー入力があったので押されたキーに応じた処理を実行します。
-    // 有効なキー入力だった場合はフォーカス位置や行数が変わっている可能性があります。
-    // そこで文字領域に対してmousedownイベントを発信することで行番号領域とキャレットに変更後の状態を通知します。
-    this.textArea.addEventListener("keydownCaret1", (event) => {
-      if (!this.reflectKey(event)) {
-        return;
-      }
-      this.dispatchTextAreaStatusToOtherArea("keydownCaret2");
+    // エディター上でマウスホイールが回転されましたので、回転方向に合わせて文字領域をスクロールします。
+    this.textArea.addEventListener("wheelEditor", (event) => {
+      this.textArea.scrollTop += event.detail.scrollSize;
+      this.dispatchEvents("wheelEditor-textArea");
     });
   };
 

@@ -23,6 +23,22 @@ const VirticalScrollbarArea = class {
   virticalScrollbarArea = null;
 
   /**
+   * 垂直方向のスクロールバーの寸法と位置を調整します。
+   * @param {number} textAreaClientHeight 文字領域の見た目の高さです。
+   * @param {number} textAreaScrollHeight 文字領域の実際の高さです。
+   * @param {number} textAreaScrollTop 文字領域の垂直方向のスクロール量です。
+   */
+  adjustVirticalScrollbarRect = (textAreaClientHeight, textAreaScrollHeight, textAreaScrollTop) => {
+    if (textAreaClientHeight === textAreaScrollHeight) {
+      this.virticalScrollbar.style.height = 0;
+      this.virticalScrollbar.style.top = 0;
+      return;
+    }
+    this.virticalScrollbar.style.height = `${textAreaClientHeight / textAreaScrollHeight * 100}%`;
+    this.virticalScrollbar.style.top = `${textAreaScrollTop * textAreaClientHeight / textAreaScrollHeight}px`;
+  };
+
+  /**
    * 垂直方向のスクロールバーを生成します。
    * @returns {HTMLDivElement} 垂直方向のスクロールバーです。
    */
@@ -47,16 +63,16 @@ const VirticalScrollbarArea = class {
    */
   setEventListeners = () => {
 
-    // キャレットにキー入力があり押されたキーに応じた処理を文字領域に適用した後、
-    // 文字領域の見た目の高さと実際の高さが送信されてきます。
-    this.virticalScrollbarArea.addEventListener("keydownCaret2", (event) => {
-      if (event.detail.clientHeight === event.detail.scrollHeight) {
-        this.virticalScrollbar.style.height = 0;
-        this.virticalScrollbar.scrollTop = 0;
-        return;
-      }
-      this.virticalScrollbar.style.height = `${event.detail.clientHeight / event.detail.scrollHeight * 100}%`;
-      this.virticalScrollbar.scrollTop = event.detail.scrollTop * event.detail.clientHeight / event.detail.scrollHeight;
+    // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
+    // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
+    this.virticalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
+    // エディター上でホイールが回されて文字領域のスクロール量に変化があったので、
+    // それら値に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("wheelEditor-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
   };
 };

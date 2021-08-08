@@ -59,15 +59,15 @@ const Caret = class {
    */
   setEventListeners = (textArea, lineNumberArea) => {
 
-    // キャレットからフォーカスを外します。
-    // 文字領域と行番号領域にフォーカスが外れた旨を通知します。
+    // キャレットからフォーカスが外れたときは、キャレットを見えなくします。
+    // その後、フォーカスが外れた旨を文字領域と行番号領域に通知します。
     this.caret.addEventListener("blur", () => {
       this.takeCaret();
       textArea.dispatchEvent(new CustomEvent("blurCaret"));
       lineNumberArea.dispatchEvent(new CustomEvent("blurCaret"));
     });
 
-    // キー入力を検知したら文字領域に押されたキー情報を通知します。
+    // キー入力を検知したら、文字領域に押されたキー情報を通知します。
     this.caret.addEventListener("keydown", (event) => {
       if (event.key === "Tab") {
         event.preventDefault();
@@ -78,7 +78,7 @@ const Caret = class {
       if (event.key === "Shift") {
         return;
       }
-      textArea.dispatchEvent(new CustomEvent("keydownCaret1", {
+      textArea.dispatchEvent(new CustomEvent("keydownCaret", {
         detail: {
           ctrlKey: event.ctrlKey,
           key: event.key,
@@ -87,11 +87,21 @@ const Caret = class {
       }));
     });
 
-    // フォーカスする文字が更新されたので更新後の文字の位置を受けとります。
+    // 文字領域に送信したkeydownイベントによって文字領域の内容に変化があったので、
+    // 変化後のフォーカス位置にキャレットを動かします。
+    this.caret.addEventListener("keydownCaret-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
+    // 文字領域のどこかがクリックされてフォーカス位置が更新されたので、
+    // 更新後のフォーカス位置にキャレットを動かします。
     this.caret.addEventListener("mousedownTextArea", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
-    this.caret.addEventListener("keydownCaret2", (event) => {
+
+    // エディター上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
+    // 変化後の座標にキャレットを動かします。
+    this.caret.addEventListener("wheelEditor-textArea", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
   };

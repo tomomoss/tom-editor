@@ -43,6 +43,7 @@
   border-right: 0.1rem solid rgb(238, 238, 238);
   bottom: 0;
   left: 0;
+  overflow: hidden;
   pointer-events: none;
   position: absolute;
   text-align: right;
@@ -61,6 +62,7 @@
 .tom-editor__text-area {
   cursor: text;
   height: 100%;
+  overflow: hidden;
 }
 .tom-editor__text-area__character {
   display: inline-block;
@@ -90,10 +92,12 @@
   right: 0;
   position: absolute;
   top: 0;
+  width: 1rem;
 }
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar {
   background: rgb(238, 238, 238);
-  width: 1rem;
+  position: absolute;
+  width: 100%;
 }
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar:hover {
   background: rgb(221, 221, 221);

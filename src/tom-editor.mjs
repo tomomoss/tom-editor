@@ -56,6 +56,7 @@ const TOMEditor = class {
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
+    this.setEventListeners(editor, textArea.textArea, lineNumberArea.lineNumberArea);
     textArea.setEventListeners(lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
     lineNumberArea.setEventListeners();
     virticalScrollbarArea.setEventListeners();
@@ -66,10 +67,32 @@ const TOMEditor = class {
    * エディター本体を生成します。
    * @returns {HTMLDivElement} エディター本体です。
    */
-   createEditor = () => {
+  createEditor = () => {
     const editor = document.createElement("div");
     editor.classList.add("tom-editor");
     return editor;
+  };
+
+  /**
+   * イベントリスナーを実装します。
+   * @param {HTMLDivElement} editor エディター本体です。
+   * @param {HTMLDivElement} textArea 文字領域です。
+   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   */
+  setEventListeners = (editor, textArea, lineNumberArea) => {
+
+    // ホイールされた方向に応じて一定量のスクロールを各要素に通知します。
+    // 1回転につき、2.5文字分垂直方向にスクロールするようにします。
+    editor.addEventListener("wheel", (event) => {
+      const scrollSIze = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 2.5;
+      for (const editorComponent of [textArea, lineNumberArea]) {
+        editorComponent.dispatchEvent(new CustomEvent("wheelEditor", {
+          detail: {
+            scrollSize: scrollSIze
+          }
+        }));
+      }
+    });
   };
 };
 
