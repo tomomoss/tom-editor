@@ -82,6 +82,15 @@ const TOMEditor = class {
    */
   setEventListeners = (editor, lineNumberArea, textArea, virticalScrollbarArea) => {
 
+    // エディターの寸法変更に伴って、文字領域の横幅を調整します。
+    // 監視対象を文字領域にすると狭まるときは処理が走るのですが拡がるときは無視されてしまうためエディターを監視対象としています。
+    new ResizeObserver(() => {
+      const editorWidth = editor.getBoundingClientRect().width;
+      const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
+      const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
+      textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
+    }).observe(editor);
+
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
     // mousedownイベントの標準動作を停止させます。
     editor.addEventListener("mousedown", (event) => {

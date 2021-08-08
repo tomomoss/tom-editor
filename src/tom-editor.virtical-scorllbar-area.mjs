@@ -68,9 +68,21 @@ const VirticalScrollbarArea = class {
    */
   setEventListeners = (lineNumberArea, textArea) => {
 
-    // スクロールバーがクリックされたときはドラッグ移動フラグを起動します。
+    // エディターの縦幅が変更されたとき――当領域の縦幅が変更されたときは、
+    // スクロールバーの寸法や位置を更新します。
+    new ResizeObserver(() => {
+      textArea.dispatchEvent(new CustomEvent("resizeVirticalScrollbarArea"));
+    }).observe(this.virticalScrollbarArea);
+
+    // スクロールバーがクリックされたときは、ドラッグ移動フラグを起動します。
     this.virticalScrollbar.addEventListener("mousedown", (event) => {
       this.lastY = event.y;
+    });
+
+    // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
+    // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
+    this.virticalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
     // 領域上をクリックされたときは、マウスホイール操作と同様に一定量のスクロールを実行します。
@@ -92,12 +104,6 @@ const VirticalScrollbarArea = class {
           scrollSize: scrollSize
         }
       }));
-    });
-
-    // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
-    // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
-    this.virticalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
-      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
     // 行番号領域がクリックされたことで1行範囲選択処理が実行されたので、
@@ -142,6 +148,12 @@ const VirticalScrollbarArea = class {
     // エディター上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
     this.virticalScrollbarArea.addEventListener("mouseupEditor", () => {
       this.lastY = null;
+    });
+
+    // エディターの縦幅が変更されたとき――当領域の縦幅が変更されたことで文字領域の縦幅が変わったので、
+    // スクロールバーの寸法や位置を更新します。
+    this.virticalScrollbarArea.addEventListener("resizeVirticalScrollbarArea-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
     // エディター上でホイールが回されて文字領域のスクロール量に変化があったので、

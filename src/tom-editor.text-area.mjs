@@ -143,11 +143,18 @@ const TextArea = class {
    */
   dispatchEvents = (eventName) => {
     if ([
+      "resizeVirticalScrollbarArea-textArea"
+    ].includes(eventName)) {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      return;
+    }
+    if ([
       "mousedownVirticalScrollbarArea-textArea",
       "mousemoveEditor-virticalScrollbarArea-textArea"
     ].includes(eventName)) {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      return;
     }
     if ([
       "keydownCaret-textArea",
@@ -158,6 +165,7 @@ const TextArea = class {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      return;
     }
   };
 
@@ -735,6 +743,12 @@ const TextArea = class {
     this.textArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
       this.textArea.scrollTop += this.textArea.scrollHeight * event.detail.scrollRatio;
       this.dispatchEvents("mousemoveEditor-virticalScrollbarArea-textArea");
+    });
+
+    // エディターの縦幅が変更されたとき――垂直方向のスクロールバー領域の縦幅が変更されたときは、
+    // 当領域の寸法やスクロール量をスクロールバー領域に返します。
+    this.textArea.addEventListener("resizeVirticalScrollbarArea", () => {
+      this.dispatchEvents("resizeVirticalScrollbarArea-textArea");
     });
 
     // エディター上でマウスホイールが回転されましたので、回転方向に合わせて文字領域をスクロールします。
