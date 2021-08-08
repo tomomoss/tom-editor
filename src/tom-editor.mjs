@@ -28,7 +28,7 @@ const TOMEditor = class {
    * エディターを初期化します。
    * 当コンストラクタは外部に露出するため引数検査を実施します。
    * @param {Element} editorContainer エディターの実装対象となるHTML要素です。
-   * @param {...any} rest ※引数検査のためだけに存在する引数です。
+   * @param {...any} rest ※引数検査用の引数です。
    */
   constructor(editorContainer, ...rest) {
     if (typeof editorContainer === "undefined") {
@@ -47,8 +47,8 @@ const TOMEditor = class {
     // エディターを構成する主要な要素を初期化します。
     const editor = this.createEditor();
     editorContainer.appendChild(editor);
-    const textArea = new TextArea(editor);
     const lineNumberArea = new LineNumberArea(editor);
+    const textArea = new TextArea(editor);
     const virticalScrollbarArea = new VirticalScrollbarArea(editor);
     // const textAreaBoundingClientRect = textArea.textArea.getBoundingClientRect();
     // const horizontalScrollbarArea = new HorizontalScrollbarArea(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
@@ -56,11 +56,11 @@ const TOMEditor = class {
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
-    this.setEventListeners(editor, textArea.textArea, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea);
-    textArea.setEventListeners(lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
+    this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea);
     lineNumberArea.setEventListeners();
-    virticalScrollbarArea.setEventListeners(textArea.textArea, lineNumberArea.lineNumberArea);
-    caret.setEventListeners(textArea.textArea, lineNumberArea.lineNumberArea);
+    textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
+    virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
+    caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 
   /**
@@ -76,11 +76,11 @@ const TOMEditor = class {
   /**
    * イベントリスナーを実装します。
    * @param {HTMLDivElement} editor エディター本体です。
-   * @param {HTMLDivElement} textArea 文字領域です。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   * @param {HTMLDivElement} textArea 文字領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
    */
-  setEventListeners = (editor, textArea, lineNumberArea, virticalScrollbarArea) => {
+  setEventListeners = (editor, lineNumberArea, textArea, virticalScrollbarArea) => {
 
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
     // mousedownイベントの標準動作を停止させます。

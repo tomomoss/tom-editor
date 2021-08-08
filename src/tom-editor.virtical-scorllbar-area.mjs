@@ -63,10 +63,10 @@ const VirticalScrollbarArea = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = (textArea, lineNumberArea) => {
+  setEventListeners = (lineNumberArea, textArea) => {
 
     // スクロールバーがクリックされたときはドラッグ移動フラグを起動します。
     this.virticalScrollbar.addEventListener("mousedown", (event) => {

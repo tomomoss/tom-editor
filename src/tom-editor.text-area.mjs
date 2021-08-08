@@ -118,16 +118,6 @@ const TextArea = class {
   };
 
   /**
-   * 行の先頭に配置する空間を生成します。
-   * @returns {HTMLDivElement} 行頭文字です。
-   */
-  createLeadingSpace = () => {
-    const leadingSpace = document.createElement("span");
-    leadingSpace.classList.add("tom-editor__text-area__leading-space");
-    return leadingSpace;
-  };
-
-  /**
    * 文字領域を作成します。
    * @returns {HTMLDivElement} 文字領域です。
    */
@@ -144,8 +134,6 @@ const TextArea = class {
   createTextLine = () => {
     const textLine = document.createElement("div");
     textLine.classList.add("tom-editor__text-area__text-line");
-    const leadingSpace = this.createLeadingSpace();
-    textLine.appendChild(leadingSpace);
     return textLine;
   };
 
@@ -181,11 +169,11 @@ const TextArea = class {
       return;
     }
     const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-    const textArea = this.textArea.getBoundingClientRect();
+    const editor = this.otherEditorComponents.editor.getBoundingClientRect();
     this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
       detail: {
-        left: focusedCharacter.left - textArea.left,
-        top: focusedCharacter.top - textArea.top
+        left: focusedCharacter.left - editor.left,
+        top: focusedCharacter.top - editor.top
       }
     }));
   };
@@ -666,8 +654,8 @@ const TextArea = class {
     const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
     const innerRangeTop = 0.5;
     const innerRangeBottom = 0.5;
-    const innerRangeLeft = 5;
-    const innerRangeRight = 5;
+    const innerRangeLeft = 1;
+    const innerRangeRight = 1;
 
     const textAreaRect = this.textArea.getBoundingClientRect();
     if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
@@ -684,13 +672,15 @@ const TextArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {HTMLDivElement} editor エディター本体です。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
    * @param {HTMLDivElement} caret キャレットです。
    */
-  setEventListeners = (lineNumberArea, virticalScrollbarArea, caret) => {
+  setEventListeners = (editor, lineNumberArea, virticalScrollbarArea, caret) => {
     this.otherEditorComponents = {
       caret: caret,
+      editor: editor,
       lineNumberArea: lineNumberArea,
       virticalScrollbarArea: virticalScrollbarArea
     };
@@ -768,18 +758,6 @@ const TextArea = class {
       this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
         return character === event.target;
       });
-      return;
-    }
-
-    // 行先頭の空間がクリックされたときは、当該行の先頭から次行の先頭までを範囲選択しつつフォーカス移動します。
-    // 次行がない場合は当該空間が挿入されている行の行末文字までを選択範囲としてフォーカス移動します。
-    if (event.target.classList.contains("tom-editor__text-area__leading-space")) {
-      const mousedownedTextLineIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.path[1];
-      });
-      this.focusedRowIndex = mousedownedTextLineIndex;
-      this.focusedColumnIndex = 0;
-      this.moveFocusPointByArrowKey("ArrowDown", true);
       return;
     }
 

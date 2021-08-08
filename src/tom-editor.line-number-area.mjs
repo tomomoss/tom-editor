@@ -86,7 +86,7 @@ const LineNumberArea = class {
     // 横幅は表示桁数分の横幅に0.5文字分の横幅を加えることで視覚的に少し余裕をもたせます。
     const lineNumberArea = document.createElement("div");
     lineNumberArea.classList.add("tom-editor__line-number-area");
-    lineNumberArea.style.width = `${alphanumericWidth * (maximumNumberOfDigits + 0.5)}px`;
+    lineNumberArea.style.flexBasis = `${alphanumericWidth * (maximumNumberOfDigits + 0.5)}px`;
 
     return lineNumberArea;
   };

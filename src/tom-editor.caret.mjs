@@ -54,10 +54,10 @@ const Caret = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = (textArea, lineNumberArea) => {
+  setEventListeners = (lineNumberArea, textArea) => {
 
     // キャレットからフォーカスが外れたときは、キャレットを見えなくします。
     // その後、フォーカスが外れた旨を文字領域と行番号領域に通知します。
