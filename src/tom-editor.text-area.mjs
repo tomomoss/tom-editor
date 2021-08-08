@@ -35,6 +35,9 @@ const TextArea = class {
   /** @type {Array<Array<HTMLDivElement>>} 選択範囲中の文字です。 */
   selectionRange = [];
 
+  /** @type {object} 文字領域以外のエディターを構成する主要な要素です。 */
+  otherEditorComponents = {};
+
   /** @type {HTMLDivElement} 文字領域です。 */
   textArea = null;
 
@@ -149,20 +152,33 @@ const TextArea = class {
   /**
    * 他の領域に文字領域の状態を通知します。
    * @param {string} eventName イベント名です。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} caret キャレットです。
    */
-  dispatchTextAreaStatusToOtherArea = (eventName, lineNumberArea, caret) => {
+  dispatchTextAreaStatusToOtherArea = (eventName) => {
     if (["mousedownTextArea", "keydownCaret2"].includes(eventName)) {
-      lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
+
+      // 行番号領域に現在の行数とフォーカスしている行を指すインデックスを送信します。
+      this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           index: this.focusedRowIndex,
           length: this.textLines.length
         }
       }));
+
+      // 垂直方向のスクロールバー領域に文字領域のビューポートの高さと実際の高さを送信します。
+      if (eventName === "keydownCaret2") {
+        this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent("keydownCaret2", {
+          detail: {
+            clientHeight: this.textArea.clientHeight,
+            scrollHeight: this.textArea.scrollHeight,
+            scrollTop: this.textArea.scrollTop
+          }
+        }));
+      }
+
+      // キャレットにフォーカスしている文字の座標を送信します。
       const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
       const textArea = this.textArea.getBoundingClientRect();
-      caret.dispatchEvent(new CustomEvent(eventName, {
+      this.otherEditorComponents.caret.dispatchEvent(new CustomEvent(eventName, {
         detail: {
           left: focusedCharacter.left - textArea.left,
           top: focusedCharacter.top - textArea.top
@@ -385,6 +401,155 @@ const TextArea = class {
   };
 
   /**
+   * キャレット上で押されたキーに応じた処理を実行します。
+   * @param {Event} event EventTarget.addEventListenerメソッドから取得したイベント情報です。
+   * @returns {boolean} 押されたキーが有効だった場合はtrueを返します。
+   */
+  reflectKey = (event) => {
+
+    // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
+    if (event.detail.ctrlKey) {
+
+      // Ctrl + aで全文選択です。
+      // フォーカス位置は文末になります。
+      if (event.detail.key === "a") {
+        this.selectionRange = this.characters.map((characters) => {
+          return Array.from(characters);
+        });
+        this.selectionRange[this.selectionRange.length - 1].pop();
+        for (const characters of this.selectionRange) {
+          for (const character of characters) {
+            character.classList.add("tom-editor__text-area__character--select");
+          }
+        }
+        this.focusedRowIndex = this.getRowsLastIndex();
+        this.focusedColumnIndex = this.getColumnsLastIndex();
+        return true;
+      }
+
+      // Ctrl + cで範囲選択中の文字をクリップボードにコピーします。
+      if (event.detail.key === "c") {
+        const convertedText = this.convertSelectedRangeIntoText(false);
+        navigator.clipboard.writeText(convertedText);
+        return true;
+      }
+
+      // Ctrl + vでクリップボードの文字を文字領域にペーストします。
+      if (event.detail.key === "v") {
+        navigator.clipboard.readText().then((textInClipboard) => {
+          if (this.selectionRange.length) {
+            this.removeCharactersInSelectionRange();
+          }
+          for (const character of textInClipboard) {
+
+            // Async Clipboard APIで改行を取得すると「\n」ではなく「\r」「\n」の2文字で表現されます。
+            // そのままDOMに突っ込むと2回改行されてしまうため「\r」は無視するようにします。
+            if (character === "\r") {
+              continue;
+            }
+
+            if (character === "\n") {
+              const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
+              this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
+              continue;
+            }
+            this.inputCharacter(character);
+          }
+
+          // 当メソッドは非同期処理なのでブロック末尾からthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだします。
+          this.dispatchTextAreaStatusToOtherArea("keydownCaret2");
+        });
+
+        // 上のブロック最後にthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだしているので、
+        // このタイミングでは呼びださないようにします。。
+        return false;
+      }
+
+      // Ctrl + xで選択範囲中の文字をカットします。
+      if (event.detail.key === "x") {
+        const convertedText = this.convertSelectedRangeIntoText(true);
+        navigator.clipboard.writeText(convertedText);
+        return true;
+      }
+
+      // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
+      // その他キー処理は実行せず、ここで処理から抜けます。
+      return false;
+    }
+
+    // 文字入力処理です。
+    // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
+    if (event.detail.key.length === 1) {
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
+      this.inputCharacter(event.detail.key);
+      return true;
+    }
+
+    // 矢印キーによるフォーカス位置の変更と範囲選択の更新処理です。
+    // 範囲選択がされている状態でShiftキーを押さずに矢印キーが押された場合は、選択範囲の解除だけを行います。
+    if (event.detail.key.includes("Arrow")) {
+      if (!event.detail.shiftKey && this.selectionRange.length) {
+        this.unselctRange();
+        return true;
+      }
+      this.moveFocusPointByArrowKey(event.detail.key, event.detail.shiftKey);
+      return true;
+    }
+
+    // BackspaceキーとDeleteキーによる、文字あるいは選択範囲の削除処理です。
+    // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
+    if (["Backspace", "Delete"].includes(event.detail.key)) {
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+        return true;
+      }
+      this.removeCharacter(event.detail.key);
+      return true;
+    }
+
+    // その他キー入力です。
+    if (event.detail.key === "End") {
+      if (!event.detail.shiftKey && this.selectionRange.length) {
+        this.unselctRange();
+      }
+      this.focusedColumnIndex = this.getColumnsLastIndex();
+      return true;
+    }
+    if (event.detail.key === "Enter") {
+      if (!event.detail.shiftKey && this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
+      const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
+      this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
+      return true;
+    }
+    if (event.detail.key === "Home") {
+      if (!event.detail.shiftKey && this.selectionRange.length) {
+        this.unselctRange();
+      }
+      this.focusedColumnIndex = 0;
+      return true;
+    }
+    if (event.detail.key === "Tab") {
+      if (event.detail.shiftKey) {
+        return false;
+      }
+      if (this.selectionRange.length) {
+        this.removeCharactersInSelectionRange();
+      }
+      const tab = "    ";
+      for (const character of tab) {
+        this.inputCharacter(character);
+      }
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
    * Backspaceキー、あるいはDeleteキーによる文字削除処理を実行します。
    * @param {string} key 押されたキーです。
    */
@@ -461,9 +626,15 @@ const TextArea = class {
   /**
    * イベントリスナーを実装します。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
+   * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
    * @param {HTMLDivElement} caret キャレットです。
    */
-  setEventListeners = (lineNumberArea, caret) => {
+  setEventListeners = (lineNumberArea, virticalScrollbarArea, caret) => {
+    this.otherEditorComponents = {
+      caret: caret,
+      lineNumberArea: lineNumberArea,
+      virticalScrollbarArea: virticalScrollbarArea
+    };
 
     // 文字領域のどこかをクリックされたときは押された場所に応じてフォーカス位置を更新します。
     // 更新後の位置を行番号領域とキャレットに通知します。
@@ -475,7 +646,7 @@ const TextArea = class {
 
       this.unselctRange();
       this.updateFocusIndexByMousedownTarget(event);
-      this.dispatchTextAreaStatusToOtherArea("mousedownTextArea", lineNumberArea, caret);
+      this.dispatchTextAreaStatusToOtherArea("mousedownTextArea");
     });
 
     // キャレットのフォーカスが外れたのでフォーカス情報を消去します。
@@ -489,126 +660,10 @@ const TextArea = class {
     // 有効なキー入力だった場合はフォーカス位置や行数が変わっている可能性があります。
     // そこで文字領域に対してmousedownイベントを発信することで行番号領域とキャレットに変更後の状態を通知します。
     this.textArea.addEventListener("keydownCaret1", (event) => {
-
-      // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
-      if (event.detail.ctrlKey) {
-        if (event.detail.key === "a") {
-
-          // Ctrl + aで全文選択です。
-          // フォーカス位置は文末になります。
-          this.selectionRange = this.characters.map((characters) => {
-            return Array.from(characters);
-          });
-          this.selectionRange[this.selectionRange.length - 1].pop();
-          for (const characters of this.selectionRange) {
-            for (const character of characters) {
-              character.classList.add("tom-editor__text-area__character--select");
-            }
-          }
-          this.focusedRowIndex = this.getRowsLastIndex();
-          this.focusedColumnIndex = this.getColumnsLastIndex();
-        } else if (event.detail.key === "c") {
-
-          // Ctrl + cで範囲選択中の文字をクリップボードにコピーします。
-          const convertedText = this.convertSelectedRangeIntoText(false);
-          navigator.clipboard.writeText(convertedText);
-        } else if (event.detail.key === "v") {
-
-          // Ctrl + vでクリップボードの文字を文字領域にペーストします。
-          navigator.clipboard.readText().then((textInClipboard) => {
-            if (this.selectionRange.length) {
-              this.removeCharactersInSelectionRange();
-            }
-            for (const character of textInClipboard) {
-
-              // Async Clipboard APIで改行を取得すると「\n」ではなく「\r」「\n」の2文字で表現されます。
-              // そのままDOMに突っ込むと2回改行されてしまうため「\r」は無視するようにします。
-              if (character === "\r") {
-                continue;
-              }
-
-              if (character === "\n") {
-                const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
-                this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
-              } else {
-                this.inputCharacter(character);
-              }
-            }
-
-            // 当メソッドは非同期処理なのでブロック末尾からthis.dispatchTextAreaStatusToOtherAreaメソッドを呼び出します。
-            this.dispatchTextAreaStatusToOtherArea("keydownCaret2", lineNumberArea, caret);
-          });
-
-          // 二重でthis.dispatchTextAreaStatusToOtherAreaメソッドを呼び出しても意味がないので、
-          // 同期処理時はreturn文でメソッドから抜けます。
-          return;
-        } else if (event.detail.key === "x") {
-
-          // Ctrl + xで選択範囲中の文字をカットします。
-          const convertedText = this.convertSelectedRangeIntoText(true);
-          navigator.clipboard.writeText(convertedText);
-        }
-
-        // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
-        // その他キー処理は実行しません。
-        return;
-      } else if (event.detail.key.length === 1) {
-
-        // 文字入力処理です。
-        // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
-        if (this.selectionRange.length) {
-          this.removeCharactersInSelectionRange();
-        }
-        this.inputCharacter(event.detail.key);
-      } else if (event.detail.key.includes("Arrow")) {
-
-        // 矢印キーによるフォーカス位置の変更と範囲選択の更新処理です。
-        // 範囲選択がされている状態でShiftキーを押さずに矢印キーが押された場合は、選択範囲の解除だけを行います。
-        if (!event.detail.shiftKey && this.selectionRange.length) {
-          this.unselctRange();
-        } else {
-          this.moveFocusPointByArrowKey(event.detail.key, event.detail.shiftKey);
-        }
-      } else if (["Backspace", "Delete"].includes(event.detail.key)) {
-
-        // BackspaceキーとDeleteキーによる、文字あるいは選択範囲の削除処理です。
-        // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
-        if (this.selectionRange.length) {
-          this.removeCharactersInSelectionRange();
-        } else {
-          this.removeCharacter(event.detail.key);
-        }
-      } else if (event.detail.key === "End") {
-        if (!event.detail.shiftKey && this.selectionRange.length) {
-          this.unselctRange();
-        }
-        this.focusedColumnIndex = this.getColumnsLastIndex();
-      } else if (event.detail.key === "Enter") {
-        if (!event.detail.shiftKey && this.selectionRange.length) {
-          this.removeCharactersInSelectionRange();
-        }
-        const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
-        this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
-      } else if (event.detail.key === "Home") {
-        if (!event.detail.shiftKey && this.selectionRange.length) {
-          this.unselctRange();
-        }
-        this.focusedColumnIndex = 0;
-      } else if (event.detail.key === "Tab") {
-        if (event.detail.shiftKey) {
-          return;
-        }
-        if (this.selectionRange.length) {
-          this.removeCharactersInSelectionRange();
-        }
-        const tab = "    ";
-        for (const character of tab) {
-          this.inputCharacter(character);
-        }
-      } else {
+      if (!this.reflectKey(event)) {
         return;
       }
-      this.dispatchTextAreaStatusToOtherArea("keydownCaret2", lineNumberArea, caret);
+      this.dispatchTextAreaStatusToOtherArea("keydownCaret2");
     });
   };
 

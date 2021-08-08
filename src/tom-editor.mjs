@@ -56,13 +56,10 @@ const TOMEditor = class {
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
-    textArea.setEventListeners(lineNumberArea.lineNumberArea, caret.caret);
+    textArea.setEventListeners(lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
     lineNumberArea.setEventListeners();
+    virticalScrollbarArea.setEventListeners();
     caret.setEventListeners(textArea.textArea, lineNumberArea.lineNumberArea);
-
-
-    // lineNumberArea.setEventListeners();
-    // textArea.setEventListeners(lineNumberArea.lineNumberArea, caret.caret);
   };
 
   /**

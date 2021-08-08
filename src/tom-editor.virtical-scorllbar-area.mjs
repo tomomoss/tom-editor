@@ -41,6 +41,24 @@ const VirticalScrollbarArea = class {
     virticalScrollbarArea.classList.add("tom-editor__virtical-scrollbar-area");
     return virticalScrollbarArea;
   };
+
+  /**
+   * イベントリスナーを実装します。
+   */
+  setEventListeners = () => {
+
+    // キャレットにキー入力があり押されたキーに応じた処理を文字領域に適用した後、
+    // 文字領域の見た目の高さと実際の高さが送信されてきます。
+    this.virticalScrollbarArea.addEventListener("keydownCaret2", (event) => {
+      if (event.detail.clientHeight === event.detail.scrollHeight) {
+        this.virticalScrollbar.style.height = 0;
+        this.virticalScrollbar.scrollTop = 0;
+        return;
+      }
+      this.virticalScrollbar.style.height = `${event.detail.clientHeight / event.detail.scrollHeight * 100}%`;
+      this.virticalScrollbar.scrollTop = event.detail.scrollTop * event.detail.clientHeight / event.detail.scrollHeight;
+    });
+  };
 };
 
 export {

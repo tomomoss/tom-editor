@@ -73,6 +73,7 @@
   background: rgb(221, 238, 255);
 }
 .tom-editor__text-area__leading-space {
+  cursor: default;
   display: inline-block;
   height: 100%;
   width: 4rem;
@@ -91,7 +92,14 @@
   top: 0;
 }
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar {
+  background: rgb(238, 238, 238);
   width: 1rem;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar:hover {
+  background: rgb(221, 221, 221);
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar:active {
+  background: rgb(204, 204, 204);
 }
 
 
