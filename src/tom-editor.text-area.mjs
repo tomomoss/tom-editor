@@ -722,19 +722,15 @@ const TextArea = class {
       return;
     }
 
-    // 行先頭の空間がクリックされたときは次行の先頭をフォーカス位置とします。
-    // 次行がない場合は当該空間が挿入されている行の行末文字をフォーカス位置とします。
+    // 行先頭の空間がクリックされたときは、当該行の先頭から次行の先頭までを範囲選択しつつフォーカス移動します。
+    // 次行がない場合は当該空間が挿入されている行の行末文字までを選択範囲としてフォーカス移動します。
     if (event.target.classList.contains("tom-editor__text-area__leading-space")) {
       const mousedownedTextLineIndex = this.textLines.findIndex((textLine) => {
         return textLine === event.path[1];
       });
-      if (this.textLines[mousedownedTextLineIndex + 1]) {
-        this.focusedRowIndex = mousedownedTextLineIndex + 1;
-        this.focusedColumnIndex = 0
-      } else {
-        this.focusedRowIndex = mousedownedTextLineIndex;
-        this.focusedColumnIndex = this.getColumnsLastIndex();
-      }
+      this.focusedRowIndex = mousedownedTextLineIndex;
+      this.focusedColumnIndex = 0;
+      this.moveFocusPointByArrowKey("ArrowDown", true);
       return;
     }
 
