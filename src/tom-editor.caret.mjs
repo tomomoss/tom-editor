@@ -105,6 +105,12 @@ const Caret = class {
       this.putCaret(event.detail.left, event.detail.top);
     });
 
+    // 垂直方向のスクロールバーのドラッグ移動処理が実行されてフォーカス位置の座標が変化したので、
+    // 変化後の座標にキャレットを動かします。
+    this.caret.addEventListener("mousemoveEditor-virticalScrollbarArea-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
     // エディター上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
     // 変化後の座標にキャレットを動かします。
     this.caret.addEventListener("wheelEditor-textArea", (event) => {

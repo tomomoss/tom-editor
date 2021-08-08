@@ -130,8 +130,12 @@ const LineNumberArea = class {
       this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });
 
-    // エディター上でマウスホイールが回転されましたので、
-    // 回転方向に合わせて行番号領域をスクロールします。
+    // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
+    this.lineNumberArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
+      this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;
+    });
+
+    // エディター上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
     this.lineNumberArea.addEventListener("wheelEditor", (event) => {
       this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });

@@ -16,6 +16,9 @@ const VirticalScrollbarArea = class {
     this.virticalScrollbarArea.appendChild(this.virticalScrollbar);
   }
 
+  /** @type {boolean|null} スクロールバーの移動処理実行中は垂直座標が入ります。 */
+  lastY = null;
+
   /** @type {HTMLDivElement} 垂直方向のスクロールバーです。 */
   virticalScrollbar = null;
 
@@ -65,6 +68,11 @@ const VirticalScrollbarArea = class {
    */
   setEventListeners = (textArea, lineNumberArea) => {
 
+    // スクロールバーがクリックされたときはドラッグ移動フラグを起動します。
+    this.virticalScrollbar.addEventListener("mousedown", (event) => {
+      this.lastY = event.y;
+    });
+
     // 領域上をクリックされたときは、マウスホイール操作と同様に一定量のスクロールを実行します。
     this.virticalScrollbarArea.addEventListener("mousedown", (event) => {
       if (event.target !== this.virticalScrollbarArea) {
@@ -96,6 +104,38 @@ const VirticalScrollbarArea = class {
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.virticalScrollbarArea.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
+    // エディター上でmousemoveイベントが検知されたとき、スクロールバーのドラッグ移動処理を実行します。
+    // 移動した量を割合として算出し、その分だけ文字領域をスクロールさせます。
+    this.virticalScrollbarArea.addEventListener("mousemoveEditor", (event) => {
+      if (this.lastY === null) {
+        return;
+      }
+      const differenceY = event.detail.y - this.lastY;
+      this.lastY = event.detail.y;
+      const scrollRatio = differenceY / this.virticalScrollbarArea.getBoundingClientRect().height;
+      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
+        detail: {
+          scrollRatio: scrollRatio
+        }
+      }));
+      lineNumberArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
+        detail: {
+          scrollRatio: scrollRatio
+        }
+      }));
+    });
+
+    // 当スクロールバーの移動処理によって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("mousemoveEditor-virticalScrollbarArea-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
+    // エディター上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
+    this.virticalScrollbarArea.addEventListener("mouseupEditor", () => {
+      this.lastY = null;
     });
 
     // エディター上でホイールが回されて文字領域のスクロール量に変化があったので、
