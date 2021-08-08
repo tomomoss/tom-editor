@@ -655,24 +655,30 @@ const TextArea = class {
   };
 
   /**
-   * 現在のフォーカス位置がビューポート外や見えにくい位置にあるときは自動的に補正します。
+   * 現在のフォーカス位置がビューポート外や見えにくい位置にあるときは自動的にスクロールします。
    */
   scrollAutomatically = () => {
+
+    // 自動スクロールは、フォーカスされた文字が文字領域外に出たときに生じます。
+    // ただ、それだと当該文字が文字領域縁ギリギリのところに置かれつづけるために視認性が悪いです。
+    // そこでいくらか内側にも処理の対象範囲を広げることにしました。
+    // 以下4つの変数は上下左右の対象範囲を何文字分広げるかという定数です。
     const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
+    const innerRangeTop = 0.5;
+    const innerRangeBottom = 0.5;
+    const innerRangeLeft = 5;
+    const innerRangeRight = 5;
+
     const textAreaRect = this.textArea.getBoundingClientRect();
-
-    // フォーカスされた文字の上辺が、文字領域上辺より0.5文字分よりも上にあるときは、
-    // フォーカスされた文字が文字領域上辺より0.5文字分下の位置になるように文字領域をスクロールします。
-    if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * 0.5) {
-      this.textArea.scrollTop -= (textAreaRect.top + focusedCharacterRect.height * 0.5) - focusedCharacterRect.top;
-      return;
+    if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
+      this.textArea.scrollTop -= (textAreaRect.top + focusedCharacterRect.height * innerRangeTop) - focusedCharacterRect.top;
+    } else if (focusedCharacterRect.bottom > textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom) {
+      this.textArea.scrollTop += focusedCharacterRect.bottom - (textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom);
     }
-
-    // フォーカスされた文字の下辺が、文字領域下辺よりも0.5分よりも下にあるときは、
-    // フォーカスされた文字が文字領域下辺より0.5文字分上の位置になるように文字領域をスクロールします。
-    if (focusedCharacterRect.top + focusedCharacterRect.height > textAreaRect.top + textAreaRect.height - focusedCharacterRect.height * 0.5) {
-      this.textArea.scrollTop += focusedCharacterRect.top + focusedCharacterRect.height - (textAreaRect.top + textAreaRect.height - focusedCharacterRect.height * 0.5);
-      return;
+    if (focusedCharacterRect.left < textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) {
+      this.textArea.scrollLeft -= (textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) - focusedCharacterRect.left;
+    } else if (focusedCharacterRect.right > textAreaRect.right - focusedCharacterRect.width * innerRangeRight) {
+      this.textArea.scrollLeft += focusedCharacterRect.right - (textAreaRect.right - focusedCharacterRect.width * innerRangeRight);
     }
   };
 
