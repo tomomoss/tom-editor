@@ -218,6 +218,7 @@ const TextArea = class {
       const goalColumnIndex = this.focusedColumnIndex;
       while (
         !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex === goalColumnIndex) &&
+        !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex < goalColumnIndex) &&
         !(this.focusedRowIndex === this.getRowsLastIndex() && this.focusedColumnIndex === this.getColumnsLastIndex())
       ) {
         this.moveFocusPointByArrowKey("ArrowRight", shiftKey);
