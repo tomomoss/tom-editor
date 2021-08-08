@@ -16,6 +16,9 @@ const VirticalScrollbarArea = class {
     this.virticalScrollbarArea.appendChild(this.virticalScrollbar);
   }
 
+  /** @type {number} 最後に検知された垂直方向のスクロールバー領域の横幅です。 */
+  lastVirticalScrollbarAreaHeight = null;
+
   /** @type {boolean|null} スクロールバーの移動処理実行中は垂直座標が入ります。 */
   lastY = null;
 
@@ -71,6 +74,11 @@ const VirticalScrollbarArea = class {
     // エディターの縦幅が変更されたとき――当領域の縦幅が変更されたときは、
     // スクロールバーの寸法や位置を更新します。
     new ResizeObserver(() => {
+      const virticalScrollbarAreaHeight = this.virticalScrollbarArea.getBoundingClientRect().height;
+      if (virticalScrollbarAreaHeight === this.lastVirticalScrollbarAreaHeight) {
+        return;
+      }
+      this.lastVirticalScrollbarAreaHeight = virticalScrollbarAreaHeight;
       textArea.dispatchEvent(new CustomEvent("resizeVirticalScrollbarArea"));
     }).observe(this.virticalScrollbarArea);
 

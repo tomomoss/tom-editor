@@ -63,6 +63,9 @@ const TOMEditor = class {
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 
+  /** @type {number} 最後に検知されたエディターの横幅です。 */
+  lastEditorWidth = null;
+
   /**
    * エディター本体を生成します。
    * @returns {HTMLDivElement} エディター本体です。
@@ -84,8 +87,13 @@ const TOMEditor = class {
 
     // エディターの寸法変更に伴って、文字領域の横幅を調整します。
     // 監視対象を文字領域にすると狭まるときは処理が走るのですが拡がるときは無視されてしまうためエディターを監視対象としています。
+    // 横幅が変更されたときだけ文字領域の横幅調整処理を走らせることで処理量を軽減しています。
     new ResizeObserver(() => {
       const editorWidth = editor.getBoundingClientRect().width;
+      if (editorWidth === this.lastEditorWidth) {
+        return;
+      }
+      this.lastEditorWidth = editorWidth;
       const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
       const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
       textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
