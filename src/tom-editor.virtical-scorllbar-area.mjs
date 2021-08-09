@@ -140,12 +140,12 @@ const VirticalScrollbarArea = class {
       const differenceY = event.detail.y - this.lastY;
       this.lastY = event.detail.y;
       const scrollRatio = differenceY / this.virticalScrollbarArea.getBoundingClientRect().height;
-      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
+      lineNumberArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
         detail: {
           scrollRatio: scrollRatio
         }
       }));
-      lineNumberArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
+      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-virticalScrollbarArea", {
         detail: {
           scrollRatio: scrollRatio
         }
@@ -158,8 +158,8 @@ const VirticalScrollbarArea = class {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
-    // エディター上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
-    this.virticalScrollbarArea.addEventListener("mouseupEditor", () => {
+    // ウィンドウ上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
+    this.virticalScrollbarArea.addEventListener("mouseupWindow", () => {
       this.lastY = null;
     });
 

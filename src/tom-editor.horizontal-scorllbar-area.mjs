@@ -23,6 +23,9 @@ const HorizontalScrollbarArea = class {
   /** @type {HTMLDivElement} 水平方向のスクロールバー領域です。 */
   horizontalScrollbarArea = null;
 
+  /** @type {boolean|null} スクロールバーの移動処理実行中は水平座標が入ります。 */
+  lastX = null;
+
   /**
    * 水平方向のスクロールバーの座標と寸法を調整します。
    * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
@@ -77,6 +80,11 @@ const HorizontalScrollbarArea = class {
    */
   setEventListeners = (textArea) => {
 
+    // スクロールバーがクリックされたときは、ドラッグ移動フラグを起動します。
+    this.horizontalScrollbar.addEventListener("mousedown", (event) => {
+      this.lastX = event.x;
+    });
+
     // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
     // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
     this.horizontalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
@@ -109,6 +117,33 @@ const HorizontalScrollbarArea = class {
     // 変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
     this.horizontalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
+
+    // エディター上でmousemoveイベントが検知されたとき、スクロールバーのドラッグ移動処理を実行します。
+    // 移動した量を割合として算出し、その分だけ文字領域をスクロールさせます。
+    this.horizontalScrollbarArea.addEventListener("mousemoveEditor", (event) => {
+      if (this.lastX === null) {
+        return;
+      }
+      const differenceX = event.detail.x - this.lastX;
+      this.lastX = event.detail.x;
+      const scrollRatio = differenceX / this.horizontalScrollbarArea.getBoundingClientRect().width;
+      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-horizontalScrollbarArea", {
+        detail: {
+          scrollRatio: scrollRatio
+        }
+      }));
+    });
+
+    // 当スクロールバーの移動処理によって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.horizontalScrollbarArea.addEventListener("mousemoveEditor-horizontalScrollbarArea-textArea", (event) => {
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
+
+    // ウィンドウ上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
+    this.horizontalScrollbarArea.addEventListener("mouseupWindow", () => {
+      this.lastX = null;
     });
 
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、

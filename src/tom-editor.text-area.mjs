@@ -173,6 +173,11 @@ const TextArea = class {
       this.dispatchIntoCaret(eventName);
       return;
     }
+    if (eventName === "mousemoveEditor-horizontalScrollbarArea-textArea") {
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
     if (eventName === "mousemoveEditor-virticalScrollbarArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
@@ -798,6 +803,12 @@ const TextArea = class {
     this.textArea.addEventListener("mousedownVirticalScrollbarArea", (event) => {
       this.textArea.scrollTop += event.detail.scrollSize;
       this.dispatchEvents("mousedownVirticalScrollbarArea-textArea");
+    });
+
+    // 水平方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
+    this.textArea.addEventListener("mousemoveEditor-horizontalScrollbarArea", (event) => {
+      this.textArea.scrollLeft += this.textArea.scrollWidth * event.detail.scrollRatio;
+      this.dispatchEvents("mousemoveEditor-horizontalScrollbarArea-textArea");
     });
 
     // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
