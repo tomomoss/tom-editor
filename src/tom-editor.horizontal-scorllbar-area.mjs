@@ -79,6 +79,12 @@ const HorizontalScrollbarArea = class {
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
+    // 文字領域のどこかがクリックされたことでフォーカス位置が変化しましたので、
+    // 変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
+    this.horizontalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
+
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、
     // 当領域の横幅とスクロールバーの寸法・位置も更新します。
     this.horizontalScrollbarArea.addEventListener("resizeEditor-textArea", (event) => {
