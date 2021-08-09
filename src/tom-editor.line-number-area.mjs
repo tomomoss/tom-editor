@@ -155,8 +155,24 @@ const LineNumberArea = class {
       this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;
     });
 
-    // エディター上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
-    this.lineNumberArea.addEventListener("wheelEditor", (event) => {
+    // 行番号領域上でマウスホイールが操作されたのでスクロール処理を実行します。
+    this.lineNumberArea.addEventListener("wheel", (event) => {
+      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(this.lineNumberArea).fontSize) * 3;
+      this.lineNumberArea.scrollTop += scrollSize;
+      textArea.dispatchEvent(new CustomEvent("wheelLineNumberArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+    });
+
+    // 文字領域上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
+    this.lineNumberArea.addEventListener("wheelTextArea", (event) => {
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
+
+    // 垂直方向のスクロールバー領域上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
+    this.lineNumberArea.addEventListener("wheelVirticalScrollbarArea", (event) => {
       this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });
   };

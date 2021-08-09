@@ -169,9 +169,36 @@ const VirticalScrollbarArea = class {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
-    // エディター上でホイールが回されて文字領域のスクロール量に変化があったので、
+    // 垂直方向のスクロールバー領域上でマウスホイールが操作されたのでスクロール処理を実行します。
+    this.virticalScrollbarArea.addEventListener("wheel", (event) => {
+      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(this.virticalScrollbarArea).fontSize) * 3;
+      lineNumberArea.dispatchEvent(new CustomEvent("wheelVirticalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+      textArea.dispatchEvent(new CustomEvent("wheelVirticalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+    });
+
+    // 行番号領域上でホイールが回されて文字領域のスクロール量に変化があったので、
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
-    this.virticalScrollbarArea.addEventListener("wheelEditor-textArea", (event) => {
+    this.virticalScrollbarArea.addEventListener("wheelLineNumberArea-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
+    // 文字領域上でホイールが回されて文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("wheelTextArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
+    // 垂直方向のスクロールバー領域上でホイールが回されて文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("wheelVirticalScrollbarArea-textArea", (event) => {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
   };

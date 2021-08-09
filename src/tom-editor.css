@@ -63,8 +63,8 @@
 .tom-editor__line-number-area {
   cursor: default;
   flex: 0 0;
-  margin: 0 2rem 0 0;
   overflow: hidden;
+  padding: 0 2rem 0 0;
   text-align: right;
 }
 .tom-editor__line-number-area__line-number {

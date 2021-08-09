@@ -98,7 +98,7 @@ const Caret = class {
     this.caret.addEventListener("mousedownTextArea", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
-    
+
     // 水平方向のスクロールバー領域の余白がクリックされたことによるスクロール処理が実行されたので、
     // 実行後のフォーカス位置にキャレットを動かします。
     this.caret.addEventListener("mousedownHorizontalScrollbarArea-textArea", (event) => {
@@ -123,9 +123,21 @@ const Caret = class {
       this.putCaret(event.detail.left, event.detail.top);
     });
 
-    // エディター上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
+    // 行番号領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
     // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("wheelEditor-textArea", (event) => {
+    this.caret.addEventListener("wheelLineNumberArea-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
+    // 文字領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
+    // 変化後の座標にキャレットを動かします。
+    this.caret.addEventListener("wheelTextArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
+    // 垂直方向のスクロールバー領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
+    // 変化後の座標にキャレットを動かします。
+    this.caret.addEventListener("wheelVirticalScrollbarArea-textArea", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
   };

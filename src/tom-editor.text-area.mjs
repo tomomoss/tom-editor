@@ -142,42 +142,63 @@ const TextArea = class {
    * @param {string} eventName イベント名です。
    */
   dispatchEvents = (eventName) => {
-    if ([
-      "resizeEditor-textArea"
-    ].includes(eventName)) {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if ([
-      "resizeVirticalScrollbarArea-textArea"
-    ].includes(eventName)) {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if ([
-      "mousedownHorizontalScrollbarArea-textArea"
-    ].includes(eventName)) {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      this.dispatchIntoCaret(eventName);
-      return;
-    }
-    if ([
-      "mousedownVirticalScrollbarArea-textArea",
-      "mousemoveEditor-virticalScrollbarArea-textArea"
-    ].includes(eventName)) {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoCaret(eventName);
-      return;
-    }
-    if ([
-      "keydownCaret-textArea",
-      "mousedownLineNumberArea-textArea",
-      "mousedownTextArea",
-      "wheelEditor-textArea"
-    ].includes(eventName)) {
+    if ("keydownCaret-textArea" === eventName) {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("mousedownHorizontalScrollbarArea-textArea" === eventName) {
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("mousedownLineNumberArea-textArea" === eventName) {
+      this.dispatchIntoLineNumberArea(eventName);
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("mousedownTextArea" === eventName) {
+      this.dispatchIntoLineNumberArea(eventName);
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("mousedownVirticalScrollbarArea-textArea" === eventName) {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("mousemoveEditor-virticalScrollbarArea-textArea" === eventName) {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if ("resizeEditor-textArea" === eventName) {
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      return;
+    }
+    if ("resizeVirticalScrollbarArea-textArea" === eventName) {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      return;
+    }
+    if (eventName === "wheelLineNumberArea-textArea") {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if (eventName === "wheelTextArea") {
+      this.dispatchIntoLineNumberArea(eventName);
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if (eventName === "wheelVirticalScrollbarArea-textArea") {
+      this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
       return;
     }
@@ -795,10 +816,23 @@ const TextArea = class {
       this.dispatchEvents("resizeVirticalScrollbarArea-textArea");
     });
 
-    // エディター上でマウスホイールが回転されましたので、回転方向に合わせて文字領域をスクロールします。
-    this.textArea.addEventListener("wheelEditor", (event) => {
+    // マウスホイールが操作されたのでスクロール処理を実行します。
+    this.textArea.addEventListener("wheel", (event) => {
+      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 3;
+      this.textArea.scrollTop += scrollSize;
+      this.dispatchEvents("wheelTextArea");
+    });
+
+    // 行番号領域上でマウスホイールが操作されましたので、文字領域をスクロールします。
+    this.textArea.addEventListener("wheelLineNumberArea", (event) => {
       this.textArea.scrollTop += event.detail.scrollSize;
-      this.dispatchEvents("wheelEditor-textArea");
+      this.dispatchEvents("wheelLineNumberArea-textArea");
+    });
+
+    // 垂直方向のスクロールバー領域上でマウスホイールが操作されましたので、文字領域をスクロールします。
+    this.textArea.addEventListener("wheelVirticalScrollbarArea", (event) => {
+      this.textArea.scrollTop += event.detail.scrollSize;
+      this.dispatchEvents("wheelVirticalScrollbarArea-textArea");
     });
   };
 
