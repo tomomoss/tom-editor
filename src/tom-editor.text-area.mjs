@@ -155,6 +155,7 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownHorizontalScrollbarArea-textArea") {
@@ -167,6 +168,7 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownTextArea") {
@@ -174,11 +176,13 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownVirticalScrollbarArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-horizontalScrollbarArea-textArea") {
@@ -191,15 +195,18 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-virticalScrollbarArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "resizeEditor-textArea") {
       this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "resizeVirticalScrollbarArea-textArea") {
@@ -214,12 +221,14 @@ const TextArea = class {
     if (eventName === "wheelLineNumberArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "wheelTextArea") {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "wheelVirticalScrollbarArea-textArea") {
@@ -244,6 +253,23 @@ const TextArea = class {
         left: focusedCharacter.left - editor.left,
         top: focusedCharacter.top - editor.top
       }
+    }));
+  };
+
+  /**
+   * 装飾下線に文字領域の状態を通知します。
+   * @param {string} eventName イベント名です。
+   */
+  dispatchIntoDecorationUnderline = (eventName) => {
+    const detail = {
+      active: this.focusedRowIndex !== null && !this.selectionRange.length
+    };
+    if (detail.active) {
+      detail.top = this.textLines[this.focusedRowIndex].getBoundingClientRect().top - this.otherEditorComponents.editor.getBoundingClientRect().top;
+      detail.width = this.textArea.clientWidth;
+    }
+    this.otherEditorComponents.decorationUnderline.dispatchEvent(new CustomEvent(eventName, {
+      detail: detail
     }));
   };
 
@@ -756,10 +782,12 @@ const TextArea = class {
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
    * @param {HTMLDivElement} horizontalScrollbarArea 水平方向のスクロールバー領域です。
    * @param {HTMLDivElement} caret キャレットです。
+   * @param {HTMLDivElement} decorationUnderline 装飾下線です。
    */
-  setEventListeners = (editor, lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, caret) => {
+  setEventListeners = (editor, lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, caret, decorationUnderline) => {
     this.otherEditorComponents = {
       caret: caret,
+      decorationUnderline: decorationUnderline,
       editor: editor,
       horizontalScrollbarArea: horizontalScrollbarArea,
       lineNumberArea: lineNumberArea,

@@ -58,10 +58,18 @@ const TOMEditor = class {
     // 各要素にイベントリスナーを実装します。
     this.setEventListeners(editor, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea);
     lineNumberArea.setEventListeners(textArea.textArea);
-    textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea, caret.caret);
+    textArea.setEventListeners(
+      editor,
+      lineNumberArea.lineNumberArea,
+      virticalScrollbarArea.virticalScrollbarArea,
+      horizontalScrollbarArea.horizontalScrollbarArea,
+      caret.caret,
+      decorationUnderline.decorationUnderline
+    );
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
     horizontalScrollbarArea.setEventListeners(textArea.textArea);
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
+    decorationUnderline.setEventListeners();
   };
 
   /** @type {number} 最後に検知されたエディターの横幅です。 */

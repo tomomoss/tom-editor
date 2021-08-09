@@ -43,6 +43,7 @@
 }
 .tom-editor__decoration-underline {
   border-bottom: solid 0.1rem rgb(238, 238, 238);
+  height: var(--character-height);
   pointer-events: none;
   position: absolute;
   display: none;
