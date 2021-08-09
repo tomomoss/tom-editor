@@ -53,7 +53,7 @@ const TOMEditor = class {
     const textAreaLeft = textArea.textArea.getBoundingClientRect().left - editor.getBoundingClientRect().left;
     const horizontalScrollbarArea = new HorizontalScrollbarArea(editor, textAreaLeft);
     const caret = new Caret(editor);
-    // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
+    const decorationUnderline = new DecorationUnderline(editor, textAreaLeft);
 
     // 各要素にイベントリスナーを実装します。
     this.setEventListeners(editor, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea);

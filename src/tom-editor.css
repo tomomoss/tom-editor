@@ -41,6 +41,15 @@
 .tom-editor__caret--focus {
   display: inline-block;
 }
+.tom-editor__decoration-underline {
+  border-bottom: solid 0.1rem rgb(238, 238, 238);
+  pointer-events: none;
+  position: absolute;
+  display: none;
+}
+.tom-editor__decoration-underline--active {
+  display: block;
+}
 .tom-editor__horizontal-scrollbar-area {
   bottom: 0;
   display: none;
