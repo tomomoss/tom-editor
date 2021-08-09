@@ -80,14 +80,19 @@ const TextArea = class {
    * @returns {string} 文字列化した範囲選択された値です。
    */
   convertSelectedRangeIntoText = (cutFlag) => {
-    let convertedText;
+    let convertedText = "";
     if (this.selectionRange.length) {
-      convertedText = this.selectionRange.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue.reduce((accumulator, currentValue) => {
-          return accumulator + currentValue.innerHTML;
-        }, "") + "\n";
-      }, "");
-      convertedText = convertedText.slice(0, -1);
+
+      // 選択範囲が複数行にまたがるとき、最後の行以外の末尾文字が選択範囲に含まれていますので改行文字に置きかえます。
+      for (const textLine of this.selectionRange) {
+        for (const character of textLine) {
+          if (character.classList.contains("tom-editor__text-area__character--eol")) {
+            convertedText += "\n";
+            break;
+          }
+          convertedText += character.innerHTML;
+        }
+      }
     } else {
       convertedText = "";
     }
