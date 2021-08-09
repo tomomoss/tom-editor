@@ -757,10 +757,10 @@ const TextArea = class {
     // そこでいくらか内側にも処理の対象範囲を広げることにしました。
     // 以下4つの変数は上下左右の対象範囲を何文字分広げるかという定数です。
     const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
-    const innerRangeTop = 1.5;
+    const innerRangeTop = 0.5;
     const innerRangeBottom = 1.5;
-    const innerRangeLeft = 2.5;
-    const innerRangeRight = 5.5;
+    const innerRangeLeft = 1.5;
+    const innerRangeRight = 2.5;
 
     const textAreaRect = this.textArea.getBoundingClientRect();
     if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
