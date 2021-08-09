@@ -41,6 +41,20 @@ const HorizontalScrollbarArea = class {
     horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area");
     return horizontalScrollbarArea;
   };
+
+  /**
+   * イベントリスナーを実装します。
+   * @param {HTMLDivElement} textArea 文字領域です。
+   */
+  setEventListeners = (textArea) => {
+    
+    // エディターの横幅が変更されたので、当領域の座標と寸法を変更します。
+    this.horizontalScrollbarArea.addEventListener("resizeEditor", () => {
+      const textAreaRect = textArea.getBoundingClientRect();
+      this.horizontalScrollbarArea.style.left = `${textAreaRect.left}px`;
+      this.horizontalScrollbarArea.style.width = `${textAreaRect.width}px`;
+    });
+  };
 };
 
 export {

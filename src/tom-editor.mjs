@@ -55,11 +55,12 @@ const TOMEditor = class {
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
     // 各要素にイベントリスナーを実装します。
-    this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea);
+    this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea);
     lineNumberArea.setEventListeners(textArea.textArea);
     textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
+    horizontalScrollbarArea.setEventListeners(textArea.textArea);
   };
 
   /** @type {number} 最後に検知されたエディターの横幅です。 */
@@ -81,8 +82,9 @@ const TOMEditor = class {
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    * @param {HTMLDivElement} textArea 文字領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
+   * @param {HTMLDivElement} horizontalScrollbarArea 水平方向のスクロールバー領域です。
    */
-  setEventListeners = (editor, lineNumberArea, textArea, virticalScrollbarArea) => {
+  setEventListeners = (editor, lineNumberArea, textArea, virticalScrollbarArea, horizontalScrollbarArea) => {
 
     // エディターの横幅の変更を監視しています。
     // 横幅が変化したときは文字領域の横幅、水平方向のスクロールバー領域の横幅と配置位置を調整します。
@@ -95,6 +97,7 @@ const TOMEditor = class {
       }
       this.lastEditorWidth = editorWidth;
       textArea.dispatchEvent(new CustomEvent("resizeEditor"));
+      horizontalScrollbarArea.dispatchEvent(new CustomEvent("resizeEditor"));
     }).observe(editor);
 
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
