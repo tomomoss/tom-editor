@@ -102,12 +102,12 @@ const VirticalScrollbarArea = class {
       if (event.y < this.virticalScrollbar.getBoundingClientRect().top) {
         scrollSize *= -1;
       }
-      textArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
+      lineNumberArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
         detail: {
           scrollSize: scrollSize
         }
       }));
-      lineNumberArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
+      textArea.dispatchEvent(new CustomEvent("mousedownVirticalScrollbarArea", {
         detail: {
           scrollSize: scrollSize
         }

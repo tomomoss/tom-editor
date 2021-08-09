@@ -73,12 +73,35 @@ const HorizontalScrollbarArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = () => {
+  setEventListeners = (textArea) => {
 
     // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
     // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
     this.horizontalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
+
+    // 領域上をクリックされたときは、マウスホイール操作と同様に一定量のスクロールを実行します。
+    this.horizontalScrollbarArea.addEventListener("mousedown", (event) => {
+      if (event.target !== this.horizontalScrollbarArea) {
+        return;
+      }
+      let scrollSize = parseFloat(getComputedStyle(this.horizontalScrollbarArea).fontSize) * 3;
+      if (event.x < this.horizontalScrollbar.getBoundingClientRect().left) {
+        scrollSize *= -1;
+      }
+      textArea.dispatchEvent(new CustomEvent("mousedownHorizontalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+    });
+
+    // 当領域の余白がクリックされたことによるスクロール処理によって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.horizontalScrollbarArea.addEventListener("mousedownHorizontalScrollbarArea-textArea", (event) => {
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 

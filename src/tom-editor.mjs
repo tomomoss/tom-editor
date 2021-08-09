@@ -60,7 +60,7 @@ const TOMEditor = class {
     lineNumberArea.setEventListeners(textArea.textArea);
     textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea, caret.caret);
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
-    horizontalScrollbarArea.setEventListeners();
+    horizontalScrollbarArea.setEventListeners(textArea.textArea);
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 

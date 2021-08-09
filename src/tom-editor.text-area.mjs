@@ -145,13 +145,20 @@ const TextArea = class {
     if ([
       "resizeEditor-textArea"
     ].includes(eventName)) {
-      this.dispatchIntoHorizontalScrollbarArea(eventName)
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
       return;
     }
     if ([
       "resizeVirticalScrollbarArea-textArea"
     ].includes(eventName)) {
       this.dispatchIntoVirticalScrollbarArea(eventName);
+      return;
+    }
+    if ([
+      "mousedownHorizontalScrollbarArea-textArea"
+    ].includes(eventName)) {
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
       return;
     }
     if ([
@@ -170,7 +177,7 @@ const TextArea = class {
     ].includes(eventName)) {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoHorizontalScrollbarArea(eventName)
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
       return;
     }
@@ -742,6 +749,13 @@ const TextArea = class {
       this.updateFocusIndexByMousedownTarget(event);
       this.scrollAutomatically();
       this.dispatchEvents("mousedownTextArea");
+    });
+
+    // 水平方向のスクロールバー領域の余白部分がクリックされましたので、
+    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
+    this.textArea.addEventListener("mousedownHorizontalScrollbarArea", (event) => {
+      this.textArea.scrollLeft += event.detail.scrollSize;
+      this.dispatchEvents("mousedownHorizontalScrollbarArea-textArea");
     });
 
     // 行番号領域のどこかがクリックされたときは、押された行番号に対応した行を範囲選択して次行の先頭にフォーカスを移動します。
