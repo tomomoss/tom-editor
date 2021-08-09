@@ -34,7 +34,7 @@ const DecorationUnderline = class {
     }
     this.decorationUnderline.classList.add("tom-editor__decoration-underline--active");
     this.decorationUnderline.style.top = `${top}px`;
-    this.decorationUnderline.style.width = `${width - parseFloat(getComputedStyle(this.decorationUnderline).fontSize)}px`;
+    this.decorationUnderline.style.width = `${width - parseFloat(getComputedStyle(this.decorationUnderline).fontSize) * 0.5}px`;
   };
 
   /**
