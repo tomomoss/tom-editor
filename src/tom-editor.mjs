@@ -57,10 +57,10 @@ const TOMEditor = class {
     // 各要素にイベントリスナーを実装します。
     this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea);
     lineNumberArea.setEventListeners(textArea.textArea);
-    textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, caret.caret);
+    textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea, caret.caret);
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
-    caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
     horizontalScrollbarArea.setEventListeners(textArea.textArea);
+    caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 
   /** @type {number} 最後に検知されたエディターの横幅です。 */
@@ -91,13 +91,17 @@ const TOMEditor = class {
     // なぜ、それら値を監視対象にしていないかというと配置方法（Flexbox、position: absolute;）の関係上、想定どおりに動いてくれないからです。
     // 横幅が変更されたときだけ上記処理を走らせることで処理量を軽減しています。
     new ResizeObserver(() => {
-      const editorWidth = editor.getBoundingClientRect().width;
-      if (editorWidth === this.lastEditorWidth) {
+      const editorRect = editor.getBoundingClientRect();
+      if (editorRect.width === this.lastEditorWidth) {
         return;
       }
-      this.lastEditorWidth = editorWidth;
+      this.lastEditorWidth = editorRect.width;
       textArea.dispatchEvent(new CustomEvent("resizeEditor"));
-      horizontalScrollbarArea.dispatchEvent(new CustomEvent("resizeEditor"));
+      horizontalScrollbarArea.dispatchEvent(new CustomEvent("resizeEditor", {
+        detail: {
+          left: editorRect.left
+        }
+      }));
     }).observe(editor);
 
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、

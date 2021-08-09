@@ -164,6 +164,7 @@ const TextArea = class {
     ].includes(eventName)) {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoHorizontalScrollbarArea(eventName)
       this.dispatchIntoCaret(eventName);
       return;
     }
@@ -183,6 +184,20 @@ const TextArea = class {
       detail: {
         left: focusedCharacter.left - editor.left,
         top: focusedCharacter.top - editor.top
+      }
+    }));
+  };
+
+  /**
+   * 水平方向のスクロールバー領域に文字領域の状態を通知します。
+   * @param {string} eventName イベント名です。
+   */
+  dispatchIntoHorizontalScrollbarArea = (eventName) => {
+    this.otherEditorComponents.horizontalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
+      detail: {
+        clientWidth: this.textArea.clientWidth,
+        scrollWidth: this.textArea.scrollWidth,
+        scrollLeft: this.textArea.scrollLeft
       }
     }));
   };
@@ -684,12 +699,14 @@ const TextArea = class {
    * @param {HTMLDivElement} editor エディター本体です。
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
+   * @param {HTMLDivElement} horizontalScrollbarArea 水平方向のスクロールバー領域です。
    * @param {HTMLDivElement} caret キャレットです。
    */
-  setEventListeners = (editor, lineNumberArea, virticalScrollbarArea, caret) => {
+  setEventListeners = (editor, lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, caret) => {
     this.otherEditorComponents = {
       caret: caret,
       editor: editor,
+      horizontalScrollbarArea: horizontalScrollbarArea,
       lineNumberArea: lineNumberArea,
       virticalScrollbarArea: virticalScrollbarArea
     };
