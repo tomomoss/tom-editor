@@ -745,8 +745,16 @@ const TextArea = class {
       this.dispatchEvents("mousemoveEditor-virticalScrollbarArea-textArea");
     });
 
-    // エディターの縦幅が変更されたとき――垂直方向のスクロールバー領域の縦幅が変更されたときは、
-    // 当領域の寸法やスクロール量をスクロールバー領域に返します。
+    // エディターの横幅が変更されたので文字領域の横幅も合わせて変更します。
+    this.textArea.addEventListener("resizeEditor", () => {
+      const editorWidth = editor.getBoundingClientRect().width;
+      const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
+      const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
+      this.textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
+    });
+
+    // エディターの縦幅が変更されたので――垂直方向のスクロールバー領域の縦幅が変更されたので、
+    // 変更後の当領域の寸法やスクロール量をスクロールバー領域に返します。
     this.textArea.addEventListener("resizeVirticalScrollbarArea", () => {
       this.dispatchEvents("resizeVirticalScrollbarArea-textArea");
     });
