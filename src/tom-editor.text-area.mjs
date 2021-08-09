@@ -555,12 +555,12 @@ const TextArea = class {
             this.inputCharacter(character);
           }
 
-          // 当メソッドは非同期処理なのでブロック末尾からthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだします。
+          // 当メソッドは非同期処理なので当ブロック内から後続処理を呼びだします。
+          this.scrollAutomatically();
           this.dispatchEvents("keydownCaret-textArea");
         });
 
-        // 上のブロック最後にthis.dispatchTextAreaStatusToOtherAreaメソッドを呼びだしているので、
-        // このタイミングでは呼びださないようにします。。
+        // 上のブロック内で後続処理を呼びだすので、このタイミングでは呼びださないようにします。
         return false;
       }
 
