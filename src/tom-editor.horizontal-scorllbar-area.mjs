@@ -24,21 +24,20 @@ const HorizontalScrollbarArea = class {
   horizontalScrollbarArea = null;
 
   /**
-   * 水平方向のスクロールバーの位置を調整します。
+   * 水平方向のスクロールバーの座標と寸法を調整します。
    * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
    * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
    * @param {number} textAreaScrollLeft 文字領域の水平方向のスクロール量です。
    */
-  adjustHorizontalScrollbarPosition = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
+  adjustHorizontalScrollbarRect = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
+    if (textAreaClientWidth === textAreaScrollWidth) {
+      if (this.horizontalScrollbarArea.classList.contains("tom-editor__horizontal-scrollbar-area--active")) {
+        this.horizontalScrollbarArea.classList.remove("tom-editor__horizontal-scrollbar-area--active");
+      }
+      return;
+    }
+    this.horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area--active");
     this.horizontalScrollbar.style.left = `${textAreaClientWidth / textAreaScrollWidth * textAreaScrollLeft}px`;
-  };
-
-  /**
-   * 水平方向のスクロールバーの横幅を調整します。
-   * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
-   * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
-   */
-  adjustHorizontalScrollbarWidth = (textAreaClientWidth, textAreaScrollWidth) => {
     this.horizontalScrollbar.style.width = `${textAreaClientWidth / textAreaScrollWidth * 100}%`;
   };
 
@@ -80,47 +79,21 @@ const HorizontalScrollbarArea = class {
     // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
     // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
     this.horizontalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
-      if (!this.toggleHorizontalScrollbarAreaState(event.detail.clientWidth, event.detail.scrollWidth)) {
-        return;
-      }
-      this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
-      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-      this.adjustHorizontalScrollbarWidth(event.detail.clientWidth, event.detail.scrollWidth);
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
     // 文字領域のどこかがクリックされたことでフォーカス位置が変化しましたので、
     // 変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
     this.horizontalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
-      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、
     // 当領域の横幅とスクロールバーの寸法・位置も更新します。
     this.horizontalScrollbarArea.addEventListener("resizeEditor-textArea", (event) => {
-      if (!this.toggleHorizontalScrollbarAreaState(event.detail.clientWidth, event.detail.scrollWidth)) {
-        return;
-      }
       this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
-      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-      this.adjustHorizontalScrollbarWidth(event.detail.clientWidth, event.detail.scrollWidth);
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
-  };
-
-  /**
-   * 当領域を可視状態にするかどうかを判定して切り替えます。
-   * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
-   * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
-   * @returns {boolean} 可視状態ならばtrueを返します。
-   */
-  toggleHorizontalScrollbarAreaState = (textAreaClientWidth, textAreaScrollWidth) => {
-    if (textAreaClientWidth === textAreaScrollWidth) {
-      if (this.horizontalScrollbarArea.classList.contains("tom-editor__horizontal-scrollbar-area--active")) {
-        this.horizontalScrollbarArea.classList.remove("tom-editor__horizontal-scrollbar-area--active");
-      }
-      return false;
-    }
-    this.horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area--active");
-    return true;
   };
 };
 
