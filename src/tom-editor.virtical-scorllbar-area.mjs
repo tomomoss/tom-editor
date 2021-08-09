@@ -120,6 +120,11 @@ const VirticalScrollbarArea = class {
       this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
     });
 
+    // 文字領域がクリックされたことでスクロール位置が変化したので、変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
     // 当領域の余白がクリックされたことによるスクロール処理によって文字領域のスクロール量に変化があったので、
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.virticalScrollbarArea.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {
