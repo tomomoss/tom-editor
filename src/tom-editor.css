@@ -64,11 +64,11 @@
   cursor: default;
   flex: 0 0;
   overflow: hidden;
-  padding: 0 2rem 0 0;
   text-align: right;
 }
 .tom-editor__line-number-area__line-number {
-  color: rgb(204, 204, 204)
+  color: rgb(204, 204, 204);
+  padding: 0 2rem 0 0;
 }
 .tom-editor__line-number-area__line-number:last-of-type {
   height: 100%;

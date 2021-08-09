@@ -13,6 +13,25 @@ const LineNumberArea = class {
     this.lineNumberArea = this.createLineNumberArea(editor);
     editor.appendChild(this.lineNumberArea);
     this.appendLineNumber();
+
+    // 行番号領域の横幅を求めます。
+    // 横幅は「半角英数字の横幅 * 表示する桁数 + 行番号のpadding-rightプロパティの値」とします。
+
+    // 半角英数字の横幅を求めます。
+    const temporaryElement = document.createElement("span");
+    temporaryElement.innerHTML = "0";
+    editor.appendChild(temporaryElement);
+    const alphanumericWidth = temporaryElement.getBoundingClientRect().width;
+    temporaryElement.remove();
+
+    // 表示する桁数です。
+    // 横幅は表示桁数分の横幅に0.5文字分の横幅を加えることで視覚的に少し余裕をもたせます。
+    const maximumNumberOfDigits = 4.5;
+
+    // 行番号のpadding-rightプロパティの値です。
+    const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
+
+    this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
   }
 
   /** @type {number} フォーカスしている行番号を指すインデックスです。 */
@@ -66,28 +85,11 @@ const LineNumberArea = class {
 
   /**
    * 行番号領域を生成します。
-   * @param {HTMLDivElement} editor エディター本体です。
    * @returns {HTMLDivElement} 行番号領域です。
    */
-  createLineNumberArea = (editor) => {
-
-    // 半角英数字の横幅を求めます。
-    const temporaryElement = document.createElement("span");
-    temporaryElement.innerHTML = "0";
-    editor.appendChild(temporaryElement);
-    const alphanumericWidth = temporaryElement.getBoundingClientRect().width;
-    temporaryElement.remove();
-
-    // 行番号領域に表示する桁数です。
-    // とりえあず4桁指定しておきます。
-    const maximumNumberOfDigits = 4;
-
-    // 行番号領域を生成します。
-    // 横幅は表示桁数分の横幅に0.5文字分の横幅を加えることで視覚的に少し余裕をもたせます。
+  createLineNumberArea = () => {
     const lineNumberArea = document.createElement("div");
     lineNumberArea.classList.add("tom-editor__line-number-area");
-    lineNumberArea.style.flexBasis = `${alphanumericWidth * (maximumNumberOfDigits + 0.5)}px`;
-
     return lineNumberArea;
   };
 
