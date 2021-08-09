@@ -24,13 +24,21 @@ const HorizontalScrollbarArea = class {
   horizontalScrollbarArea = null;
 
   /**
-   * 水平方向のスクロールバーの寸法と位置を調整します。
+   * 水平方向のスクロールバーの位置を調整します。
    * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
    * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
    * @param {number} textAreaScrollLeft 文字領域の水平方向のスクロール量です。
    */
-  adjustHorizontalScrollbarRect = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
-    this.horizontalScrollbar.style.left = `${textAreaScrollLeft * textAreaClientWidth / textAreaScrollWidth}px`;
+  adjustHorizontalScrollbarPosition = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
+    this.horizontalScrollbar.style.left = `${textAreaClientWidth / textAreaScrollWidth * textAreaScrollLeft}px`;
+  };
+
+  /**
+   * 水平方向のスクロールバーの横幅を調整します。
+   * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
+   * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
+   */
+  adjustHorizontalScrollbarWidth = (textAreaClientWidth, textAreaScrollWidth) => {
     this.horizontalScrollbar.style.width = `${textAreaClientWidth / textAreaScrollWidth * 100}%`;
   };
 
@@ -76,13 +84,14 @@ const HorizontalScrollbarArea = class {
         return;
       }
       this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarWidth(event.detail.clientWidth, event.detail.scrollWidth);
     });
 
     // 文字領域のどこかがクリックされたことでフォーカス位置が変化しましたので、
     // 変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
     this.horizontalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、
@@ -92,7 +101,8 @@ const HorizontalScrollbarArea = class {
         return;
       }
       this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarPosition(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+      this.adjustHorizontalScrollbarWidth(event.detail.clientWidth, event.detail.scrollWidth);
     });
   };
 

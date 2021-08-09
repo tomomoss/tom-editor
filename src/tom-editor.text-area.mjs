@@ -684,8 +684,8 @@ const TextArea = class {
     const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
     const innerRangeTop = 0.5;
     const innerRangeBottom = 0.5;
-    const innerRangeLeft = 1;
-    const innerRangeRight = 1;
+    const innerRangeLeft = 1.5;
+    const innerRangeRight = 5.5;
 
     const textAreaRect = this.textArea.getBoundingClientRect();
     if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
