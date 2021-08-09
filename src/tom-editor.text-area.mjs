@@ -280,7 +280,7 @@ const TextArea = class {
   };
 
   /**
-   * 矢印キーによるフォーカス位置と選択範囲の更新処理です。
+   * 矢印キーと移動キーによるフォーカス位置と選択範囲の更新処理です。
    * @param {string} key 押された方向です。
    * @param {boolean} shiftKey Shiftキーが押されているときはtrueになります。
    */
@@ -295,7 +295,7 @@ const TextArea = class {
       ) {
         this.moveFocusPointByArrowKey("ArrowRight", shiftKey);
       }
-      return true;
+      return;
     }
     if (key === "ArrowLeft") {
       if (this.focusedColumnIndex === 0) {
@@ -451,7 +451,19 @@ const TextArea = class {
       ) {
         this.moveFocusPointByArrowKey("ArrowLeft", shiftKey);
       }
-      return true;
+      return;
+    }
+    if (key === "End") {
+      for (let i = 0; i < this.getColumnsLastIndex() - this.focusedColumnIndex; i += 1) {
+        this.moveFocusPointByArrowKey("ArrowDown", shiftKey);
+      }
+      return;
+    }
+    if (key === "Home") {
+      for (let i = 0; i < this.focusedColumnIndex; i += 1) {
+        this.moveFocusPointByArrowKey("ArrowUp", shiftKey);
+      }
+      return;
     }
     throw new Error(`想定外の引数です（${key}）。`);
   };
@@ -543,9 +555,9 @@ const TextArea = class {
       return true;
     }
 
-    // 矢印キーによるフォーカス位置の変更と範囲選択の更新処理です。
+    // 矢印キーと移動キーによるフォーカス位置の変更と範囲選択の更新処理です。
     // 範囲選択がされている状態でShiftキーを押さずに矢印キーが押された場合は、選択範囲の解除だけを行います。
-    if (event.detail.key.includes("Arrow")) {
+    if (event.detail.key.includes("Arrow") || ["End", "Home"].includes(event.detail.key)) {
       if (!event.detail.shiftKey && this.selectionRange.length) {
         this.unselctRange();
         return true;
@@ -566,26 +578,12 @@ const TextArea = class {
     }
 
     // その他キー入力です。
-    if (event.detail.key === "End") {
-      if (!event.detail.shiftKey && this.selectionRange.length) {
-        this.unselctRange();
-      }
-      this.focusedColumnIndex = this.getColumnsLastIndex();
-      return true;
-    }
     if (event.detail.key === "Enter") {
       if (!event.detail.shiftKey && this.selectionRange.length) {
         this.removeCharactersInSelectionRange();
       }
       const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
       this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
-      return true;
-    }
-    if (event.detail.key === "Home") {
-      if (!event.detail.shiftKey && this.selectionRange.length) {
-        this.unselctRange();
-      }
-      this.focusedColumnIndex = 0;
       return true;
     }
     if (event.detail.key === "Tab") {
