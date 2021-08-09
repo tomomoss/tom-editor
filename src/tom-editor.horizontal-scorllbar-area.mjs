@@ -117,6 +117,22 @@ const HorizontalScrollbarArea = class {
       this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
+
+    // 水平方向のスクロールバー領域上でマウスホイールが操作されたのでスクロール処理を実行します。
+    this.horizontalScrollbarArea.addEventListener("wheel", (event) => {
+      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(this.horizontalScrollbarArea).fontSize) * 3;
+      textArea.dispatchEvent(new CustomEvent("wheelHorizontalScrollbarArea", {
+        detail: {
+          scrollSize: scrollSize
+        }
+      }));
+    });
+
+    // 当領域上でwhellイベントが発生して文字領域がスクロールされたので、
+    // 変化後のスクロール量に合わせてスクロールバーの位置を更新します。
+    this.horizontalScrollbarArea.addEventListener("wheelHorizontalScrollbarArea-textArea", (event) => {
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
   };
 };
 
