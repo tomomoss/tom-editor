@@ -49,6 +49,9 @@
 .tom-editor__horizontal-scrollbar-area--active {
   display: block;
 }
+.tom-editor__horizontal-scrollbar-area:hover {
+  background: rgba(0, 0, 0, .05);
+}
 .tom-editor__horizontal-scrollbar-area__horizontal-scrollbar {
   background: rgb(238, 238, 238);
   height: 100%;
