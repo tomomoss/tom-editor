@@ -152,6 +152,13 @@ const LineNumberArea = class {
       this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });
 
+    // 文字領域でドラッグ操作が実行されてフォーカス位置とスクロール量が更新されましたので、
+    // こちらもフォーカスする行番号とスクロール量を更新します。
+    this.lineNumberArea.addEventListener("mousemoveEditor-textArea", (event) => {
+      this.updateFocusLineNumber(event.detail.index);
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
+
     // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
     this.lineNumberArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
       this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;

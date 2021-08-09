@@ -135,6 +135,12 @@ const HorizontalScrollbarArea = class {
       }));
     });
 
+    // 文字領域でドラッグ操作が生じたことによって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.horizontalScrollbarArea.addEventListener("mousemoveEditor-textArea", (event) => {
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
+    });
+
     // 当スクロールバーの移動処理によって文字領域のスクロール量に変化があったので、
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.horizontalScrollbarArea.addEventListener("mousemoveEditor-horizontalScrollbarArea-textArea", (event) => {

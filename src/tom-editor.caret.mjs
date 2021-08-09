@@ -115,6 +115,12 @@ const Caret = class {
       this.putCaret(event.detail.left, event.detail.top);
     });
 
+    // 文字領域でドラッグ操作が実行されたことでフォーカス位置の座標が変化したので、
+    // 変化後の座標にキャレットを動かします。
+    this.caret.addEventListener("mousemoveEditor-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
     // 水平方向のスクロールバーのドラッグ移動処理が実行されてフォーカス位置の座標が変化したので、
     // 変化後の座標にキャレットを動かします。
     this.caret.addEventListener("mousemoveEditor-horizontalScrollbarArea-textArea", (event) => {
@@ -126,7 +132,7 @@ const Caret = class {
     this.caret.addEventListener("mousemoveEditor-virticalScrollbarArea-textArea", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
-    
+
     // 水平方向のスクロールバー領域でマウスホイールが操作されてフォーカス位置の座標が変化したので、
     // 変化後の座標にキャレットを動かします。
     this.caret.addEventListener("wheelHorizontalScrollbarArea-textArea", (event) => {

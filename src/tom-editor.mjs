@@ -88,7 +88,8 @@ const TOMEditor = class {
 
     // エディターの横幅の変更を監視しています。
     // 横幅が変化したときは文字領域の横幅、水平方向のスクロールバー領域の横幅と配置位置を調整します。
-    // なぜ、それら値を監視対象にしていないかというと配置方法（Flexbox、position: absolute;）の関係上、想定どおりに動いてくれないからです。
+    // なぜ、それら値を監視対象にしていないかというと配置方法（Flexbox、position: absolute;）の関係上、
+    // 想定どおりに動いてくれないからです。
     // 横幅が変更されたときだけ上記処理を走らせることで処理量を軽減しています。
     new ResizeObserver(() => {
       const editorRect = editor.getBoundingClientRect();
@@ -107,6 +108,12 @@ const TOMEditor = class {
 
     // 他要素にmousemoveイベントが発生したことを通知するだけの役割です。
     editor.addEventListener("mousemove", (event) => {
+      textArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
+        detail: {
+          target: event.target,
+          targetParent: event.path[1]
+        }
+      }));
       virticalScrollbarArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
         detail: {
           y: event.y
@@ -121,6 +128,7 @@ const TOMEditor = class {
 
     // 他要素にmouseupイベントが発生したことを通知するだけの役割です。
     window.addEventListener("mouseup", () => {
+      textArea.dispatchEvent(new CustomEvent("mouseupWindow"));
       virticalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
       horizontalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
     });

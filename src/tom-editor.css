@@ -30,6 +30,7 @@
   outline: none;
   overflow: hidden;
   padding: 0;
+  pointer-events: none;
   position: absolute;
   resize: none;
   width: 0;

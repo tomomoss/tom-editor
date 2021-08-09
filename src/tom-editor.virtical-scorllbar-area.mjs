@@ -152,6 +152,12 @@ const VirticalScrollbarArea = class {
       }));
     });
 
+    // 文字領域でドラッグ操作が生じたことによって文字領域のスクロール量に変化があったので、
+    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
+    this.virticalScrollbarArea.addEventListener("mousemoveEditor-textArea", (event) => {
+      this.adjustVirticalScrollbarRect(event.detail.clientHeight, event.detail.scrollHeight, event.detail.scrollTop);
+    });
+
     // 当スクロールバーの移動処理によって文字領域のスクロール量に変化があったので、
     // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
     this.virticalScrollbarArea.addEventListener("mousemoveEditor-virticalScrollbarArea-textArea", (event) => {

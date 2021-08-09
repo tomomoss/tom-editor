@@ -26,6 +26,9 @@ const TextArea = class {
   /** @type {Array<Array<HTMLDivElement>>} Webページに挿入されている文字です。 */
   characters = [];
 
+  /** @type {boolean} マウスドラッグ処理が起動中はtrueが入ります。 */
+  isDragging = false;
+
   /** @type {number} 現在フォーカス中の列を指すインデックスです。 */
   focusedColumnIndex = null;
 
@@ -174,6 +177,13 @@ const TextArea = class {
       return;
     }
     if (eventName === "mousemoveEditor-horizontalScrollbarArea-textArea") {
+      this.dispatchIntoHorizontalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      return;
+    }
+    if (eventName === "mousemoveEditor-textArea") {
+      this.dispatchIntoLineNumberArea(eventName);
+      this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
       return;
@@ -360,13 +370,11 @@ const TextArea = class {
         // 選択範囲が縮小されるときの処理です。
         this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
         this.selectionRange.pop();
-        this.selectionRange[this.selectionRange.length - 1].pop();
-        if (!this.selectionRange[0].length && this.selectionRange.length === 1) {
+        if (this.selectionRange.length) {
           this.selectionRange = [];
-          return;
+          return
         }
         return;
-
       }
 
       // 文中にいるときは1つ前の文字に移動します。
@@ -433,7 +441,7 @@ const TextArea = class {
         // 選択範囲が縮小されるときの処理です。
         previousFocusedCharacter.classList.remove("tom-editor__text-area__character--select");
         this.selectionRange.shift();
-        if (!this.selectionRange[0].length) {
+        if (!this.selectionRange.length) {
           this.selectionRange = [];
           return;
         }
@@ -718,9 +726,9 @@ const TextArea = class {
     // そこでいくらか内側にも処理の対象範囲を広げることにしました。
     // 以下4つの変数は上下左右の対象範囲を何文字分広げるかという定数です。
     const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
-    const innerRangeTop = 0.5;
-    const innerRangeBottom = 0.5;
-    const innerRangeLeft = 1.5;
+    const innerRangeTop = 1.5;
+    const innerRangeBottom = 1.5;
+    const innerRangeLeft = 2.5;
     const innerRangeRight = 5.5;
 
     const textAreaRect = this.textArea.getBoundingClientRect();
@@ -771,9 +779,12 @@ const TextArea = class {
       this.dispatchEvents("keydownCaret-textArea");
     });
 
-    // 文字領域のどこかをクリックされたときは、押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除します。
+    // 文字領域のどこかをクリックされたときの処理です。
+    // 押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除し、
+    // windowオブジェクトでmouseupイベントが発生するまでドラッグ処理のフラグを立ち上げます。
     // その後、行番号領域とキャレットにフォーカス情報を通知します。
     this.textArea.addEventListener("mousedown", (event) => {
+      this.isDragging = true;
       this.unselctRange();
       this.updateFocusIndexByMousedownTarget(event);
       this.scrollAutomatically();
@@ -805,6 +816,18 @@ const TextArea = class {
       this.dispatchEvents("mousedownVirticalScrollbarArea-textArea");
     });
 
+    // エディター上でmousemoveイベントが検知されましたので、
+    this.textArea.addEventListener("mousemoveEditor", (event) => {
+      if (!this.isDragging) {
+        return;
+      }
+      if (!this.updateFocusIndexByDragTarget(event.detail.target, event.detail.targetParent)) {
+        return;
+      }
+      this.scrollAutomatically();
+      this.dispatchEvents("mousemoveEditor-textArea");
+    });
+
     // 水平方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
     this.textArea.addEventListener("mousemoveEditor-horizontalScrollbarArea", (event) => {
       this.textArea.scrollLeft += this.textArea.scrollWidth * event.detail.scrollRatio;
@@ -815,6 +838,11 @@ const TextArea = class {
     this.textArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
       this.textArea.scrollTop += this.textArea.scrollHeight * event.detail.scrollRatio;
       this.dispatchEvents("mousemoveEditor-virticalScrollbarArea-textArea");
+    });
+
+    // エディター上でmouseupイベントが検知されたときはマウスドラッグ処理を停止します。
+    this.textArea.addEventListener("mouseupWindow", () => {
+      this.isDragging = false;
     });
 
     // エディターの横幅が変更されたので文字領域の横幅も合わせて変更します。
@@ -868,6 +896,55 @@ const TextArea = class {
       }
     }
     this.selectionRange = [];
+  };
+
+  /**
+   * ドラッグ操作（エディター本体でのmousemoveイベント）の対象となったHTML要素に応じて、
+   * フォーカス位置を更新するとともに選択範囲を更新します。
+   * @param {Element} target イベントの対象となったHTML要素です。
+   * @param {Element} targetParent イベントの対象となったHTML要素の親要素です。
+   * @returns {boolean} 対象となるHTML要素が処理の対象だった場合はtrueを返します。
+   */
+  updateFocusIndexByDragTarget = (target, targetParent) => {
+
+    // まずは対象となるHTML要素からフォーカス位置を求めます。
+    // フォーカス対象でない場合、現在のフォーカス位置と対象の位置が同じ場合は処理から抜けます。
+    let targetRowIndex;
+    let targetColumnIndex;
+    if (target.classList.contains("tom-editor__text-area__character")) {
+      targetRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === targetParent;
+      });
+      targetColumnIndex = this.characters[targetRowIndex].findIndex((character) => {
+        return character === target;
+      });
+    } else if (target.classList.contains("tom-editor__text-area__text-line")) {
+      targetRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === target;
+      });
+      targetColumnIndex = this.getColumnsLastIndex();
+    } else {
+      return false;
+    }
+    if (targetRowIndex === this.focusedRowIndex && targetColumnIndex === this.focusedColumnIndex) {
+      return false;
+    }
+
+    // 対象が行か文字だったということでフォーカス位置と選択範囲の更新処理を行います。
+    while (targetRowIndex < this.focusedRowIndex) {
+      this.moveFocusPointByArrowKey("ArrowUp", true);
+    }
+    while (targetRowIndex > this.focusedRowIndex) {
+      this.moveFocusPointByArrowKey("ArrowDown", true);
+    }
+    while (targetColumnIndex < this.focusedColumnIndex) {
+      this.moveFocusPointByArrowKey("ArrowLeft", true);
+    }
+    while (targetColumnIndex > this.focusedColumnIndex) {
+      this.moveFocusPointByArrowKey("ArrowRight", true);
+    }
+
+    return true;
   };
 
   /**
