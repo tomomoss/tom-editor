@@ -143,6 +143,12 @@ const TextArea = class {
    */
   dispatchEvents = (eventName) => {
     if ([
+      "resizeEditor-textArea"
+    ].includes(eventName)) {
+      this.dispatchIntoHorizontalScrollbarArea(eventName)
+      return;
+    }
+    if ([
       "resizeVirticalScrollbarArea-textArea"
     ].includes(eventName)) {
       this.dispatchIntoVirticalScrollbarArea(eventName);
@@ -768,6 +774,7 @@ const TextArea = class {
       const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
       const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
       this.textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
+      this.dispatchEvents("resizeEditor-textArea");
     });
 
     // エディターの縦幅が変更されたので――垂直方向のスクロールバー領域の縦幅が変更されたので、

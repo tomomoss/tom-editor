@@ -8,9 +8,10 @@ const HorizontalScrollbarArea = class {
   /**
    * 水平方向のスクロールバー領域を初期化します。
    * @param {HTMLDivElement} editor エディター本体です。
+   * @param {number} left 当領域の配置場所となる水平座標です。
    */
-  constructor(editor) {
-    this.horizontalScrollbarArea = this.createHorizontalScrollbarArea();
+  constructor(editor, left) {
+    this.horizontalScrollbarArea = this.createHorizontalScrollbarArea(left);
     editor.appendChild(this.horizontalScrollbarArea);
     this.horizontalScrollbar = this.createHorizontalScrollbar();
     this.horizontalScrollbarArea.appendChild(this.horizontalScrollbar);
@@ -29,15 +30,16 @@ const HorizontalScrollbarArea = class {
    * @param {number} textAreaScrollLeft 文字領域の水平方向のスクロール量です。
    */
   adjustHorizontalScrollbarRect = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
-    if (textAreaClientWidth === textAreaScrollWidth) {
-      if (this.horizontalScrollbarArea.classList.contains("tom-editor__horizontal-scrollbar-area--active")) {
-        this.horizontalScrollbarArea.classList.remove("tom-editor__horizontal-scrollbar-area--active");
-      }
-      return;
-    }
-    this.horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area--active");
     this.horizontalScrollbar.style.left = `${textAreaScrollLeft * textAreaClientWidth / textAreaScrollWidth}px`;
     this.horizontalScrollbar.style.width = `${textAreaClientWidth / textAreaScrollWidth * 100}%`;
+  };
+
+  /**
+   * 水平方向のスクロールバー領域の横幅を調整します。
+   * @param {number} textAreaWidth 文字領域の横幅です。
+   */
+  adjustHorizontalScrollbarAreaWidth = (textAreaWidth) => {
+    this.horizontalScrollbarArea.style.width = `${textAreaWidth}px`;
   };
 
   /**
@@ -52,32 +54,57 @@ const HorizontalScrollbarArea = class {
 
   /**
    * 水平方向のスクロールバー領域を生成します。
+   * @param {number} left 当領域の配置場所となる水平座標です。
    * @returns {HTMLDivElement} 水平方向のスクロールバー領域です。
    */
-  createHorizontalScrollbarArea = () => {
+  createHorizontalScrollbarArea = (left) => {
     const horizontalScrollbarArea = document.createElement("div");
     horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area");
+    horizontalScrollbarArea.style.left = `${left}px`;
     return horizontalScrollbarArea;
   };
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = (textArea) => {
+  setEventListeners = () => {
 
     // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
     // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
     this.horizontalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
+      if (!this.toggleHorizontalScrollbarAreaState(event.detail.clientWidth, event.detail.scrollWidth)) {
+        return;
+      }
+      this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
-    // エディターの横幅が変更されたので、当領域の座標と寸法を変更します。
-    this.horizontalScrollbarArea.addEventListener("resizeEditor", (event) => {
-      const textAreaRect = textArea.getBoundingClientRect();
-      this.horizontalScrollbarArea.style.left = `${textAreaRect.left - event.detail.left}px`;
-      this.horizontalScrollbarArea.style.width = `${textAreaRect.width}px`;
+    // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、
+    // 当領域の横幅とスクロールバーの寸法・位置も更新します。
+    this.horizontalScrollbarArea.addEventListener("resizeEditor-textArea", (event) => {
+      if (!this.toggleHorizontalScrollbarAreaState(event.detail.clientWidth, event.detail.scrollWidth)) {
+        return;
+      }
+      this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
+      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
+  };
+
+  /**
+   * 当領域を可視状態にするかどうかを判定して切り替えます。
+   * @param {number} textAreaClientWidth 文字領域の見た目の横幅です。
+   * @param {number} textAreaScrollWidth 文字領域の実際の横幅です。
+   * @returns {boolean} 可視状態ならばtrueを返します。
+   */
+  toggleHorizontalScrollbarAreaState = (textAreaClientWidth, textAreaScrollWidth) => {
+    if (textAreaClientWidth === textAreaScrollWidth) {
+      if (this.horizontalScrollbarArea.classList.contains("tom-editor__horizontal-scrollbar-area--active")) {
+        this.horizontalScrollbarArea.classList.remove("tom-editor__horizontal-scrollbar-area--active");
+      }
+      return false;
+    }
+    this.horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area--active");
+    return true;
   };
 };
 

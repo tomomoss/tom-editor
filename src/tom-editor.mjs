@@ -50,7 +50,8 @@ const TOMEditor = class {
     const lineNumberArea = new LineNumberArea(editor);
     const textArea = new TextArea(editor);
     const virticalScrollbarArea = new VirticalScrollbarArea(editor);
-    const horizontalScrollbarArea = new HorizontalScrollbarArea(editor);
+    const textAreaLeft = textArea.textArea.getBoundingClientRect().left - editor.getBoundingClientRect().left;
+    const horizontalScrollbarArea = new HorizontalScrollbarArea(editor, textAreaLeft);
     const caret = new Caret(editor);
     // const decorationUnderline = new DecorationUnderline(tomEditor, textAreaBoundingClientRect.left, textAreaBoundingClientRect.width);
 
@@ -59,7 +60,7 @@ const TOMEditor = class {
     lineNumberArea.setEventListeners(textArea.textArea);
     textArea.setEventListeners(editor, lineNumberArea.lineNumberArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea, caret.caret);
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
-    horizontalScrollbarArea.setEventListeners(textArea.textArea);
+    horizontalScrollbarArea.setEventListeners();
     caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 
@@ -97,11 +98,6 @@ const TOMEditor = class {
       }
       this.lastEditorWidth = editorRect.width;
       textArea.dispatchEvent(new CustomEvent("resizeEditor"));
-      horizontalScrollbarArea.dispatchEvent(new CustomEvent("resizeEditor", {
-        detail: {
-          left: editorRect.left
-        }
-      }));
     }).observe(editor);
 
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
