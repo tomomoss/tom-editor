@@ -76,6 +76,11 @@ const DecorationUnderline = class {
       this.adjustDecorationUnderlineRect(event.detail.active, event.detail.top, event.detail.width);
     });
 
+    //
+    this.decorationUnderline.addEventListener("mousemoveEditor-lineNumberArea-textArea", (event) => {
+      this.adjustDecorationUnderlineRect(event.detail.active, event.detail.top, event.detail.width);
+    });
+
     // 文字領域のマウスドラッグ操作により文字領域のフォーカス位置が変化したので、
     // 装飾下線を表示状態にするとともに配置位置を調整します。
     this.decorationUnderline.addEventListener("mousemoveEditor-textArea", (event) => {

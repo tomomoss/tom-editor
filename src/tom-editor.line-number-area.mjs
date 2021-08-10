@@ -37,6 +37,9 @@ const LineNumberArea = class {
   /** @type {number} フォーカスしている行番号を指すインデックスです。 */
   focusedLineNumberIndex = null;
 
+  /** @type {null|number} ドラッグ処理で最後に参照した行のインデックス値が入ります。 */
+  lastDragedIndex = null;
+
   /** @type {HTMLDivElement} 行番号領域です */
   lineNumberArea = null;
 
@@ -120,7 +123,11 @@ const LineNumberArea = class {
     });
 
     // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
+    // また、ドラッグフラグを起動します。
     this.lineNumberArea.addEventListener("mousedown", (event) => {
+      this.lastDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
+        return lineNumber === event.target;
+      });
       textArea.dispatchEvent(new CustomEvent("mousedownLineNumberArea", {
         detail: {
           index: this.lineNumbers.findIndex((lineNumber) => {
@@ -152,6 +159,30 @@ const LineNumberArea = class {
       this.lineNumberArea.scrollTop += event.detail.scrollSize;
     });
 
+    //
+    this.lineNumberArea.addEventListener("mousemoveEditor", (event) => {
+      if (this.lastDragedIndex === null || !event.detail.target.classList.contains("tom-editor__line-number-area__line-number")) {
+        return;
+      }
+      const targetIndex = this.lineNumbers.findIndex((lineNumber) => {
+        return lineNumber === event.detail.target;
+      });
+      if (targetIndex === this.lastDragedIndex) {
+        return;
+      }
+      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-lineNumberArea", {
+        detail: {
+          index: targetIndex
+        }
+      }));
+    });
+
+    //
+    this.lineNumberArea.addEventListener("mousemoveEditor-lineNumberArea-textArea", (event) => {
+      this.updateFocusLineNumber(event.detail.index);
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
+
     // 文字領域でドラッグ操作が実行されてフォーカス位置とスクロール量が更新されましたので、
     // こちらもフォーカスする行番号とスクロール量を更新します。
     this.lineNumberArea.addEventListener("mousemoveEditor-textArea", (event) => {
@@ -162,6 +193,11 @@ const LineNumberArea = class {
     // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
     this.lineNumberArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
       this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;
+    });
+
+    //
+    this.lineNumberArea.addEventListener("mouseupWindow", () => {
+      this.lastDragedIndex = null;
     });
 
     // 行番号領域上でマウスホイールが操作されたのでスクロール処理を実行します。

@@ -190,6 +190,13 @@ const TextArea = class {
       this.dispatchIntoCaret(eventName);
       return;
     }
+    if (eventName === "mousemoveEditor-lineNumberArea-textArea") {
+      this.dispatchIntoLineNumberArea(eventName);
+      this.dispatchIntoVirticalScrollbarArea(eventName);
+      this.dispatchIntoCaret(eventName);
+      this.dispatchIntoDecorationUnderline(eventName);
+      return;
+    }
     if (eventName === "mousemoveEditor-textArea") {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
@@ -401,9 +408,8 @@ const TextArea = class {
         // 選択範囲が縮小されるときの処理です。
         this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
         this.selectionRange.pop();
-        if (this.selectionRange.length) {
+        if (!this.selectionRange.length) {
           this.selectionRange = [];
-          return
         }
         return;
       }
@@ -433,7 +439,6 @@ const TextArea = class {
       this.selectionRange[this.selectionRange.length - 1].pop();
       if (!this.selectionRange[0].length && this.selectionRange.length === 1) {
         this.selectionRange = [];
-        return;
       }
       return;
     }
@@ -474,10 +479,8 @@ const TextArea = class {
         this.selectionRange.shift();
         if (!this.selectionRange.length) {
           this.selectionRange = [];
-          return;
         }
         return;
-
       }
 
       // 文中にいるときは1つ次の文字に移動します。
@@ -507,7 +510,6 @@ const TextArea = class {
       this.selectionRange[0].shift();
       if (!this.selectionRange[0].length) {
         this.selectionRange = [];
-        return;
       }
       return;
     }
@@ -865,6 +867,18 @@ const TextArea = class {
     this.textArea.addEventListener("mousemoveEditor-horizontalScrollbarArea", (event) => {
       this.textArea.scrollLeft += this.textArea.scrollWidth * event.detail.scrollRatio;
       this.dispatchEvents("mousemoveEditor-horizontalScrollbarArea-textArea");
+    });
+
+    //
+    this.textArea.addEventListener("mousemoveEditor-lineNumberArea", (event) => {
+      while (event.detail.index < this.focusedRowIndex - 1) {
+        this.moveFocusPointByArrowKey("ArrowUp", true);
+      }
+      while (event.detail.index > this.focusedRowIndex - 1) {
+        this.moveFocusPointByArrowKey("ArrowDown", true);
+      }
+      this.scrollAutomatically();
+      this.dispatchEvents("mousemoveEditor-lineNumberArea-textArea");
     });
 
     // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。

@@ -115,6 +115,11 @@ const Caret = class {
       this.putCaret(event.detail.left, event.detail.top);
     });
 
+    //
+    this.caret.addEventListener("mousemoveEditor-lineNumberArea-textArea", (event) => {
+      this.putCaret(event.detail.left, event.detail.top);
+    });
+
     // 文字領域でドラッグ操作が実行されたことでフォーカス位置の座標が変化したので、
     // 変化後の座標にキャレットを動かします。
     this.caret.addEventListener("mousemoveEditor-textArea", (event) => {
