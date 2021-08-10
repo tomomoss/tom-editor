@@ -1,29 +1,43 @@
 "use strict";
 
 /**
- * 水平方向のスクロールバー領域です。
+ * 水平スクロールバー領域です。
+ * @param {HTMLDivElement} editor エディター本体です。
+ * @param {number} left 当領域の配置場所となる水平座標です。
  */
 const HorizontalScrollbarArea = class {
-
-  /**
-   * 水平方向のスクロールバー領域を初期化します。
-   * @param {HTMLDivElement} editor エディター本体です。
-   * @param {number} left 当領域の配置場所となる水平座標です。
-   */
   constructor(editor, left) {
+    this.editor = editor;
     this.horizontalScrollbarArea = this.createHorizontalScrollbarArea(left);
-    editor.appendChild(this.horizontalScrollbarArea);
+    this.editor.appendChild(this.horizontalScrollbarArea);
     this.horizontalScrollbar = this.createHorizontalScrollbar();
     this.horizontalScrollbarArea.appendChild(this.horizontalScrollbar);
+    // this.setEventListeners();
   }
 
-  /** @type {HTMLDivElement} 水平方向のスクロールバーです。 */
-  horizontalScrollbar = null;
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    horizontalScrollbar: {
+      element: "tom-editor__horizontal-scrollbar-area__horizontal-scrollbar"
+    },
+    horizontalScrollbarArea: {
+      element: "tom-editor__horizontal-scrollbar-area",
+      modifier: {
+        active: "tom-editor__horizontal-scrollbar-area--active"
+      }
+    }
+  };
 
-  /** @type {HTMLDivElement} 水平方向のスクロールバー領域です。 */
-  horizontalScrollbarArea = null;
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
 
-  /** @type {boolean|null} スクロールバーの移動処理実行中は水平座標が入ります。 */
+  /** @type {HTMLDivElement} 水平スクロールバーです。 */
+  horizontalScrollbar;
+
+  /** @type {HTMLDivElement} 水平スクロールバー領域です。 */
+  horizontalScrollbarArea;
+
+  /** @type {boolean|null} 水平スクロールバーの移動処理実行中は水平座標が入ります。 */
   lastX = null;
 
   /**
@@ -34,12 +48,12 @@ const HorizontalScrollbarArea = class {
    */
   adjustHorizontalScrollbarRect = (textAreaClientWidth, textAreaScrollWidth, textAreaScrollLeft) => {
     if (textAreaClientWidth === textAreaScrollWidth) {
-      if (this.horizontalScrollbarArea.classList.contains("tom-editor__horizontal-scrollbar-area--active")) {
-        this.horizontalScrollbarArea.classList.remove("tom-editor__horizontal-scrollbar-area--active");
+      if (this.horizontalScrollbarArea.classList.contains(this.CSSClass.horizontalScrollbarArea.modifier.active)) {
+        this.horizontalScrollbarArea.classList.remove(this.CSSClass.horizontalScrollbarArea.modifier.active);
       }
       return;
     }
-    this.horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area--active");
+    this.horizontalScrollbarArea.classList.add(this.CSSClass.horizontalScrollbarArea.modifier.active);
     this.horizontalScrollbar.style.left = `${textAreaClientWidth / textAreaScrollWidth * textAreaScrollLeft}px`;
     this.horizontalScrollbar.style.width = `${textAreaClientWidth / textAreaScrollWidth * 100}%`;
   };
@@ -53,125 +67,104 @@ const HorizontalScrollbarArea = class {
   };
 
   /**
-   * 水平方向のスクロールバーを生成します。
-   * @returns {HTMLDivElement} 水平方向のスクロールバーです。
+   * 水平スクロールバーを生成します。
+   * @returns {HTMLDivElement} 水平スクロールバーです。
    */
   createHorizontalScrollbar = () => {
     const horizontalScrollbar = document.createElement("div");
-    horizontalScrollbar.classList.add("tom-editor__horizontal-scrollbar-area__horizontal-scrollbar");
+    horizontalScrollbar.classList.add(this.CSSClass.horizontalScrollbar.element);
     return horizontalScrollbar;
   };
 
   /**
-   * 水平方向のスクロールバー領域を生成します。
+   * 水平スクロールバー領域を生成します。
    * @param {number} left 当領域の配置場所となる水平座標です。
-   * @returns {HTMLDivElement} 水平方向のスクロールバー領域です。
+   * @returns {HTMLDivElement} 水平スクロールバー領域です。
    */
   createHorizontalScrollbarArea = (left) => {
     const horizontalScrollbarArea = document.createElement("div");
-    horizontalScrollbarArea.classList.add("tom-editor__horizontal-scrollbar-area");
+    horizontalScrollbarArea.classList.add(this.CSSClass.horizontalScrollbarArea.element);
     horizontalScrollbarArea.style.left = `${left}px`;
     return horizontalScrollbarArea;
   };
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = (textArea) => {
+  setEventListeners = () => {
 
-    // スクロールバーがクリックされたときは、ドラッグ移動フラグを起動します。
+    // スクロール処理でのスクロール量です。
+    // どちらの方向にスクロールするかによって符号を切りかえてください。
+    const scrollSize = parseFloat(getComputedStyle(this.horizontalScrollbarArea).lineHeight) * 3;
+
+    // 水平スクロールバーがクリックされたので、ドラッグ移動フラグを起動します。
     this.horizontalScrollbar.addEventListener("mousedown", (event) => {
       this.lastX = event.x;
     });
 
-    // キャレットに有効なキーが入力されて文字領域の寸法とスクロール量に変化があったので、
-    // それら値に合わせてこちらのスクロールバーの寸法と位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("keydownCaret-textArea", (event) => {
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-    });
-
-    // 領域上をクリックされたときは、マウスホイール操作と同様に一定量のスクロールを実行します。
+    // 水平スクロールバー領域上の余白がクリックされたならば、マウスホイール操作と同様に一定量のスクロールを実行します。
     this.horizontalScrollbarArea.addEventListener("mousedown", (event) => {
+
+      // 水平スクロールバーをクリックした場合は抜けます。
       if (event.target !== this.horizontalScrollbarArea) {
         return;
       }
-      let scrollSize = parseFloat(getComputedStyle(this.horizontalScrollbarArea).fontSize) * 3;
+
+      let scrollSizeSign;
       if (event.x < this.horizontalScrollbar.getBoundingClientRect().left) {
-        scrollSize *= -1;
+        scrollSizeSign = -1;
+      } else {
+        scrollSizeSign = 1;
       }
-      textArea.dispatchEvent(new CustomEvent("mousedownHorizontalScrollbarArea", {
+      this.editor.dispatchEvent(new CustomEvent("horizontalScrollbarArea -> textArea", {
         detail: {
-          scrollSize: scrollSize
+          scrollSize: scrollSizeSign * scrollSize
         }
       }));
     });
 
-    // 当領域の余白がクリックされたことによるスクロール処理によって文字領域のスクロール量に変化があったので、
-    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("mousedownHorizontalScrollbarArea-textArea", (event) => {
+    // 水平スクロールバー領域上でマウスホイールが操作されたので、スクロール処理を実行します。
+    this.horizontalScrollbarArea.addEventListener("wheel", (event) => {
+      this.editor.dispatchEvent(new CustomEvent("horizontalScrollbarArea -> textArea", {
+        detail: {
+          scrollSize: Math.sign(event.deltaY) * scrollSize
+        }
+      }));
+    });
+
+    // 文字領域からの通知です。
+    this.editor.addEventListener("textArea -> horizontalScrollbarArea", (event) => {
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
 
-    // 文字領域のどこかがクリックされたことでフォーカス位置が変化しましたので、
-    // 変化後のフォーカス位置に合わせてスクロールバーの位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("mousedownTextArea", (event) => {
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-    });
+
+
 
     // エディター上でmousemoveイベントが検知されたとき、スクロールバーのドラッグ移動処理を実行します。
     // 移動した量を割合として算出し、その分だけ文字領域をスクロールさせます。
-    this.horizontalScrollbarArea.addEventListener("mousemoveEditor", (event) => {
+    this.horizontalScrollbarArea.addEventListener("editor -> horizontalScrollbarArea", (event) => {
       if (this.lastX === null) {
         return;
       }
       const differenceX = event.detail.x - this.lastX;
       this.lastX = event.detail.x;
       const scrollRatio = differenceX / this.horizontalScrollbarArea.getBoundingClientRect().width;
-      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-horizontalScrollbarArea", {
+      this.editor.dispatchEvent(new CustomEvent("horizontalScrollbarArea -> textArea", {
         detail: {
           scrollRatio: scrollRatio
         }
       }));
     });
 
-    // 文字領域でドラッグ操作が生じたことによって文字領域のスクロール量に変化があったので、
-    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("mousemoveEditor-textArea", (event) => {
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-    });
-
-    // 当スクロールバーの移動処理によって文字領域のスクロール量に変化があったので、
-    // 変化後の状態に合わせてこちらのスクロールバーの位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("mousemoveEditor-horizontalScrollbarArea-textArea", (event) => {
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-    });
-
     // ウィンドウ上でmouseupイベントが検知されたとき、スクロールバーのドラッグ移動処理を終了します。
-    this.horizontalScrollbarArea.addEventListener("mouseupWindow", () => {
+    this.editor.addEventListener("window -> horizontalScrollbarArea", () => {
       this.lastX = null;
     });
 
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、
     // 当領域の横幅とスクロールバーの寸法・位置も更新します。
-    this.horizontalScrollbarArea.addEventListener("resizeEditor-textArea", (event) => {
+    this.editor.addEventListener("textArea -> horizontalScrollbarArea", (event) => {
       this.adjustHorizontalScrollbarAreaWidth(event.detail.clientWidth);
-      this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
-    });
-
-    // 水平方向のスクロールバー領域上でマウスホイールが操作されたのでスクロール処理を実行します。
-    this.horizontalScrollbarArea.addEventListener("wheel", (event) => {
-      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(this.horizontalScrollbarArea).fontSize) * 3;
-      textArea.dispatchEvent(new CustomEvent("wheelHorizontalScrollbarArea", {
-        detail: {
-          scrollSize: scrollSize
-        }
-      }));
-    });
-
-    // 当領域上でwhellイベントが発生して文字領域がスクロールされたので、
-    // 変化後のスクロール量に合わせてスクロールバーの位置を更新します。
-    this.horizontalScrollbarArea.addEventListener("wheelHorizontalScrollbarArea-textArea", (event) => {
       this.adjustHorizontalScrollbarRect(event.detail.clientWidth, event.detail.scrollWidth, event.detail.scrollLeft);
     });
   };

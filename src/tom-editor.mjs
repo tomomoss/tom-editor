@@ -56,18 +56,7 @@ const TOMEditor = class {
     const decorationUnderline = new DecorationUnderline(editor, textAreaLeft);
 
     // 各要素にイベントリスナーを実装します。
-    this.setEventListeners(editor, lineNumberArea.lineNumberArea, textArea.textArea, virticalScrollbarArea.virticalScrollbarArea, horizontalScrollbarArea.horizontalScrollbarArea);
-    lineNumberArea.setEventListeners(textArea.textArea);
-    textArea.setEventListeners(
-      editor,
-      lineNumberArea.lineNumberArea,
-      virticalScrollbarArea.virticalScrollbarArea,
-      horizontalScrollbarArea.horizontalScrollbarArea,
-      caret.caret,
-      decorationUnderline.decorationUnderline
-    );
-    virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
-    horizontalScrollbarArea.setEventListeners(textArea.textArea);
+    // this.setEventListeners(editor);
   };
 
   /** @type {number} 最後に検知されたエディターの横幅です。 */
@@ -86,12 +75,8 @@ const TOMEditor = class {
   /**
    * イベントリスナーを実装します。
    * @param {HTMLDivElement} editor エディター本体です。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} textArea 文字領域です。
-   * @param {HTMLDivElement} virticalScrollbarArea 垂直方向のスクロールバー領域です。
-   * @param {HTMLDivElement} horizontalScrollbarArea 水平方向のスクロールバー領域です。
    */
-  setEventListeners = (editor, lineNumberArea, textArea, virticalScrollbarArea, horizontalScrollbarArea) => {
+  setEventListeners = (editor) => {
 
     // エディターの横幅の変更を監視しています。
     // 横幅が変化したときは文字領域の横幅、水平方向のスクロールバー領域の横幅と配置位置を調整します。
@@ -104,7 +89,7 @@ const TOMEditor = class {
         return;
       }
       this.lastEditorWidth = editorRect.width;
-      textArea.dispatchEvent(new CustomEvent("resizeEditor"));
+      editor.dispatchEvent(new CustomEvent("editor -> textArea"));
     }).observe(editor);
 
     // エディター内をクリックしたときにキャレットからフォーカスが外れないように、
@@ -120,18 +105,18 @@ const TOMEditor = class {
           target: event.target
         }
       }));
-      textArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
+      editor.dispatchEvent(new CustomEvent("editor -> textArea", {
         detail: {
           target: event.target,
           targetParent: event.path[1]
         }
       }));
-      virticalScrollbarArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
+      editor.dispatchEvent(new CustomEvent("editor -> virticalScrollbarArea", {
         detail: {
           y: event.y
         }
       }));
-      horizontalScrollbarArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
+      editor.dispatchEvent(new CustomEvent("editor -> horizontalScrollbarArea", {
         detail: {
           x: event.x
         }
@@ -141,9 +126,9 @@ const TOMEditor = class {
     // 他要素にmouseupイベントが発生したことを通知するだけの役割です。
     window.addEventListener("mouseup", () => {
       editor.dispatchEvent(new CustomEvent("window -> lineNumberArea"));
-      textArea.dispatchEvent(new CustomEvent("mouseupWindow"));
-      virticalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
-      horizontalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
+      editor.dispatchEvent(new CustomEvent("window -> textArea"));
+      editor.dispatchEvent(new CustomEvent("window -> virticalScrollbarArea"));
+      editor.dispatchEvent(new CustomEvent("window -> horizontalScrollbarArea"));
     });
   };
 };

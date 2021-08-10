@@ -9,7 +9,7 @@ const Caret = class {
     this.editor = editor;
     this.caret = this.createCaret();
     this.editor.appendChild(this.caret);
-    this.setEventListeners();
+    // this.setEventListeners();
   }
 
   /** @type {HTMLDivElement} キャレットです。 */

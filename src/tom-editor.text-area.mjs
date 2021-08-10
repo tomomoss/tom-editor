@@ -10,8 +10,9 @@ const TextArea = class {
    * @param {HTMLDivElement} editor エディター本体です。
    */
   constructor(editor) {
+    this.editor = editor;
     this.textArea = this.createTextArea();
-    editor.appendChild(this.textArea);
+    this.editor.appendChild(this.textArea);
 
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
     const textLine = this.createTextLine();
@@ -21,28 +22,46 @@ const TextArea = class {
     const EOL = this.createEOL();
     this.characters[0].push(EOL);
     textLine.appendChild(EOL);
+
+    // this.setEventListeners();
   }
+
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    character: {
+      element: "tom-editor__text-area__character",
+      modifier: {
+        EOL: "tom-editor__text-area__character--eol"
+      }
+    },
+    textArea: {
+      element: "tom-editor__text-area"
+    },
+    textLine: {
+      element: "tom-editor__text-area__text-line"
+    }
+  };
 
   /** @type {Array<Array<HTMLDivElement>>} Webページに挿入されている文字です。 */
   characters = [];
 
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
+
   /** @type {boolean} マウスドラッグ処理が起動中はtrueが入ります。 */
   isDragging = false;
 
-  /** @type {number} 現在フォーカス中の列を指すインデックスです。 */
+  /** @type {null|number} 現在フォーカス中の列を指すインデックスです。 */
   focusedColumnIndex = null;
 
-  /** @type {number} 現在フォーカス中の行を指すインデックスです。 */
+  /** @type {null|number} 現在フォーカス中の行を指すインデックスです。 */
   focusedRowIndex = null;
 
   /** @type {Array<Array<HTMLDivElement>>} 選択範囲中の文字です。 */
   selectionRange = [];
 
-  /** @type {object} 文字領域以外のエディターを構成する主要な要素です。 */
-  otherEditorComponents = {};
-
   /** @type {HTMLDivElement} 文字領域です。 */
-  textArea = null;
+  textArea;
 
   /** @type {Array<HTMLDivElement>} Webページに挿入されている行です。 */
   textLines = [];
@@ -109,7 +128,7 @@ const TextArea = class {
    */
   createCharacter = (innerHTML) => {
     const character = document.createElement("span");
-    character.classList.add("tom-editor__text-area__character");
+    character.classList.add(this.CSSClass.character.element);
     character.innerHTML = innerHTML;
     return character
   };
@@ -120,7 +139,7 @@ const TextArea = class {
    */
   createEOL = () => {
     const EOL = document.createElement("span");
-    EOL.classList.add("tom-editor__text-area__character", "tom-editor__text-area__character--eol");
+    EOL.classList.add(this.CSSClass.character.element, this.CSSClass.character.modifier.EOL);
     EOL.innerHTML = " ";
     return EOL;
   };
@@ -131,7 +150,7 @@ const TextArea = class {
    */
   createTextArea = () => {
     const textArea = document.createElement("div");
-    textArea.classList.add("tom-editor__text-area");
+    textArea.classList.add(this.CSSClass.textArea.element);
     return textArea;
   };
 
@@ -141,22 +160,39 @@ const TextArea = class {
    */
   createTextLine = () => {
     const textLine = document.createElement("div");
-    textLine.classList.add("tom-editor__text-area__text-line");
+    textLine.classList.add(this.CSSClass.textLine.element);
     return textLine;
   };
 
   /**
    * 他の領域に文字領域の状態を通知します。
-   * @param {string} eventName イベント名です。
    */
-  dispatchEvents = (eventName) => {
+  dispatchEvents = () => {
 
     // 行番号領域へ通知します。
-    this.otherEditorComponents.editor.dispatchEvent(new CustomEvent("textArea -> lineNumberArea", {
+    this.editor.dispatchEvent(new CustomEvent("textArea -> lineNumberArea", {
       detail: {
         index: this.focusedRowIndex,
         length: this.textLines.length,
         scrollTop: this.textArea.scrollTop
+      }
+    }));
+
+    // 垂直スクロールバー領域へ通知します。
+    this.editor.dispatchEvent(new CustomEvent("textArea -> virticalScrollbarArea", {
+      detail: {
+        clientHeight: this.textArea.clientHeight,
+        scrollHeight: this.textArea.scrollHeight,
+        scrollTop: this.textArea.scrollTop
+      }
+    }));
+
+    // 水平スクロールバー領域へ通知します。
+    this.editor.dispatchEvent(new CustomEvent("textArea -> horizontalScrollbarArea", {
+      detail: {
+        clientWidth: this.textArea.clientWidth,
+        scrollWidth: this.textArea.scrollWidth,
+        scrollLeft: this.textArea.scrollLeft
       }
     }));
 
@@ -165,8 +201,8 @@ const TextArea = class {
       return;
     }
     const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-    const editor = this.otherEditorComponents.editor.getBoundingClientRect();
-    this.otherEditorComponents.editor.dispatchEvent(new CustomEvent("textArea -> caret", {
+    const editor = this.editor.getBoundingClientRect();
+    this.editor.dispatchEvent(new CustomEvent("textArea -> caret", {
       detail: {
         left: focusedCharacter.left - editor.left,
         top: focusedCharacter.top - editor.top
@@ -178,104 +214,11 @@ const TextArea = class {
       active: this.focusedRowIndex !== null && !this.selectionRange.length
     };
     if (detailOfDecorationUnderline.active) {
-      detailOfDecorationUnderline.top = this.textLines[this.focusedRowIndex].getBoundingClientRect().top - this.otherEditorComponents.editor.getBoundingClientRect().top;
+      detailOfDecorationUnderline.top = this.textLines[this.focusedRowIndex].getBoundingClientRect().top - this.editor.getBoundingClientRect().top;
       detailOfDecorationUnderline.width = this.textArea.clientWidth;
     }
-    this.otherEditorComponents.editor.dispatchEvent(new CustomEvent("textArea -> decorationUnderline", {
+    this.editor.dispatchEvent(new CustomEvent("textArea -> decorationUnderline", {
       detail: detailOfDecorationUnderline
-    }));
-
-    if (eventName === "keydownCaret-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousedownHorizontalScrollbarArea-textArea") {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousedownLineNumberArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousedownTextArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousedownVirticalScrollbarArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousemoveEditor-horizontalScrollbarArea-textArea") {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousemoveEditor-lineNumberArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousemoveEditor-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "mousemoveEditor-virticalScrollbarArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "resizeEditor-textArea") {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "resizeVirticalScrollbarArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "wheelHorizontalScrollbarArea-textArea") {
-      this.dispatchIntoHorizontalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "wheelLineNumberArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "wheelTextArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-    if (eventName === "wheelVirticalScrollbarArea-textArea") {
-      this.dispatchIntoVirticalScrollbarArea(eventName);
-      return;
-    }
-  };
-
-  /**
-   * 水平方向のスクロールバー領域に文字領域の状態を通知します。
-   * @param {string} eventName イベント名です。
-   */
-  dispatchIntoHorizontalScrollbarArea = (eventName) => {
-    this.otherEditorComponents.horizontalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
-      detail: {
-        clientWidth: this.textArea.clientWidth,
-        scrollWidth: this.textArea.scrollWidth,
-        scrollLeft: this.textArea.scrollLeft
-      }
-    }));
-  };
-
-  /**
-   * 垂直方向のスクロールバー領域に文字領域の状態を通知します。
-   * @param {string} eventName イベント名です。
-   */
-  dispatchIntoVirticalScrollbarArea = (eventName) => {
-    this.otherEditorComponents.virticalScrollbarArea.dispatchEvent(new CustomEvent(eventName, {
-      detail: {
-        clientHeight: this.textArea.clientHeight,
-        scrollHeight: this.textArea.scrollHeight,
-        scrollTop: this.textArea.scrollTop
-      }
     }));
   };
 
@@ -765,8 +708,41 @@ const TextArea = class {
       this.dispatchEvents("mousedownTextArea");
     });
 
+    // マウスホイールが操作されたのでスクロール処理を実行します。
+    this.textArea.addEventListener("wheel", (event) => {
+      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 3;
+      this.textArea.scrollTop += scrollSize;
+      this.dispatchEvents("wheelTextArea");
+    });
+
+    // ウィンドウからの通知です。
+    this.textArea.addEventListener("window -> textArea", () => {
+      this.isDragging = false;
+    });
+
+    // エディター本体からの通知です。
+    this.editor.addEventListener("editor -> textArea", (event) => {
+      if (event.detail.target && event.detail.targetParent) {
+        if (!this.isDragging) {
+          return;
+        }
+        if (!this.updateFocusIndexByDragTarget(event.detail.target, event.detail.targetParent)) {
+          return;
+        }
+        this.scrollAutomatically();
+        this.dispatchEvents("mousemoveEditor-textArea");
+        return;
+      }
+
+      const editorWidth = editor.getBoundingClientRect().width;
+      const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
+      const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
+      this.textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
+      this.dispatchEvents("resizeEditor-textArea");
+    });
+
     // 行番号領域からの通知です。
-    this.otherEditorComponents.editor.addEventListener("lineNumberArea -> textArea", (event) => {
+    this.editor.addEventListener("lineNumberArea -> textArea", (event) => {
 
       // 行番号のどこかがクリックされたので、押された行番号に対応した行を範囲選択して次行の先頭までフォーカスを移動します。
       // 次行がない場合は末尾文字で止まります。
@@ -779,7 +755,7 @@ const TextArea = class {
         this.dispatchEvents("mousedownLineNumberArea-textArea");
         return;
       }
-      
+
       // 行番号領域でドラッグ操作されました。
       if (event.detail.mousemoveIndex) {
         while (event.detail.mousemoveIndex < this.focusedRowIndex - 1) {
@@ -794,8 +770,40 @@ const TextArea = class {
       }
     });
 
+    // 垂直スクロールバー領域からの通知です。
+    this.editor.addEventListener("virticalScrollbarArea -> textArea", (event) => {
+
+      // event.detail.scrollSizeプロパティがあるときは、同領域の余白がクリックされてスクロールが発生したことを意味します。
+      if (event.detail.scrollSize) {
+        this.textArea.scrollTop += event.detail.scrollSize;
+      }
+
+      // event.detail.scrollRatioプロパティがあるときは、ドラッグ操作によるスクロールが行われたことを意味します。
+      if (event.detail.scrollRatio) {
+        this.textArea.scrollTop += this.textArea.scrollHeight * event.detail.scrollRatio;
+      }
+
+      this.dispatchEvents("resizeVirticalScrollbarArea-textArea");
+    });
+
+    // 水平スクロールバー領域からの通知です。
+    this.editor.addEventListener("horizontalScrollbarArea -> textArea", (event) => {
+
+      // event.detail.scrollSizeプロパティがあるときは、同領域の余白がクリックされてスクロールが発生したことを意味します。
+      if (event.detail.scrollSize) {
+        this.textArea.scrollTop += event.detail.scrollSize;
+      }
+
+      // event.detail.scrollRatioプロパティがあるときは、ドラッグ操作によるスクロールが行われたことを意味します。
+      if (event.detail.scrollRatio) {
+        this.textArea.scrollTop += this.textArea.scrollHeight * event.detail.scrollRatio;
+      }
+
+      this.dispatchEvents("mousedownHorizontalScrollbarArea-textArea");
+    });
+
     // キャレットからの通知です。
-    this.otherEditorComponents.editor.addEventListener("caret -> textArea", (event) => {
+    this.editor.addEventListener("caret -> textArea", (event) => {
 
       // キャレットがblurしたときの処理です。
       // 範囲選択を解除するとともにフォーカス位置情報を消去します。
@@ -818,91 +826,7 @@ const TextArea = class {
       this.dispatchEvents("keydownCaret-textArea");
     });
 
-    // 水平方向のスクロールバー領域の余白部分がクリックされましたので、
-    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
-    this.textArea.addEventListener("mousedownHorizontalScrollbarArea", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize;
-      this.dispatchEvents("mousedownHorizontalScrollbarArea-textArea");
-    });
 
-
-
-
-    // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、
-    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
-    this.textArea.addEventListener("mousedownVirticalScrollbarArea", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize;
-      this.dispatchEvents("mousedownVirticalScrollbarArea-textArea");
-    });
-
-    // エディター上でmousemoveイベントが検知されましたので、
-    this.textArea.addEventListener("mousemoveEditor", (event) => {
-      if (!this.isDragging) {
-        return;
-      }
-      if (!this.updateFocusIndexByDragTarget(event.detail.target, event.detail.targetParent)) {
-        return;
-      }
-      this.scrollAutomatically();
-      this.dispatchEvents("mousemoveEditor-textArea");
-    });
-
-    // 水平方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
-    this.textArea.addEventListener("mousemoveEditor-horizontalScrollbarArea", (event) => {
-      this.textArea.scrollLeft += this.textArea.scrollWidth * event.detail.scrollRatio;
-      this.dispatchEvents("mousemoveEditor-horizontalScrollbarArea-textArea");
-    });
-
-    // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
-    this.textArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
-      this.textArea.scrollTop += this.textArea.scrollHeight * event.detail.scrollRatio;
-      this.dispatchEvents("mousemoveEditor-virticalScrollbarArea-textArea");
-    });
-
-    // エディター上でmouseupイベントが検知されたときはマウスドラッグ処理を停止します。
-    this.textArea.addEventListener("mouseupWindow", () => {
-      this.isDragging = false;
-    });
-
-    // エディターの横幅が変更されたので文字領域の横幅も合わせて変更します。
-    this.textArea.addEventListener("resizeEditor", () => {
-      const editorWidth = editor.getBoundingClientRect().width;
-      const lineNumberAreaWidth = lineNumberArea.getBoundingClientRect().width + parseFloat(getComputedStyle(lineNumberArea).marginRight);
-      const virticalScrollbarAreaWidth = virticalScrollbarArea.getBoundingClientRect().width + parseFloat(getComputedStyle(virticalScrollbarArea).borderLeftWidth);
-      this.textArea.style.maxWidth = `${editorWidth - lineNumberAreaWidth - virticalScrollbarAreaWidth}px`;
-      this.dispatchEvents("resizeEditor-textArea");
-    });
-
-    // エディターの縦幅が変更されたので――垂直方向のスクロールバー領域の縦幅が変更されたので、
-    // 変更後の当領域の寸法やスクロール量をスクロールバー領域に返します。
-    this.textArea.addEventListener("resizeVirticalScrollbarArea", () => {
-      this.dispatchEvents("resizeVirticalScrollbarArea-textArea");
-    });
-
-    // マウスホイールが操作されたのでスクロール処理を実行します。
-    this.textArea.addEventListener("wheel", (event) => {
-      const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(editor).fontSize) * 3;
-      this.textArea.scrollTop += scrollSize;
-      this.dispatchEvents("wheelTextArea");
-    });
-
-    // 水平方向のスクロールバー領域上でマウスホイールが操作されましたので、文字領域をスクロールします。
-    this.textArea.addEventListener("wheelHorizontalScrollbarArea", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize;
-      this.dispatchEvents("wheelHorizontalScrollbarArea-textArea");
-    });
-
-    // 行番号領域上でマウスホイールが操作されましたので、文字領域をスクロールします。
-    this.textArea.addEventListener("wheelLineNumberArea", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize;
-      this.dispatchEvents("wheelLineNumberArea-textArea");
-    });
-
-    // 垂直方向のスクロールバー領域上でマウスホイールが操作されましたので、文字領域をスクロールします。
-    this.textArea.addEventListener("wheelVirticalScrollbarArea", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize;
-      this.dispatchEvents("wheelVirticalScrollbarArea-textArea");
-    });
   };
 
   /**

@@ -10,7 +10,7 @@ const DecorationUnderline = class {
     this.editor = editor;
     this.decorationUnderline = this.createDecorationUnderline(left);
     this.editor.appendChild(this.decorationUnderline);
-    this.setEventListeners();
+    // this.setEventListeners();
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */

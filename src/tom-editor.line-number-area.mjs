@@ -28,7 +28,7 @@ const LineNumberArea = class {
     const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
     this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
 
-    this.setEventListeners();
+    // this.setEventListeners();
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -118,9 +118,8 @@ const LineNumberArea = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} textArea 文字領域です
    */
-  setEventListeners = (textArea) => {
+  setEventListeners = () => {
 
     // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
     // また、ドラッグフラグを起動します。
@@ -139,7 +138,7 @@ const LineNumberArea = class {
     this.lineNumberArea.addEventListener("wheel", (event) => {
       const scrollSize = Math.sign(event.deltaY) * parseFloat(getComputedStyle(this.lineNumberArea).fontSize) * 3;
       this.lineNumberArea.scrollTop += scrollSize;
-      textArea.dispatchEvent(new CustomEvent("wheelLineNumberArea", {
+      this.editor.dispatchEvent(new CustomEvent("lineNumberArea -> textArea", {
         detail: {
           scrollSize: scrollSize
         }
