@@ -10,40 +10,53 @@ const LineNumberArea = class {
    * @param {HTMLDivElement} editor エディター本体です。
    */
   constructor(editor) {
-    this.lineNumberArea = this.createLineNumberArea(editor);
-    editor.appendChild(this.lineNumberArea);
+    this.editor = editor;
+    this.lineNumberArea = this.createLineNumberArea();
+    this.editor.appendChild(this.lineNumberArea);
     this.appendLineNumber();
 
     // 行番号領域の横幅を求めます。
     // 横幅は「半角英数字の横幅 * 表示する桁数 + 行番号のpadding-rightプロパティの値」とします。
-
-    // 半角英数字の横幅を求めます。
+    // 表示する桁数ですがそのまま指定するとエディターの縁との隙間がほとんどないので少し余裕をもたせます。
     const temporaryElement = document.createElement("span");
     temporaryElement.innerHTML = "0";
-    editor.appendChild(temporaryElement);
-    const alphanumericWidth = temporaryElement.getBoundingClientRect().width;
+    temporaryElement.style.display = "inline-block";
+    this.lineNumberArea.appendChild(temporaryElement);
+    const alphanumericWidth = temporaryElement.clientWidth;
     temporaryElement.remove();
-
-    // 表示する桁数です。
-    // 横幅は表示桁数分の横幅に0.5文字分の横幅を加えることで視覚的に少し余裕をもたせます。
     const maximumNumberOfDigits = 4.5;
-
-    // 行番号のpadding-rightプロパティの値です。
     const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
-
     this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
+
+    this.setEventListeners();
   }
 
-  /** @type {number} フォーカスしている行番号を指すインデックスです。 */
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    lineNumber: {
+      element: "tom-editor__line-number-area__line-number",
+      modifier: {
+        focus: "tom-editor__line-number-area__line-number--focus"
+      }
+    },
+    lineNumberArea: {
+      element: "tom-editor__line-number-area"
+    }
+  };
+
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
+
+  /** @type {null|number} フォーカスしている行番号を指すインデックスです。 */
   focusedLineNumberIndex = null;
 
   /** @type {null|number} ドラッグ処理で最後に参照した行のインデックス値が入ります。 */
   lastDragedIndex = null;
 
   /** @type {HTMLDivElement} 行番号領域です */
-  lineNumberArea = null;
+  lineNumberArea;
 
-  /** @type {Array<HTMLDivElement>} 現在Webページに挿入されている行番号の数です。 */
+  /** @type {Array<HTMLDivElement>} 現在Webページに挿入されている行番号です。 */
   lineNumbers = [];
 
   /**
@@ -81,7 +94,7 @@ const LineNumberArea = class {
    */
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
-    lineNumber.classList.add("tom-editor__line-number-area__line-number");
+    lineNumber.classList.add(this.CSSClass.lineNumber.element);
     lineNumber.innerHTML = this.lineNumbers.length + 1;
     return lineNumber;
   };
@@ -92,7 +105,7 @@ const LineNumberArea = class {
    */
   createLineNumberArea = () => {
     const lineNumberArea = document.createElement("div");
-    lineNumberArea.classList.add("tom-editor__line-number-area");
+    lineNumberArea.classList.add(this.CSSClass.lineNumberArea.element);
     return lineNumberArea;
   };
 
@@ -109,9 +122,9 @@ const LineNumberArea = class {
    */
   setEventListeners = (textArea) => {
 
-    // キャレットのフォーカスが外れたので、フォーカス状態を消去します。
-    this.lineNumberArea.addEventListener("blurCaret", () => {
-      this.updateFocusLineNumber(null);
+    // キャレットからの通知です。
+    this.editor.addEventListener("caret -> lineNumberArea", (event) => {
+      this.updateFocusLineNumber(event.detail.index);
     });
 
     // キャレットに入力されたキーによって文字領域の状態が変化したので、
@@ -224,17 +237,28 @@ const LineNumberArea = class {
 
   /**
    * 行番号のフォーカス状態を更新します。
-   * @param {null|number} newIndex フォーカスする行番号を指すインデックスです。
+   * @param {null|number} index フォーカスする行番号を指すインデックスです。
    */
-  updateFocusLineNumber = (newIndex) => {
-    if (this.focusedLineNumberIndex !== null && this.lineNumbers[this.focusedLineNumberIndex]) {
-      this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
-    }
-    this.focusedLineNumberIndex = newIndex;
-    if (newIndex === null) {
+  updateFocusLineNumber = (index) => {
+
+    // 引数にnullが指定されているということはフォーカスする行番号がないということなので、フォーカス状態を解除します。
+    if (index === null) {
+      if (this.lineNumbers[this.focusedLineNumberIndex].classList.contains(this.CSSClass.lineNumber.modifier.focus)) {
+        this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
+      }
       return;
     }
-    this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
+
+    // 引数で指定された行番号とフォーカスしている行番号が同じ場合は、何もすることがないので処理から抜けます。
+    if (index === this.focusedLineNumberIndex) {
+      return;
+    }
+
+    if (this.focusedLineNumberIndex !== null) {
+      this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
+    }
+    this.focusedLineNumberIndex = index;
+    this.lineNumbers[this.focusedLineNumberIndex].classList.add(this.CSSClass.lineNumber.modifier.focus);
   };
 };
 

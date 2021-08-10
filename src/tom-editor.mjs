@@ -68,7 +68,6 @@ const TOMEditor = class {
     );
     virticalScrollbarArea.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
     horizontalScrollbarArea.setEventListeners(textArea.textArea);
-    caret.setEventListeners(lineNumberArea.lineNumberArea, textArea.textArea);
   };
 
   /** @type {number} 最後に検知されたエディターの横幅です。 */

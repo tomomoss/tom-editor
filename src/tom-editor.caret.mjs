@@ -2,20 +2,32 @@
 
 /**
  * キャレットです。
+ * @param {HTMLDivElement} editor エディター本体です。
  */
 const Caret = class {
-
-  /**
-   * キャレットを初期化します。
-   * @param {HTMLDivElement} editor エディター本体です。
-   */
   constructor(editor) {
+    this.editor = editor;
     this.caret = this.createCaret();
-    editor.appendChild(this.caret);
+    this.editor.appendChild(this.caret);
+    this.setEventListeners();
   }
 
   /** @type {HTMLDivElement} キャレットです。 */
-  caret = null;
+  caret;
+
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    caret: {
+      element: "tom-editor__caret",
+      modifier: {
+        active: "tom-editor__caret--active",
+        focus: "tom-editor__caret--focus"
+      }
+    }
+  };
+
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
 
   /**
    * キャレットを生成します。
@@ -23,25 +35,29 @@ const Caret = class {
    */
   createCaret = () => {
     const caret = document.createElement("textarea");
-    caret.classList.add("tom-editor__caret");
+    caret.classList.add(this.CSSClass.caret.element);
     return caret;
   };
 
   /**
    * キャレットの配置処理です。
-   * @param {number} positionLeft 水平座標です。
-   * @param {number} positionTop 垂直座標です。
+   * @param {number} left 水平座標です。
+   * @param {number} top 垂直座標です。
    */
-  putCaret = (positionLeft, positionTop) => {
-    this.caret.classList.add("tom-editor__caret--focus");
-    this.caret.style.left = `${positionLeft}px`;
-    this.caret.style.top = `${positionTop}px`;
+  putCaret = (left, top) => {
+    this.caret.classList.add(this.CSSClass.caret.modifier.focus);
+    this.caret.style.left = `${left}px`;
+    this.caret.style.top = `${top}px`;
     this.caret.focus();
 
-    // クラスの付け替えによるkeyframesの再実行のために非同期処理にして少しずらしています。
-    this.caret.classList.remove("tom-editor__caret--active");
+    // キャレットの点滅処理はCSSのKeyframe Animationで実装しており、
+    // 当該CSSクラスを適用した瞬間にアニメーションが再生されるようになっています。
+    // アニメーションはキャレットに何らかの有効なキー入力があるたびにイチから再生される必要がありますが、
+    // 普通にクラスを付けても再生中のアニメーションはそのときの状態のまま流れつづけてしまいます。
+    // そこで、非同期処理にするとともに0.05sほど遅延させることで上記の想定どおりの挙動を実現しています。
+    this.caret.classList.remove(this.CSSClass.caret.modifier.active);
     setTimeout(() => {
-      this.caret.classList.add("tom-editor__caret--active");
+      this.caret.classList.add(this.CSSClass.caret.modifier.active);
     }, 50);
   };
 
@@ -49,34 +65,47 @@ const Caret = class {
    * キャレットの除外処理です。
    */
   takeCaret = () => {
-    this.caret.classList.remove("tom-editor__caret--active", "tom-editor__caret--focus");
+    this.caret.classList.remove(this.CSSClass.caret.modifier.active, this.CSSClass.caret.modifier.focus);
   };
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} textArea 文字領域です。
    */
-  setEventListeners = (lineNumberArea, textArea) => {
+  setEventListeners = () => {
 
     // キャレットからフォーカスが外れたときは、キャレットを見えなくします。
     // その後、フォーカスが外れた旨を文字領域と行番号領域に通知します。
     this.caret.addEventListener("blur", () => {
       this.takeCaret();
-      textArea.dispatchEvent(new CustomEvent("blurCaret"));
-      lineNumberArea.dispatchEvent(new CustomEvent("blurCaret"));
+      this.editor.dispatchEvent(new CustomEvent("caret -> lineNumberArea", {
+        detail: {
+          index: null
+        }
+      }));
+      this.editor.dispatchEvent(new CustomEvent("caret -> textArea", {
+        detail: {
+          blur: true
+        }
+      }));
     });
 
     // キー入力を検知したら、文字領域に押されたキー情報を通知します。
     this.caret.addEventListener("keydown", (event) => {
+
+      // Tabキーによるフォーカス位置の変更とか、CtrlキーとF5キー同時押しによるスーパーリロードとか、
+      // そういったkeydownイベントの標準処理が走らないようにしておきます。 
       event.preventDefault();
+
+      // CtrlキーとShiftキーが押されたときは何もせずに処理から抜けます。
+      // なぜなら上記キーが押しっぱなしになっているかどうかはeventオブジェクトから参照できるためで、
+      // 上記キーが押されただけでは何もできることがないためです。
       if (event.key === "Ctrl") {
         return;
       }
       if (event.key === "Shift") {
         return;
       }
-      textArea.dispatchEvent(new CustomEvent("keydownCaret", {
+      this.editor.dispatchEvent(new CustomEvent("caret -> textArea", {
         detail: {
           ctrlKey: event.ctrlKey,
           key: event.key,
@@ -85,80 +114,8 @@ const Caret = class {
       }));
     });
 
-    // 文字領域に送信したkeydownイベントによって文字領域の内容に変化があったので、
-    // 変化後のフォーカス位置にキャレットを動かします。
-    this.caret.addEventListener("keydownCaret-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 文字領域のどこかがクリックされてフォーカス位置が更新されたので、
-    // 更新後のフォーカス位置にキャレットを動かします。
-    this.caret.addEventListener("mousedownTextArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 水平方向のスクロールバー領域の余白がクリックされたことによるスクロール処理が実行されたので、
-    // 実行後のフォーカス位置にキャレットを動かします。
-    this.caret.addEventListener("mousedownHorizontalScrollbarArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 行番号領域がクリックされたことで1行範囲選択処理が実行されたので、
-    // 実行後のフォーカス位置にキャレットを動かします。
-    this.caret.addEventListener("mousedownLineNumberArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 垂直方向のスクロールバー領域の余白がクリックされたことによるスクロール処理が実行されたので、
-    // 実行後のフォーカス位置にキャレットを動かします。
-    this.caret.addEventListener("mousedownVirticalScrollbarArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    //
-    this.caret.addEventListener("mousemoveEditor-lineNumberArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 文字領域でドラッグ操作が実行されたことでフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("mousemoveEditor-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 水平方向のスクロールバーのドラッグ移動処理が実行されてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("mousemoveEditor-horizontalScrollbarArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 垂直方向のスクロールバーのドラッグ移動処理が実行されてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("mousemoveEditor-virticalScrollbarArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 水平方向のスクロールバー領域でマウスホイールが操作されてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("wheelHorizontalScrollbarArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 行番号領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("wheelLineNumberArea-textArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 文字領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("wheelTextArea", (event) => {
-      this.putCaret(event.detail.left, event.detail.top);
-    });
-
-    // 垂直方向のスクロールバー領域上でマウスホイールが動かされてフォーカス位置の座標が変化したので、
-    // 変化後の座標にキャレットを動かします。
-    this.caret.addEventListener("wheelVirticalScrollbarArea-textArea", (event) => {
+    // 文字領域からの通知です。
+    this.editor.addEventListener("textArea -> caret", (event) => {
       this.putCaret(event.detail.left, event.detail.top);
     });
   };
