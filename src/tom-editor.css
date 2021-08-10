@@ -81,6 +81,9 @@
   color: rgb(204, 204, 204);
   padding: 0 2rem 0 0;
 }
+.tom-editor__line-number-area__line-number:not(.tom-editor__line-number-area__line-number--focus):hover {
+  color: rgb(153, 153, 153);
+}
 .tom-editor__line-number-area__line-number:last-of-type {
   height: 100%;
 }

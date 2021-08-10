@@ -122,95 +122,17 @@ const LineNumberArea = class {
    */
   setEventListeners = (textArea) => {
 
-    // キャレットからの通知です。
-    this.editor.addEventListener("caret -> lineNumberArea", (event) => {
-      this.updateFocusLineNumber(event.detail.index);
-    });
-
-    // キャレットに入力されたキーによって文字領域の状態が変化したので、
-    // 変化後のフォーカス状態にあわせて強調する行番号を更新します。
-    this.lineNumberArea.addEventListener("keydownCaret-textArea", (event) => {
-      this.adjustNumberOfLineNumbers(event.detail.length);
-      this.updateFocusLineNumber(event.detail.index);
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
     // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
     // また、ドラッグフラグを起動します。
     this.lineNumberArea.addEventListener("mousedown", (event) => {
       this.lastDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
         return lineNumber === event.target;
       });
-      textArea.dispatchEvent(new CustomEvent("mousedownLineNumberArea", {
+      this.editor.dispatchEvent(new CustomEvent("lineNumberArea -> textArea", {
         detail: {
-          index: this.lineNumbers.findIndex((lineNumber) => {
-            return lineNumber === event.target;
-          })
+          mousedownIndex: this.lastDragedIndex
         }
       }));
-    });
-
-    // 行番号がクリックされて1行範囲選択処理が実行されたので、
-    // 更新後のフォーカス状態にあわせて強調する行番号を更新します。
-    this.lineNumberArea.addEventListener("mousedownLineNumberArea-textArea", (event) => {
-      this.adjustNumberOfLineNumbers(event.detail.length);
-      this.updateFocusLineNumber(event.detail.index);
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
-    // 文字領域のどこかがクリックされてフォーカス位置が更新されたので、
-    // 更新後のフォーカス状態にあわせて強調する行番号を更新します。
-    this.lineNumberArea.addEventListener("mousedownTextArea", (event) => {
-      this.adjustNumberOfLineNumbers(event.detail.length);
-      this.updateFocusLineNumber(event.detail.index);
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
-    // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、
-    // マウスホイール操作処理と同様に一定量のスクロールを実施します。
-    this.lineNumberArea.addEventListener("mousedownVirticalScrollbarArea", (event) => {
-      this.lineNumberArea.scrollTop += event.detail.scrollSize;
-    });
-
-    //
-    this.lineNumberArea.addEventListener("mousemoveEditor", (event) => {
-      if (this.lastDragedIndex === null || !event.detail.target.classList.contains("tom-editor__line-number-area__line-number")) {
-        return;
-      }
-      const targetIndex = this.lineNumbers.findIndex((lineNumber) => {
-        return lineNumber === event.detail.target;
-      });
-      if (targetIndex === this.lastDragedIndex) {
-        return;
-      }
-      textArea.dispatchEvent(new CustomEvent("mousemoveEditor-lineNumberArea", {
-        detail: {
-          index: targetIndex
-        }
-      }));
-    });
-
-    //
-    this.lineNumberArea.addEventListener("mousemoveEditor-lineNumberArea-textArea", (event) => {
-      this.updateFocusLineNumber(event.detail.index);
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
-    // 文字領域でドラッグ操作が実行されてフォーカス位置とスクロール量が更新されましたので、
-    // こちらもフォーカスする行番号とスクロール量を更新します。
-    this.lineNumberArea.addEventListener("mousemoveEditor-textArea", (event) => {
-      this.updateFocusLineNumber(event.detail.index);
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
-    // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。
-    this.lineNumberArea.addEventListener("mousemoveEditor-virticalScrollbarArea", (event) => {
-      this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;
-    });
-
-    //
-    this.lineNumberArea.addEventListener("mouseupWindow", () => {
-      this.lastDragedIndex = null;
     });
 
     // 行番号領域上でマウスホイールが操作されたのでスクロール処理を実行します。
@@ -224,14 +146,59 @@ const LineNumberArea = class {
       }));
     });
 
-    // 文字領域上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
-    this.lineNumberArea.addEventListener("wheelTextArea", (event) => {
+    // エディター本体からの通知です。
+    this.editor.addEventListener("editor -> lineNumberArea", (event) => {
+
+      // ドラッグ操作による範囲選択処理以外では後続の処理は走りません。
+      if (this.lastDragedIndex === null || !event.detail.target.classList.contains(this.CSSClass.lineNumber.element)) {
+        return;
+      }
+
+      // mousemoveイベントが発生した対象を求めます。
+      // 最後に発生した対象と同じであればすることがないので処理から抜けます。
+      const targetIndex = this.lineNumbers.findIndex((lineNumber) => {
+        return lineNumber === event.detail.target;
+      });
+      if (targetIndex === this.lastDragedIndex) {
+        return;
+      }
+
+      this.editor.dispatchEvent(new CustomEvent("lineNumberArea -> textArea", {
+        detail: {
+          mousemoveIndex: targetIndex
+        }
+      }));
+    });
+
+    // 文字領域からの通知です。
+    this.editor.addEventListener("textArea -> lineNumberArea", (event) => {
+      this.adjustNumberOfLineNumbers(event.detail.length);
+      this.updateFocusLineNumber(event.detail.index);
       this.lineNumberArea.scrollTop = event.detail.scrollTop;
     });
 
-    // 垂直方向のスクロールバー領域上でマウスホイールが回転されましたので、回転方向に合わせて行番号領域をスクロールします。
-    this.lineNumberArea.addEventListener("wheelVirticalScrollbarArea", (event) => {
-      this.lineNumberArea.scrollTop += event.detail.scrollSize;
+    // 垂直スクロールバー領域からの通知です。
+    this.editor.addEventListener("virticalScrollbarArea -> lineNumberArea", (event) => {
+
+      // event.detail.scrollSizeプロパティがあるときは、同領域の余白がクリックされてスクロールが発生したことを意味します。
+      if (event.detail.scrollSize) {
+        this.lineNumberArea.scrollTop += event.detail.scrollSize;
+      }
+
+      // event.detail.scrollRatioプロパティがあるときは、ドラッグ操作によるスクロールが行われたことを意味します。
+      if (event.detail.scrollRatio) {
+        this.lineNumberArea.scrollTop += this.lineNumberArea.scrollHeight * event.detail.scrollRatio;
+      }
+    });
+
+    // キャレットからの通知です。
+    this.editor.addEventListener("caret -> lineNumberArea", (event) => {
+      this.updateFocusLineNumber(event.detail.index);
+    });
+
+    // windowオブジェクトからの通知です。
+    this.editor.addEventListener("window -> lineNumberArea", () => {
+      this.lastDragedIndex = null;
     });
   };
 
@@ -243,6 +210,9 @@ const LineNumberArea = class {
 
     // 引数にnullが指定されているということはフォーカスする行番号がないということなので、フォーカス状態を解除します。
     if (index === null) {
+      if (this.focusedLineNumberIndex === null) {
+        return;
+      }
       if (this.lineNumbers[this.focusedLineNumberIndex].classList.contains(this.CSSClass.lineNumber.modifier.focus)) {
         this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
       }

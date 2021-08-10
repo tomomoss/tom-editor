@@ -151,6 +151,15 @@ const TextArea = class {
    */
   dispatchEvents = (eventName) => {
 
+    // 行番号領域へ通知します。
+    this.otherEditorComponents.editor.dispatchEvent(new CustomEvent("textArea -> lineNumberArea", {
+      detail: {
+        index: this.focusedRowIndex,
+        length: this.textLines.length,
+        scrollTop: this.textArea.scrollTop
+      }
+    }));
+
     // キャレットへ通知します。
     if (this.getFocusedCharacter() === null) {
       return;
@@ -177,7 +186,6 @@ const TextArea = class {
     }));
 
     if (eventName === "keydownCaret-textArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       return;
@@ -187,13 +195,11 @@ const TextArea = class {
       return;
     }
     if (eventName === "mousedownLineNumberArea-textArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       return;
     }
     if (eventName === "mousedownTextArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       return;
@@ -207,12 +213,10 @@ const TextArea = class {
       return;
     }
     if (eventName === "mousemoveEditor-lineNumberArea-textArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-textArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       return;
@@ -238,7 +242,6 @@ const TextArea = class {
       return;
     }
     if (eventName === "wheelTextArea") {
-      this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       return;
     }
@@ -258,20 +261,6 @@ const TextArea = class {
         clientWidth: this.textArea.clientWidth,
         scrollWidth: this.textArea.scrollWidth,
         scrollLeft: this.textArea.scrollLeft
-      }
-    }));
-  };
-
-  /**
-   * 行番号領域に文字領域の状態を通知します。
-   * @param {string} eventName イベント名です。
-   */
-  dispatchIntoLineNumberArea = (eventName) => {
-    this.otherEditorComponents.lineNumberArea.dispatchEvent(new CustomEvent(eventName, {
-      detail: {
-        index: this.focusedRowIndex,
-        length: this.textLines.length,
-        scrollTop: this.textArea.scrollTop
       }
     }));
   };
@@ -764,6 +753,47 @@ const TextArea = class {
       virticalScrollbarArea: virticalScrollbarArea
     };
 
+    // 文字領域のどこかをクリックされたときの処理です。
+    // 押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除し、
+    // windowオブジェクトでmouseupイベントが発生するまでドラッグ処理のフラグを立ち上げます。
+    // その後、行番号領域とキャレットにフォーカス情報を通知します。
+    this.textArea.addEventListener("mousedown", (event) => {
+      this.isDragging = true;
+      this.unselctRange();
+      this.updateFocusIndexByMousedownTarget(event);
+      this.scrollAutomatically();
+      this.dispatchEvents("mousedownTextArea");
+    });
+
+    // 行番号領域からの通知です。
+    this.otherEditorComponents.editor.addEventListener("lineNumberArea -> textArea", (event) => {
+
+      // 行番号のどこかがクリックされたので、押された行番号に対応した行を範囲選択して次行の先頭までフォーカスを移動します。
+      // 次行がない場合は末尾文字で止まります。
+      if (event.detail.mousedownIndex) {
+        this.unselctRange();
+        this.focusedRowIndex = event.detail.mousedownIndex;
+        this.focusedColumnIndex = 0;
+        this.moveFocusPointByArrowKey("ArrowDown", true);
+        this.scrollAutomatically();
+        this.dispatchEvents("mousedownLineNumberArea-textArea");
+        return;
+      }
+      
+      // 行番号領域でドラッグ操作されました。
+      if (event.detail.mousemoveIndex) {
+        while (event.detail.mousemoveIndex < this.focusedRowIndex - 1) {
+          this.moveFocusPointByArrowKey("ArrowUp", true);
+        }
+        while (event.detail.mousemoveIndex > this.focusedRowIndex - 1) {
+          this.moveFocusPointByArrowKey("ArrowDown", true);
+        }
+        this.scrollAutomatically();
+        this.dispatchEvents("mousemoveEditor-lineNumberArea-textArea");
+        return;
+      }
+    });
+
     // キャレットからの通知です。
     this.otherEditorComponents.editor.addEventListener("caret -> textArea", (event) => {
 
@@ -788,18 +818,6 @@ const TextArea = class {
       this.dispatchEvents("keydownCaret-textArea");
     });
 
-    // 文字領域のどこかをクリックされたときの処理です。
-    // 押された場所に応じてフォーカス位置を更新するとともに範囲選択状態を解除し、
-    // windowオブジェクトでmouseupイベントが発生するまでドラッグ処理のフラグを立ち上げます。
-    // その後、行番号領域とキャレットにフォーカス情報を通知します。
-    this.textArea.addEventListener("mousedown", (event) => {
-      this.isDragging = true;
-      this.unselctRange();
-      this.updateFocusIndexByMousedownTarget(event);
-      this.scrollAutomatically();
-      this.dispatchEvents("mousedownTextArea");
-    });
-
     // 水平方向のスクロールバー領域の余白部分がクリックされましたので、
     // マウスホイール操作処理と同様に一定量のスクロールを実施します。
     this.textArea.addEventListener("mousedownHorizontalScrollbarArea", (event) => {
@@ -807,16 +825,8 @@ const TextArea = class {
       this.dispatchEvents("mousedownHorizontalScrollbarArea-textArea");
     });
 
-    // 行番号領域のどこかがクリックされたときは、押された行番号に対応した行を範囲選択して次行の先頭にフォーカスを移動します。
-    // 次行がない場合は末尾文字で止まります。
-    this.textArea.addEventListener("mousedownLineNumberArea", (event) => {
-      this.unselctRange();
-      this.focusedRowIndex = event.detail.index;
-      this.focusedColumnIndex = 0;
-      this.moveFocusPointByArrowKey("ArrowDown", true);
-      this.scrollAutomatically();
-      this.dispatchEvents("mousedownLineNumberArea-textArea");
-    });
+
+
 
     // 垂直方向のスクロールバー領域の余白部分がクリックされましたので、
     // マウスホイール操作処理と同様に一定量のスクロールを実施します。
@@ -841,18 +851,6 @@ const TextArea = class {
     this.textArea.addEventListener("mousemoveEditor-horizontalScrollbarArea", (event) => {
       this.textArea.scrollLeft += this.textArea.scrollWidth * event.detail.scrollRatio;
       this.dispatchEvents("mousemoveEditor-horizontalScrollbarArea-textArea");
-    });
-
-    //
-    this.textArea.addEventListener("mousemoveEditor-lineNumberArea", (event) => {
-      while (event.detail.index < this.focusedRowIndex - 1) {
-        this.moveFocusPointByArrowKey("ArrowUp", true);
-      }
-      while (event.detail.index > this.focusedRowIndex - 1) {
-        this.moveFocusPointByArrowKey("ArrowDown", true);
-      }
-      this.scrollAutomatically();
-      this.dispatchEvents("mousemoveEditor-lineNumberArea-textArea");
     });
 
     // 垂直方向のスクロールバーがドラッグ移動されましたので、移動したぶんだけスクロールします。

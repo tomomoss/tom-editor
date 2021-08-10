@@ -115,7 +115,7 @@ const TOMEditor = class {
 
     // 他要素にmousemoveイベントが発生したことを通知するだけの役割です。
     editor.addEventListener("mousemove", (event) => {
-      lineNumberArea.dispatchEvent(new CustomEvent("mousemoveEditor", {
+      editor.dispatchEvent(new CustomEvent("editor -> lineNumberArea", {
         detail: {
           target: event.target
         }
@@ -140,7 +140,7 @@ const TOMEditor = class {
 
     // 他要素にmouseupイベントが発生したことを通知するだけの役割です。
     window.addEventListener("mouseup", () => {
-      lineNumberArea.dispatchEvent(new CustomEvent("mouseupWindow"));
+      editor.dispatchEvent(new CustomEvent("window -> lineNumberArea"));
       textArea.dispatchEvent(new CustomEvent("mouseupWindow"));
       virticalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
       horizontalScrollbarArea.dispatchEvent(new CustomEvent("mouseupWindow"));
