@@ -150,12 +150,24 @@ const TextArea = class {
    * @param {string} eventName イベント名です。
    */
   dispatchEvents = (eventName) => {
+
+    // 装飾下線へ通知します。
+    const detailOfDecorationUnderline = {
+      active: this.focusedRowIndex !== null && !this.selectionRange.length
+    };
+    if (detailOfDecorationUnderline.active) {
+      detailOfDecorationUnderline.top = this.textLines[this.focusedRowIndex].getBoundingClientRect().top - this.otherEditorComponents.editor.getBoundingClientRect().top;
+      detailOfDecorationUnderline.width = this.textArea.clientWidth;
+    }
+    this.otherEditorComponents.editor.dispatchEvent(new CustomEvent("textArea -> decorationUnderline", {
+      detail: detailOfDecorationUnderline
+    }));
+
     if (eventName === "keydownCaret-textArea") {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownHorizontalScrollbarArea-textArea") {
@@ -168,7 +180,6 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownTextArea") {
@@ -176,13 +187,11 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousedownVirticalScrollbarArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-horizontalScrollbarArea-textArea") {
@@ -194,7 +203,6 @@ const TextArea = class {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-textArea") {
@@ -202,18 +210,15 @@ const TextArea = class {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoHorizontalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "mousemoveEditor-virticalScrollbarArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "resizeEditor-textArea") {
       this.dispatchIntoHorizontalScrollbarArea(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "resizeVirticalScrollbarArea-textArea") {
@@ -228,14 +233,12 @@ const TextArea = class {
     if (eventName === "wheelLineNumberArea-textArea") {
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "wheelTextArea") {
       this.dispatchIntoLineNumberArea(eventName);
       this.dispatchIntoVirticalScrollbarArea(eventName);
       this.dispatchIntoCaret(eventName);
-      this.dispatchIntoDecorationUnderline(eventName);
       return;
     }
     if (eventName === "wheelVirticalScrollbarArea-textArea") {
@@ -260,23 +263,6 @@ const TextArea = class {
         left: focusedCharacter.left - editor.left,
         top: focusedCharacter.top - editor.top
       }
-    }));
-  };
-
-  /**
-   * 装飾下線に文字領域の状態を通知します。
-   * @param {string} eventName イベント名です。
-   */
-  dispatchIntoDecorationUnderline = (eventName) => {
-    const detail = {
-      active: this.focusedRowIndex !== null && !this.selectionRange.length
-    };
-    if (detail.active) {
-      detail.top = this.textLines[this.focusedRowIndex].getBoundingClientRect().top - this.otherEditorComponents.editor.getBoundingClientRect().top;
-      detail.width = this.textArea.clientWidth;
-    }
-    this.otherEditorComponents.decorationUnderline.dispatchEvent(new CustomEvent(eventName, {
-      detail: detail
     }));
   };
 
@@ -801,6 +787,7 @@ const TextArea = class {
       this.unselctRange();
       this.focusedRowIndex = null;
       this.focusedColumnIndex = null;
+      this.dispatchEvents();
     });
 
     // キャレットにキー入力がありましたので、押されたキーに応じた処理を実行します。
