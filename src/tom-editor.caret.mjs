@@ -6,10 +6,11 @@
  */
 const Caret = class {
   constructor(editor) {
+    Object.seal(this);
     this.editor = editor;
     this.caret = this.createCaret();
     this.editor.appendChild(this.caret);
-    // this.setEventListeners();
+    this.setEventListeners();
   }
 
   /** @type {HTMLDivElement} キャレットです。 */
@@ -73,39 +74,17 @@ const Caret = class {
    */
   setEventListeners = () => {
 
-    // キャレットからフォーカスが外れたときは、キャレットを見えなくします。
-    // その後、フォーカスが外れた旨を文字領域と行番号領域に通知します。
+    // キャレットからフォーカスが外れたことを文字領域に通知します。。
     this.caret.addEventListener("blur", () => {
-      this.takeCaret();
-      this.editor.dispatchEvent(new CustomEvent("caret -> lineNumberArea", {
-        detail: {
-          index: null
-        }
-      }));
-      this.editor.dispatchEvent(new CustomEvent("caret -> textArea", {
-        detail: {
-          blur: true
-        }
-      }));
+      this.editor.dispatchEvent(new CustomEvent("custom-blur"));
     });
 
-    // キー入力を検知したら、文字領域に押されたキー情報を通知します。
+    // キーが入力されてもキャレットですることはほとんどありません。
+    // せいぜいTabキーによるフォーカス位置の変更やCtrlキーを同時押ししてのショートカット処理などの既定の動作を中止すること。
+    // 押されたキーを発信することぐらいです。
     this.caret.addEventListener("keydown", (event) => {
-
-      // Tabキーによるフォーカス位置の変更とか、CtrlキーとF5キー同時押しによるスーパーリロードとか、
-      // そういったkeydownイベントの標準処理が走らないようにしておきます。 
       event.preventDefault();
-
-      // CtrlキーとShiftキーが押されたときは何もせずに処理から抜けます。
-      // なぜなら上記キーが押しっぱなしになっているかどうかはeventオブジェクトから参照できるためで、
-      // 上記キーが押されただけでは何もできることがないためです。
-      if (event.key === "Ctrl") {
-        return;
-      }
-      if (event.key === "Shift") {
-        return;
-      }
-      this.editor.dispatchEvent(new CustomEvent("caret -> textArea", {
+      this.editor.dispatchEvent(new CustomEvent("custom-keydown", {
         detail: {
           ctrlKey: event.ctrlKey,
           key: event.key,
@@ -114,8 +93,12 @@ const Caret = class {
       }));
     });
 
-    // 文字領域からの通知です。
-    this.editor.addEventListener("textArea -> caret", (event) => {
+    // 文字領域でフォーカス位置が変更されたので、変更後の座標にキャレットを移動させます。
+    this.editor.addEventListener("custom-moveFocusPoint", (event) => {
+      if (event.detail.left === null || event.detail.top === null) {
+        this.takeCaret();
+        return;
+      }
       this.putCaret(event.detail.left, event.detail.top);
     });
   };

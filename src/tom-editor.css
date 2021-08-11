@@ -14,9 +14,11 @@
 }
 
 .tom-editor {
+  background: rgb(255, 255, 255);
   display: flex;
   font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
   height: 100%;
+  justify-content: space-between;
   overflow: hidden;
   position: relative;
   white-space: pre;
@@ -72,10 +74,12 @@
   background: rgb(204, 204, 204);
 }
 .tom-editor__line-number-area {
+  background: rgb(255, 255, 255);
   cursor: default;
   flex: 0 0;
   overflow: hidden;
   text-align: right;
+  z-index: 1;
 }
 .tom-editor__line-number-area__line-number {
   color: rgb(204, 204, 204);
@@ -91,6 +95,7 @@
   color: rgb(102, 102, 102);
 }
 .tom-editor__text-area {
+  background: rgb(255, 255, 255);
   cursor: text;
   flex: 1 1 auto;
   overflow: hidden;
@@ -112,19 +117,25 @@
   height: 100%;
 }
 .tom-editor__virtical-scrollbar-area {
+  background: rgb(255, 255, 255);
   border-left: 0.1rem solid rgb(238, 238, 238);
   flex: 0 0 1rem;
   position: relative;
   width: 1rem;
+  z-index: 1;
 }
 .tom-editor__virtical-scrollbar-area__virtical-scrollbar {
   background: rgb(238, 238, 238);
+  display: none;
   position: absolute;
   width: 100%;
 }
-.tom-editor__virtical-scrollbar-area__virtical-scrollbar:hover {
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active {
+  display: block;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active:hover {
   background: rgb(221, 221, 221);
 }
-.tom-editor__virtical-scrollbar-area__virtical-scrollbar:active {
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active:active {
   background: rgb(204, 204, 204);
 }
