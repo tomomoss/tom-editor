@@ -79,9 +79,29 @@ const Caret = class {
       this.editor.dispatchEvent(new CustomEvent("custom-blur"));
     });
 
-    // キーが入力されてもキャレットですることはほとんどありません。
-    // せいぜいTabキーによるフォーカス位置の変更やCtrlキーを同時押ししてのショートカット処理などの既定の動作を中止すること。
-    // 押されたキーを発信することぐらいです。
+    // 変換中の文章を通知します。
+    this.caret.addEventListener("input", (event) => {
+      this.editor.dispatchEvent(new CustomEvent("custom-input", {
+        detail: {
+          data: event.data,
+          selectionStart: this.caret.selectionStart
+        }
+      }));
+    });
+
+    // 変換セッションの終了と変換結果を通知します。
+    this.caret.addEventListener("compositionend", () => {
+      this.editor.dispatchEvent(new CustomEvent("custom-compositionend"));
+    });
+
+    // 変換セッションの開始を通知します。
+    this.caret.addEventListener("compositionstart", () => {
+      this.editor.dispatchEvent(new CustomEvent("custom-compositionstart"));
+    });
+
+    // 入力されたキー情報を発信します。
+    // Tabキーによるフォーカスの移動やCtrlキーとファンクションキーを同時押ししてのショートカット処理といった、
+    // ブラウザ標準動作が走ると何が起こるか予想できないのでEvent.preventDefaultメソッドを呼んでおきます。
     this.caret.addEventListener("keydown", (event) => {
       event.preventDefault();
       this.editor.dispatchEvent(new CustomEvent("custom-keydown", {
