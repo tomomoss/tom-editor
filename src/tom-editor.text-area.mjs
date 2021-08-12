@@ -880,8 +880,10 @@ const TextArea = class {
           this.removeCharacter("Delete");
         }
         compositionState.lastData = event.detail.data;
-        for (const character of compositionState.lastData) {
-          this.appendCharacter(character);
+        if (compositionState.lastData !== null) {
+          for (const character of compositionState.lastData) {
+            this.appendCharacter(character);
+          }
         }
       }
 

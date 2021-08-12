@@ -35,7 +35,7 @@ const TOMEditor = class {
       throw new Error("第1引数が指定されていません。");
     }
     if (!editorContainer instanceof Element) {
-      throw new Error("第1引数がHTML要素ではありません。");
+      throw new TypeError("第1引数がElement型ではありません。");
     }
     if (rest.length) {
       throw new Error("引数の数が不正です。");
@@ -48,22 +48,108 @@ const TOMEditor = class {
     // エディターを構成する主要な要素を初期化します。
     this.editor = this.createEditor();
     editorContainer.appendChild(this.editor);
-    const lineNumberArea = new LineNumberArea(this.editor);
-    const textArea = new TextArea(this.editor);
-    const virticalScrollbarArea = new VirticalScrollbarArea(this.editor);
-    const textAreaLeft = textArea.textArea.getBoundingClientRect().left - this.editor.getBoundingClientRect().left;
-    const horizontalScrollbarArea = new HorizontalScrollbarArea(this.editor, textAreaLeft);
-    const caret = new Caret(this.editor);
-    const decorationUnderline = new DecorationUnderline(this.editor, textAreaLeft);
+    this.lineNumberArea = new LineNumberArea(this.editor);
+    this.textArea = new TextArea(this.editor);
+    this.virticalScrollbarArea = new VirticalScrollbarArea(this.editor);
+    const textAreaLeft = this.textArea.textArea.getBoundingClientRect().left - this.editor.getBoundingClientRect().left;
+    this.horizontalScrollbarArea = new HorizontalScrollbarArea(this.editor, textAreaLeft);
+    this.caret = new Caret(this.editor);
+    this.decorationUnderline = new DecorationUnderline(this.editor, textAreaLeft);
     this.setEventListeners(
-      lineNumberArea.lineNumberArea,
-      virticalScrollbarArea.virticalScrollbarArea,
-      horizontalScrollbarArea.horizontalScrollbarArea
+      this.lineNumberArea.lineNumberArea,
+      this.virticalScrollbarArea.virticalScrollbarArea,
+      this.horizontalScrollbarArea.horizontalScrollbarArea
     );
   };
 
+  /**
+   * エディターに入力されている値を取得するPublic APIです。
+   * @returns {string} 入力されている内容を文字列化したものです。
+   */
+  get value() {
+    let convertedText = "";
+    for (let i = 0; i < this.textArea.characters.length; i += 1) {
+      for (let j = 0; j < this.textArea.characters[i].length; j += 1) {
+        if (j === this.textArea.characters[i].length - 1) {
+          if (i === this.textArea.characters.length - 1) {
+            break;
+          }
+          convertedText += "\n";
+          break;
+        }
+        convertedText += this.textArea.characters[i][j].innerHTML;
+      }
+    }
+    return convertedText;
+  }
+
+  /**
+   * エディターの内容を外部から指定するPublic APIです。
+   * @param {string} newValue 新しい内容です。
+   */
+  set value(newValue) {
+    if (typeof newValue !== "string") {
+      throw new TypeError("第1引数がstring型ではありません。");
+    }
+    this.textArea.characters = [];
+    this.textArea.focusedColumnIndex = null;
+    this.textArea.focusedRowIndex = null;
+    this.textArea.selectionRange = [];
+    this.textArea.textLines = [];
+    this.textArea.textArea.innerHTML = "";
+    for (const textLineOfNewValue of newValue.split("\n")) {
+      const textLine = this.textArea.createTextLine();
+      this.textArea.textLines.push(textLine);
+      this.textArea.characters.push([]);
+      for (const characterOfNewValue of textLineOfNewValue) {
+        const character = this.textArea.createCharacter(characterOfNewValue);
+        this.textArea.characters[this.textArea.characters.length - 1].push(character);
+        textLine.appendChild(character);
+      }
+      const EOL = this.textArea.createEOL();
+      this.textArea.characters[this.textArea.characters.length - 1].push(EOL);
+      textLine.appendChild(EOL);
+      this.textArea.textArea.appendChild(textLine);
+    }
+    this.textArea.dispatchEvents();
+  }
+
+  /**
+   * エディターの入力内容が変更されたときに実行する関数を指定するPublic APIです。
+   * @param {Function} handler 入力内容変更時に呼び出す関数です。
+   */
+  set valueObserver(handler) {
+    if (typeof handler !== "function") {
+      throw new TypeError("第1引数がFunction型ではありません。");
+    }
+    new MutationObserver(() => {
+      handler(this.value);
+    }).observe(this.textArea.textArea, {
+      childList: true,
+      subtree: true
+    });;
+  }
+
+  /** @type {Caret} キャレットです。 */
+  caret;
+
+  /** @type {DecorationUnderline} 装飾下線です。 */
+  decorationUnderline;
+
   /** @type {HTMLDivElement} エディター本体です。 */
   editor;
+
+  /** @type {HorizontalScrollbarArea} 水平スクロールバー領域です。 */
+  horizontalScrollbarArea;
+
+  /** @type {LineNumberArea} 行番号領域です。 */
+  lineNumberArea;
+
+  /** @type {TextArea} 文字領域です。 */
+  textArea;
+
+  /** @type {VirticalScrollbarArea} 垂直スクロールバー領域です。 */
+  virticalScrollbarArea;
 
   /**
    * エディター本体を生成します。
