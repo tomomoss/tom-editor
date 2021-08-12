@@ -122,7 +122,16 @@ const TOMEditor = class {
     if (typeof handler !== "function") {
       throw new TypeError("第1引数がFunction型ではありません。");
     }
+    this.editor.addEventListener("custom-compositionend", () => {
+      if (this.textArea.tedifferenceBetweenCurrentAndHistory()) {
+        handler(this.value);
+        return;
+      }
+    });
     new MutationObserver(() => {
+      if (this.textArea.isComposing) {
+        return;
+      }
       handler(this.value);
     }).observe(this.textArea.textArea, {
       childList: true,
