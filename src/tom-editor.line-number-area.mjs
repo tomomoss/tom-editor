@@ -2,14 +2,11 @@
 
 /**
  * 行番号領域です。
+ * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const LineNumberArea = class {
-
-  /**
-   * 行番号領域を初期化します。
-   * @param {HTMLDivElement} editor エディター本体です。
-   */
-  constructor(editor) {
+  constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.lineNumberArea = this.createLineNumberArea();
@@ -29,7 +26,7 @@ const LineNumberArea = class {
     const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
     this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
 
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -89,7 +86,7 @@ const LineNumberArea = class {
       return;
     }
 
-    
+
     if (this.focusedLineNumberIndex !== null && this.lineNumbers[this.focusedLineNumberIndex]) {
       this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
     }
@@ -127,30 +124,60 @@ const LineNumberArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
 
-    // 行番号を対象とするドラッグ操作処理のフラグです。
-    // 処理中は、最後にドラッグした行番号のインデックス値が入ります。
-    let lastDragedIndex = null;
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
 
-    // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
-    // また、ドラッグフラグを立てます。
-    this.lineNumberArea.addEventListener("mousedown", (event) => {
-      lastDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
-        return lineNumber === event.target;
+      // 行番号を対象とするドラッグ操作処理のフラグです。
+      // 処理中は、最後にドラッグした行番号のインデックス値が入ります。
+      let lastDragedIndex = null;
+
+      // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
+      // また、ドラッグフラグを立てます。
+      this.lineNumberArea.addEventListener("mousedown", (event) => {
+        lastDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
+          return lineNumber === event.target;
+        });
+        this.editor.dispatchEvent(new CustomEvent("custom-mousedonwLineNumber", {
+          detail: {
+            index: lastDragedIndex
+          }
+        }));
       });
-      this.editor.dispatchEvent(new CustomEvent("custom-mousedonwLineNumber", {
-        detail: {
-          index: lastDragedIndex
-        }
-      }));
-    });
 
-    // 文字領域でフォーカスしている行が変更されたため、行番号領域のフォーカス行番号も変更します。
-    this.editor.addEventListener("custom-changeFocusedRowIndex", (event) => {
-      this.changeFocusLineNumber(event.detail.index);
-    });
+      // フラグが立っているときは、行番号を対象とするドラッグ操作処理を実行します。
+      this.editor.addEventListener("custom-mousemove", (event) => {
+        if (lastDragedIndex === null) {
+          return;
+        }
+        const currentDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
+          return lineNumber === event.detail.target;
+        });
+        if (currentDragedIndex === lastDragedIndex) {
+          return;
+        }
+        lastDragedIndex = currentDragedIndex;
+        this.editor.dispatchEvent(new CustomEvent("custom-dragLineNumber", {
+          detail: {
+            index: lastDragedIndex
+          }
+        }));
+      });
+
+      // ドラッグ処理フラグを下ろします。
+      this.editor.addEventListener("custom-mouseup", () => {
+        lastDragedIndex = null;
+      });
+
+      // 文字領域でフォーカスしている行が変更されたため、行番号領域のフォーカス行番号も変更します。
+      this.editor.addEventListener("custom-changeFocusedRowIndex", (event) => {
+        this.changeFocusLineNumber(event.detail.index);
+      });
+    }
 
     // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
     this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
@@ -165,30 +192,6 @@ const LineNumberArea = class {
     // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
     this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
       this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
-
-    // フラグが立っているときは、行番号を対象とするドラッグ操作処理を実行します。
-    this.editor.addEventListener("custom-mousemove", (event) => {
-      if (lastDragedIndex === null) {
-        return;
-      }
-      const currentDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
-        return lineNumber === event.detail.target;
-      });
-      if (currentDragedIndex === lastDragedIndex) {
-        return;
-      }
-      lastDragedIndex = currentDragedIndex;
-      this.editor.dispatchEvent(new CustomEvent("custom-dragLineNumber", {
-        detail: {
-          index: lastDragedIndex
-        }
-      }));
-    });
-
-    // ドラッグ処理フラグを下ろします。
-    this.editor.addEventListener("custom-mouseup", () => {
-      lastDragedIndex = null;
     });
   };
 };

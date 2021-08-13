@@ -3,16 +3,17 @@
 /**
  * 垂直スクロールバー領域です。
  * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const VirticalScrollbarArea = class {
-  constructor(editor) {
+  constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.virticalScrollbarArea = this.createVirticalScrollbarArea();
     editor.appendChild(this.virticalScrollbarArea);
     this.virticalScrollbar = this.createVirticalScrollbar();
     this.virticalScrollbarArea.appendChild(this.virticalScrollbar);
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -59,8 +60,16 @@ const VirticalScrollbarArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // 垂直スクロールバー領域には省略される値やイベントリスナーはありません。
+    }
 
     // マウスホイール操作、および垂直スクロールバー領域の余白をクリックしたときに実行する、
     // 垂直スクロール処理で用いるスクロール量です。
@@ -122,7 +131,7 @@ const VirticalScrollbarArea = class {
       this.virticalScrollbar.style.height = `${lastViewportHeightRatio * 100}%`;
     });
 
-        // エディター上でmousemoveイベントが検知されましたので、
+    // エディター上でmousemoveイベントが検知されましたので、
     // 垂直スクロールバーのドラッグ操作処理中ならば垂直スクロール処理を実行します。
     this.editor.addEventListener("custom-mousemove", (event) => {
       if (lastY === null) {

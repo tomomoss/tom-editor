@@ -4,14 +4,15 @@
  * 装飾下線です。
  * @param {HTMLDivElement} editor エディター本体です。
  * @param {number} left 装飾下線の配置場所となる水平座標です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const DecorationUnderline = class {
-  constructor(editor, left) {
+  constructor(editor, left, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.decorationUnderline = this.createDecorationUnderline(left);
     this.editor.appendChild(this.decorationUnderline);
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -64,29 +65,35 @@ const DecorationUnderline = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
 
-    // 装飾下線と垂直スクロールバー領域との間にもうける隙間の大きさです。
-    // これがないとピッタリくっついてしまい、なんだか窮屈な感じになってしまいます。
-    const decorationUnderlineGapSize = parseFloat(getComputedStyle(this.editor).fontSize) * 0.5;
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
 
-    // 範囲選択中は装飾下線を表示しません。
-    this.editor.addEventListener("custom-changeSelectingRange", (event) => {
-      this.lastSelectingRange = event.detail.selectingRange;
-      this.adjustDecorationUnderlineStyle();
-    });
+      // 装飾下線と垂直スクロールバー領域との間にもうける隙間の大きさです。
+      // これがないとピッタリくっついてしまい、なんだか窮屈な感じになってしまいます。
+      const decorationUnderlineGapSize = parseFloat(getComputedStyle(this.editor).fontSize) * 0.5;
 
-    // 文字領域からの通知です。
-    this.editor.addEventListener("custom-moveFocusPoint", (event) => {
-      this.lastFocusPointTop = event.detail.top;
-      this.adjustDecorationUnderlineStyle();
-    });
+      // 範囲選択中は装飾下線を表示しません。
+      this.editor.addEventListener("custom-changeSelectingRange", (event) => {
+        this.lastSelectingRange = event.detail.selectingRange;
+        this.adjustDecorationUnderlineStyle();
+      });
 
-    // 文字領域の横幅が変化したので、装飾下線の横幅も合わせます。
-    this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
-      this.decorationUnderline.style.width = `${event.detail.width - decorationUnderlineGapSize}px`;
-    });
+      // 文字領域でフォーカス位置が変更されたので、変更後の座標に装飾下線を移動させます。
+      this.editor.addEventListener("custom-moveFocusPoint", (event) => {
+        this.lastFocusPointTop = event.detail.top;
+        this.adjustDecorationUnderlineStyle();
+      });
+
+      // 文字領域の横幅が変化したので、装飾下線の横幅も合わせます。
+      this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
+        this.decorationUnderline.style.width = `${event.detail.width - decorationUnderlineGapSize}px`;
+      });
+    }
   };
 };
 

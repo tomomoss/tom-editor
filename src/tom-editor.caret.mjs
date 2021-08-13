@@ -3,14 +3,15 @@
 /**
  * キャレットです。
  * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const Caret = class {
-  constructor(editor) {
+  constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.caret = this.createCaret();
     this.editor.appendChild(this.caret);
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {HTMLDivElement} キャレットです。 */
@@ -71,56 +72,62 @@ const Caret = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
 
-    // キャレットからフォーカスが外れたことを文字領域に通知します。。
-    this.caret.addEventListener("blur", () => {
-      this.editor.dispatchEvent(new CustomEvent("custom-blur"));
-    });
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
 
-    // 変換中の文章を通知します。
-    this.caret.addEventListener("input", (event) => {
-      this.editor.dispatchEvent(new CustomEvent("custom-input", {
-        detail: {
-          data: event.data,
-          selectionStart: this.caret.selectionStart
+      // キャレットからフォーカスが外れたことを文字領域に通知します。
+      this.caret.addEventListener("blur", () => {
+        this.editor.dispatchEvent(new CustomEvent("custom-blur"));
+      });
+
+      // 変換中の文章を通知します。
+      this.caret.addEventListener("input", (event) => {
+        this.editor.dispatchEvent(new CustomEvent("custom-input", {
+          detail: {
+            data: event.data,
+            selectionStart: this.caret.selectionStart
+          }
+        }));
+      });
+
+      // 変換セッションの終了と変換結果を通知します。
+      this.caret.addEventListener("compositionend", () => {
+        this.editor.dispatchEvent(new CustomEvent("custom-compositionend"));
+      });
+
+      // 変換セッションの開始を通知します。
+      this.caret.addEventListener("compositionstart", () => {
+        this.editor.dispatchEvent(new CustomEvent("custom-compositionstart"));
+      });
+
+      // 入力されたキー情報を発信します。
+      // Tabキーによるフォーカスの移動やCtrlキーとファンクションキーを同時押ししてのショートカット処理といった、
+      // ブラウザ標準動作が走ると何が起こるか予想できないのでEvent.preventDefaultメソッドを呼んでおきます。
+      this.caret.addEventListener("keydown", (event) => {
+        event.preventDefault();
+        this.editor.dispatchEvent(new CustomEvent("custom-keydown", {
+          detail: {
+            ctrlKey: event.ctrlKey,
+            key: event.key,
+            shiftKey: event.shiftKey
+          }
+        }));
+      });
+
+      // 文字領域でフォーカス位置が変更されたので、変更後の座標にキャレットを移動させます。
+      this.editor.addEventListener("custom-moveFocusPoint", (event) => {
+        if (event.detail.left === null || event.detail.top === null) {
+          this.takeCaret();
+          return;
         }
-      }));
-    });
-
-    // 変換セッションの終了と変換結果を通知します。
-    this.caret.addEventListener("compositionend", () => {
-      this.editor.dispatchEvent(new CustomEvent("custom-compositionend"));
-    });
-
-    // 変換セッションの開始を通知します。
-    this.caret.addEventListener("compositionstart", () => {
-      this.editor.dispatchEvent(new CustomEvent("custom-compositionstart"));
-    });
-
-    // 入力されたキー情報を発信します。
-    // Tabキーによるフォーカスの移動やCtrlキーとファンクションキーを同時押ししてのショートカット処理といった、
-    // ブラウザ標準動作が走ると何が起こるか予想できないのでEvent.preventDefaultメソッドを呼んでおきます。
-    this.caret.addEventListener("keydown", (event) => {
-      event.preventDefault();
-      this.editor.dispatchEvent(new CustomEvent("custom-keydown", {
-        detail: {
-          ctrlKey: event.ctrlKey,
-          key: event.key,
-          shiftKey: event.shiftKey
-        }
-      }));
-    });
-
-    // 文字領域でフォーカス位置が変更されたので、変更後の座標にキャレットを移動させます。
-    this.editor.addEventListener("custom-moveFocusPoint", (event) => {
-      if (event.detail.left === null || event.detail.top === null) {
-        this.takeCaret();
-        return;
-      }
-      this.putCaret(event.detail.left, event.detail.top);
-    });
+        this.putCaret(event.detail.left, event.detail.top);
+      });
+    }
   };
 };
 

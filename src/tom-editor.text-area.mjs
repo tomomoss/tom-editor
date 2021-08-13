@@ -2,14 +2,11 @@
 
 /**
  * 文字領域です。
+ * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const TextArea = class {
-
-  /**
-   * 文字領域を初期化します。
-   * @param {HTMLDivElement} editor エディター本体です。
-   */
-  constructor(editor) {
+  constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.textArea = this.createTextArea();
@@ -34,7 +31,7 @@ const TextArea = class {
       viewportWidthRatio: this.textArea.clientWidth / this.textArea.scrollWidth
     };
     this.saveHistory();
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -921,147 +918,153 @@ const TextArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
 
-    // IMEによる入力処理の状態や値をまとめたオブジェクトです。
-    const compositionState = {
-      lastData: null,
-      startColumnIndex: null,
-      startSelectionStart: null
-    };
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
 
-    // IMEによる入力処理のフラグです。
-    let isComposing = false;
+      // IMEによる入力処理の状態や値をまとめたオブジェクトです。
+      const compositionState = {
+        lastData: null,
+        startColumnIndex: null,
+        startSelectionStart: null
+      };
 
-    // マウスドラッグによる範囲選択処理のフラグです。
-    let isDragging = false;
+      // IMEによる入力処理のフラグです。
+      let isComposing = false;
 
-    // 文字領域がクリックされたので、クリックされた場所に応じてフォーカス位置を更新します。
-    // また、範囲選択状態にあるならば当該状態を解除するとともにマウスドラッグ処理のフラグを立てます。
-    this.textArea.addEventListener("mousedown", (event) => {
-      isDragging = true;
-      this.unselctRange();
-      this.moveFocusPointByMousedownTarget(event);
-      this.scrollAutomatically();
-      this.dispatchEvents();
-    });
+      // マウスドラッグによる範囲選択処理のフラグです。
+      let isDragging = false;
 
-    // キャレットが外れたので、フォーカスも外します。
-    this.editor.addEventListener("custom-blur", () => {
-      this.unselctRange();
-      this.focusedRowIndex = null;
-      this.focusedColumnIndex = null;
-      this.dispatchEvents();
-    });
+      // 文字領域がクリックされたので、クリックされた場所に応じてフォーカス位置を更新します。
+      // また、範囲選択状態にあるならば当該状態を解除するとともにマウスドラッグ処理のフラグを立てます。
+      this.textArea.addEventListener("mousedown", (event) => {
+        isDragging = true;
+        this.unselctRange();
+        this.moveFocusPointByMousedownTarget(event);
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
 
-    // IMEによる入力処理のフラグを下ろし、当該処理に関する値を消去します。
-    this.editor.addEventListener("custom-compositionend", () => {
-      isComposing = false;
-      compositionState.lastData = null;
-      compositionState.startColumnIndex = null;
-      compositionState.startSelectionStart = null;
-      if (this.differenceBetweenCurrentAndHistory()) {
-        this.saveHistory();
-      }
-    });
+      // キャレットが外れたので、フォーカスも外します。
+      this.editor.addEventListener("custom-blur", () => {
+        this.unselctRange();
+        this.focusedRowIndex = null;
+        this.focusedColumnIndex = null;
+        this.dispatchEvents();
+      });
 
-    // IMEによる入力処理のフラグを立て、当該処理に関する値を初期化します。
-    this.editor.addEventListener("custom-compositionstart", () => {
-      isComposing = true;
-      compositionState.lastData = "";
-      compositionState.startColumnIndex = this.focusedColumnIndex;
-      compositionState.startSelectionStart = null;
-    });
-
-    // 行番号のドラッグ操作による範囲選択処理を実行します。
-    this.editor.addEventListener("custom-dragLineNumber", (event) => {
-      while (event.detail.index < this.focusedRowIndex) {
-        this.moveFocusPointByArrowKey("ArrowUp", true);
-      }
-      while (event.detail.index > this.focusedRowIndex) {
-        this.moveFocusPointByArrowKey("ArrowDown", true);
-      }
-      this.scrollAutomatically();
-      this.dispatchEvents();
-    });
-
-    // IMEによる入力処理中のみ走る専用の入力処理を実行します。
-    this.editor.addEventListener("custom-input", (event) => {
-      if (!isComposing) {
-        return;
-      }
-
-      // IME入力処理の最初の入力時におけるHTMLInputElement.selectionStartプロパティを取得します。
-      // 当処理中のフォーカス位置を特定するのに当該プロパティ（の処理開始時点での値）が必要になります。
-      if (compositionState.startSelectionStart === null) {
-        compositionState.startSelectionStart = event.detail.selectionStart - event.detail.data.length;
-      }
-
-      // 変換内容が変わっている場合はHTMLを書きかえます。
-      // 入力されている内容を全て消してから最新の状態に上書きします。
-      if (event.detail.data !== compositionState.lastData) {
-        this.focusedColumnIndex = compositionState.startColumnIndex;
-        for (let i = 0; i < compositionState.lastData.length; i += 1) {
-          this.removeCharacter("Delete");
+      // IMEによる入力処理のフラグを下ろし、当該処理に関する値を消去します。
+      this.editor.addEventListener("custom-compositionend", () => {
+        isComposing = false;
+        compositionState.lastData = null;
+        compositionState.startColumnIndex = null;
+        compositionState.startSelectionStart = null;
+        if (this.differenceBetweenCurrentAndHistory()) {
+          this.saveHistory();
         }
-        compositionState.lastData = event.detail.data;
-        if (compositionState.lastData !== null) {
-          for (const character of compositionState.lastData) {
-            this.appendCharacter(character);
+      });
+
+      // IMEによる入力処理のフラグを立て、当該処理に関する値を初期化します。
+      this.editor.addEventListener("custom-compositionstart", () => {
+        isComposing = true;
+        compositionState.lastData = "";
+        compositionState.startColumnIndex = this.focusedColumnIndex;
+        compositionState.startSelectionStart = null;
+      });
+
+      // 行番号のドラッグ操作による範囲選択処理を実行します。
+      this.editor.addEventListener("custom-dragLineNumber", (event) => {
+        while (event.detail.index < this.focusedRowIndex) {
+          this.moveFocusPointByArrowKey("ArrowUp", true);
+        }
+        while (event.detail.index > this.focusedRowIndex) {
+          this.moveFocusPointByArrowKey("ArrowDown", true);
+        }
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
+
+      // IMEによる入力処理中のみ走る専用の入力処理を実行します。
+      this.editor.addEventListener("custom-input", (event) => {
+        if (!isComposing) {
+          return;
+        }
+
+        // IME入力処理の最初の入力時におけるHTMLInputElement.selectionStartプロパティを取得します。
+        // 当処理中のフォーカス位置を特定するのに当該プロパティ（の処理開始時点での値）が必要になります。
+        if (compositionState.startSelectionStart === null) {
+          compositionState.startSelectionStart = event.detail.selectionStart - event.detail.data.length;
+        }
+
+        // 変換内容が変わっている場合はHTMLを書きかえます。
+        // 入力されている内容を全て消してから最新の状態に上書きします。
+        if (event.detail.data !== compositionState.lastData) {
+          this.focusedColumnIndex = compositionState.startColumnIndex;
+          for (let i = 0; i < compositionState.lastData.length; i += 1) {
+            this.removeCharacter("Delete");
+          }
+          compositionState.lastData = event.detail.data;
+          if (compositionState.lastData !== null) {
+            for (const character of compositionState.lastData) {
+              this.appendCharacter(character);
+            }
           }
         }
-      }
 
-      // フォーカス位置を更新します。
-      this.focusedColumnIndex = compositionState.startColumnIndex;
-      for (let i = 0; i < event.detail.selectionStart - compositionState.startSelectionStart; i += 1) {
-        this.moveFocusPointByArrowKey("ArrowRight", false);
-      }
+        // フォーカス位置を更新します。
+        this.focusedColumnIndex = compositionState.startColumnIndex;
+        for (let i = 0; i < event.detail.selectionStart - compositionState.startSelectionStart; i += 1) {
+          this.moveFocusPointByArrowKey("ArrowRight", false);
+        }
 
-      this.scrollAutomatically();
-      this.dispatchEvents();
-    });
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
 
-    // キャレットにキー入力があったので、押されたキーに応じた処理を実行します。
-    this.editor.addEventListener("custom-keydown", async (event) => {
-      if (isComposing) {
-        return;
-      }
-      if (!await this.reflectKey(event)) {
-        return;
-      }
-      this.scrollAutomatically();
-      if (this.differenceBetweenCurrentAndHistory()) {
-        this.saveHistory();
-      }
-      this.dispatchEvents();
-    });
+      // キャレットにキー入力があったので、押されたキーに応じた処理を実行します。
+      this.editor.addEventListener("custom-keydown", async (event) => {
+        if (isComposing) {
+          return;
+        }
+        if (!await this.reflectKey(event)) {
+          return;
+        }
+        this.scrollAutomatically();
+        if (this.differenceBetweenCurrentAndHistory()) {
+          this.saveHistory();
+        }
+        this.dispatchEvents();
+      });
 
-    // 行番号のクリック操作による範囲選択処理を開始します。
-    this.editor.addEventListener("custom-mousedonwLineNumber", (event) => {
-      this.unselctRange();
-      this.focusedRowIndex = event.detail.index;
-      this.focusedColumnIndex = 0;
-      this.moveFocusPointByArrowKey("ArrowDown", true);
-      this.scrollAutomatically();
-      this.dispatchEvents();
-    });
+      // 行番号のクリック操作による範囲選択処理を開始します。
+      this.editor.addEventListener("custom-mousedonwLineNumber", (event) => {
+        this.unselctRange();
+        this.focusedRowIndex = event.detail.index;
+        this.focusedColumnIndex = 0;
+        this.moveFocusPointByArrowKey("ArrowDown", true);
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
 
-    // フラグが立っているならば、マウスドラッグ処理を実行します。
-    this.editor.addEventListener("custom-mousemove", (event) => {
-      if (!isDragging) {
-        return;
-      }
-      this.moveFocusPointByDragTarget(event.detail.target);
-      this.dispatchEvents();
-    });
+      // フラグが立っているならば、マウスドラッグ処理を実行します。
+      this.editor.addEventListener("custom-mousemove", (event) => {
+        if (!isDragging) {
+          return;
+        }
+        this.moveFocusPointByDragTarget(event.detail.target);
+        this.dispatchEvents();
+      });
 
-    // マウスドラッグ処理のフラグを下ろします。
-    this.editor.addEventListener("custom-mouseup", () => {
-      isDragging = false;
-      this.dispatchEvents();
-    });
+      // マウスドラッグ処理のフラグを下ろします。
+      this.editor.addEventListener("custom-mouseup", () => {
+        isDragging = false;
+        this.dispatchEvents();
+      });
+    }
 
     // エディターの横幅が変化したので、変更後の状態を通知します。
     this.editor.addEventListener("custom-resizeTextAreaHeight", () => {

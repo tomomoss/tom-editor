@@ -4,16 +4,17 @@
  * 水平スクロールバー領域です。
  * @param {HTMLDivElement} editor エディター本体です。
  * @param {number} left 当領域の配置場所となる水平座標です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const HorizontalScrollbarArea = class {
-  constructor(editor, left) {
+  constructor(editor, left, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
     this.horizontalScrollbarArea = this.createHorizontalScrollbarArea(left);
     this.editor.appendChild(this.horizontalScrollbarArea);
     this.horizontalScrollbar = this.createHorizontalScrollbar();
     this.horizontalScrollbarArea.appendChild(this.horizontalScrollbar);
-    this.setEventListeners();
+    this.setEventListeners(readonlyFlag);
   }
 
   /** @type {object} 当クラス内で使用するCSSクラスです。 */
@@ -62,8 +63,16 @@ const HorizontalScrollbarArea = class {
 
   /**
    * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = () => {
+  setEventListeners = (readonlyFlag) => {
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // 水平スクロールバー領域には省略される値やイベントリスナーはありません。
+    }
 
     // スクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;

@@ -28,17 +28,34 @@ const TOMEditor = class {
    * エディターを初期化します。
    * 当コンストラクタは外部に露出するため引数検査を実施します。
    * @param {Element} editorContainer エディターの実装対象となるHTML要素です。
+   * @param {object} option エディターの挙動を制御する引数です。省略可能です。
    * @param {...any} rest ※引数検査用の引数です。
    */
-  constructor(editorContainer, ...rest) {
+  constructor(editorContainer, option, ...rest) {
     if (typeof editorContainer === "undefined") {
-      throw new Error("第1引数が指定されていません。");
+      throw new TypeError("第1引数が指定されていません。");
     }
     if (!editorContainer instanceof Element) {
       throw new TypeError("第1引数がElement型ではありません。");
     }
+    if (typeof option !== "undefined") {
+      if (typeof option !== "object") {
+        throw new TypeError("第2引数がObject型ではありません。");
+      }
+      for (const key in option) {
+        if (key === "readonly") {
+          if (typeof option.readonly !== "boolean") {
+            throw new Error("キー「readonly」には真偽値を指定してください。");
+          }
+          continue;
+        }
+        if (key !== "readonly") {
+          throw new Error(`キー「${key}」はキー名として許可されていません。`);
+        }
+      }
+    }
     if (rest.length) {
-      throw new Error("引数の数が不正です。");
+      throw new TypeError("引数の数が不正です。");
     }
     Object.seal(this);
 
@@ -46,19 +63,26 @@ const TOMEditor = class {
     editorContainer.innerHTML = "";
 
     // エディターを構成する主要な要素を初期化します。
+    let readonlyFlag;
+    if (typeof option === "undefined") {
+      readonlyFlag = false;
+    } else {
+      readonlyFlag = option.readonly;
+    }
     this.editor = this.createEditor();
     editorContainer.appendChild(this.editor);
-    this.lineNumberArea = new LineNumberArea(this.editor);
-    this.textArea = new TextArea(this.editor);
-    this.virticalScrollbarArea = new VirticalScrollbarArea(this.editor);
+    this.lineNumberArea = new LineNumberArea(this.editor, readonlyFlag);
+    this.textArea = new TextArea(this.editor, readonlyFlag);
+    this.virticalScrollbarArea = new VirticalScrollbarArea(this.editor, readonlyFlag);
     const textAreaLeft = this.textArea.textArea.getBoundingClientRect().left - this.editor.getBoundingClientRect().left;
-    this.horizontalScrollbarArea = new HorizontalScrollbarArea(this.editor, textAreaLeft);
-    this.caret = new Caret(this.editor);
-    this.decorationUnderline = new DecorationUnderline(this.editor, textAreaLeft);
+    this.horizontalScrollbarArea = new HorizontalScrollbarArea(this.editor, textAreaLeft, readonlyFlag);
+    this.caret = new Caret(this.editor, readonlyFlag);
+    this.decorationUnderline = new DecorationUnderline(this.editor, textAreaLeft, readonlyFlag);
     this.setEventListeners(
       this.lineNumberArea.lineNumberArea,
       this.virticalScrollbarArea.virticalScrollbarArea,
-      this.horizontalScrollbarArea.horizontalScrollbarArea
+      this.horizontalScrollbarArea.horizontalScrollbarArea,
+      readonlyFlag
     );
   };
 
@@ -85,6 +109,7 @@ const TOMEditor = class {
 
   /**
    * エディターの内容を外部から指定するPublic APIです。
+   * セッターは外部に露出するため引数検査を実施します。
    * @param {string} newValue 新しい内容です。
    */
   set value(newValue) {
@@ -116,6 +141,7 @@ const TOMEditor = class {
 
   /**
    * エディターの入力内容が変更されたときに実行する関数を指定するPublic APIです。
+   * セッターは外部に露出するため引数検査を実施します。
    * @param {Function} handler 入力内容変更時に呼び出す関数です。
    */
   set valueObserver(handler) {
@@ -175,8 +201,16 @@ const TOMEditor = class {
    * @param {HTMLDivElement} lineNumberArea 行番号領域です。
    * @param {HTMLDivElement} virticalScrollbarArea 垂直スクロールバー領域です。
    * @param {HTMLDivElement} horizontalScrollbarArea 水平スクロールバー領域です。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = (lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea) => {
+  setEventListeners = (lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, readonlyFlag) => {
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // エディター本体には省略される値やイベントリスナーはありません。
+    }
 
     // マウスホイールの操作によるスクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
