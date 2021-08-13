@@ -2,178 +2,117 @@
 
 /**
  * 文字領域です。
+ * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const TextArea = class {
-
-  /**
-   * 文字領域を初期化します。
-   * @param {Element} superRoot エディター本体を表すHTML要素です。
-   */
-  constructor(superRoot) {
+  constructor(editor, readonlyFlag) {
     Object.seal(this);
+    this.editor = editor;
+    this.textArea = this.createTextArea();
+    this.editor.appendChild(this.textArea);
 
-    // 文字領域を初期化します。
-    this.root = document.createElement("div");
-    this.root.classList.add("tom-editor__text-area");
-    superRoot.appendChild(this.root);
-    this.initializeTextLinesWrapper();
-    this.initializeNegativeSpaceWrapper();
+    // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
+    const textLine = this.createTextLine();
+    this.textLines.push(textLine);
+    this.textArea.appendChild(textLine);
+    this.characters.push([]);
+    const EOL = this.createEOL();
+    this.characters[0].push(EOL);
+    textLine.appendChild(EOL);
+
+    this.lastDispatchedEventValue = {
+      index: this.focusedRowIndex,
+      length: this.textLines.length,
+      scrollLeft: this.textArea.scrollLeft,
+      scrollTop: this.textArea.scrollTop,
+      selecingRange: Boolean(this.selectionRange.length),
+      viewportHeightRatio: this.textArea.clientHeight / this.textArea.scrollHeight,
+      viewportWidthRatio: this.textArea.clientWidth / this.textArea.scrollWidth
+    };
+    this.saveHistory();
+    this.setEventListeners(readonlyFlag);
   }
 
-  /** @type {Array<Array<Element>>} DOMに挿入されている文字（行末文字を含む）を表すHTML要素群をまとめた配列です。 */
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    character: {
+      element: "tom-editor__text-area__character",
+      modifier: {
+        EOL: "tom-editor__text-area__character--eol"
+      }
+    },
+    textArea: {
+      element: "tom-editor__text-area"
+    },
+    textLine: {
+      element: "tom-editor__text-area__text-line"
+    }
+  };
+
+  /** @type {Array<Array<HTMLDivElement>>} Webページに挿入されている文字です。 */
   characters = [];
 
-  /** @type {Array<Element>} 余白内に生成されるダミー行をまとめた配列です。 */
-  dummyTextLines = [];
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
 
-  /** @type {boolean} Shiftキーが押されている間はtrueが入ります。 */
-  duringSelectionRange = false;
+  /** @type {null|number} 現在フォーカス中の列を指すインデックスです。 */
+  focusedColumnIndex = null;
 
-  /** @type {number} フォーカスされている列のインデックス値です。 */
-  focusedColumnIndex;
+  /** @type {null|number} 現在フォーカス中の行を指すインデックスです。 */
+  focusedRowIndex = null;
 
-  /** @type {number} フォーカスされている行のインデックス値です。 */
-  focusedRowIndex;
+  /** @type {object} 文字領域の変更状態をまとめたオブジェクトです。 */
+  history;
 
-  /** @type {Element} 文字領域のサイズ調整に大きく貢献する余白を表すHTML要素です。 */
-  negativeSpace;
+  /** @type {object} EventTarget.dispatchEventメソッドの送信対象となる値の、最後に送信されたときの値です。 */
+  lastDispatchedEventValue;
 
-  /** @type {Element} 余白領域を包むHTML要素です。 */
-  negativeSpaceWrapper;
+  /** @type {Array<Array<HTMLDivElement>>} 選択範囲中の文字です。 */
+  selectionRange = [];
 
-  /** @type {number} 範囲選択開始地点となる列のインデックス値です。 */
-  selectionRangeEndColumnIndex;
+  /** @type {HTMLDivElement} 文字領域です。 */
+  textArea;
 
-  /** @type {number} 範囲選択開始地点となる行のインデックス値です。 */
-  selectionRangeEndRowIndex;
-
-  /** @type {number} 範囲選択開始地点となる列のインデックス値です。 */
-  selectionRangeStartColumnIndex;
-
-  /** @type {number} 範囲選択開始地点となる行のインデックス値です。 */
-  selectionRangeStartRowIndex;
-
-  /** @type {Element} 自身（文字領域）を表すHTML要素です。 */
-  root;
-
-  /** @type {Array<Element>} DOMに挿入されている行を表すHTML要素群をまとめた配列です。 */
+  /** @type {Array<HTMLDivElement>} Webページに挿入されている行です。 */
   textLines = [];
 
-  /** @type {Element} 行を表すHTML要素を包むHTML要素です。 */
-  textLinesWrapper;
-
   /**
-   * フォーカス位置を起点に、文字を挿入します。
-   * @param {string} value 入力する値です。
+   * 引数に指定された文字を文章に挿入します。
+   * @param {string} innerCharacter 挿入対象となる文字です。
    */
-  appendCharacter = (value) => {
-    if (!(this.duringSelectionRange) && typeof this.selectionRangeStartRowIndex !== "undefined") {
-      this.removeCharactersInSelectionRange();
-    }
-    const character = this.createCharacter(value);
+  appendCharacter = (innerCharacter) => {
+    const character = this.createCharacter(innerCharacter);
     this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 0, character);
     this.focusedColumnIndex += 1;
     this.getFocusedCharacter().before(character);
   };
 
   /**
-   * 選択範囲に含めることができる全ての文字を選択範囲に含めます（文末文字は選択範囲に含めることができません）。
-   * フォーカスの移動先は文末になります。
+   * 文字領域に新規行を挿入します。
+   * @param {Array<HTMLSpanElement>} innerCharacters 行に最初から含める文字です。
    */
-  appendAllCharactersIntoSelectionRange = () => {
-    this.selectionRangeStartRowIndex = 0;
-    this.selectionRangeStartColumnIndex = 0;
-    this.selectionRangeEndRowIndex = this.characters.length - 1;
-    this.selectionRangeEndColumnIndex = this.characters[this.characters.length - 1].length - 2;
-    for (const textLine of this.characters) {
-      for (const character of textLine) {
-        character.classList.add("tom-editor__text-area__character--select");
-      }
+  appendTextLine = (innerCharacters) => {
+
+    // 行を生成します。
+    const textLine = this.createTextLine();
+    this.textLines.splice(this.focusedRowIndex + 1, 0, textLine);
+    this.characters.splice(this.focusedRowIndex + 1, 0, []);
+
+    // 行に文字を入れていきます。
+    const EOL = this.createEOL();
+    innerCharacters.push(EOL);
+    for (const character of innerCharacters) {
+      textLine.appendChild(character);
+      this.characters[this.focusedRowIndex + 1].push(character);
     }
-    this.focusedRowIndex = this.characters.length - 1;
-    this.focusedColumnIndex = this.characters[this.characters.length - 1].length - 1;
-    this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
-  };
 
-  /**
-   * フォーカスされた位置を起点に行を追加します。
-   * 改行に伴う文字移動処理も当メソッドで担当します。
-   */
-  appendTextLine = () => {
+    // Webページに行を挿入します。
+    this.textLines[this.focusedRowIndex].after(textLine);
 
-    // 改行時に新規行に持っていく文字を抽出します（行末文字は残します）。
-    const cutAndPasteCharacters = this.characters[this.focusedRowIndex].slice(this.focusedColumnIndex, -1);
-    this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, cutAndPasteCharacters.length);
-
-    // フォーカス位置を次の行の先頭に移します。
+    // フォーカス位置を更新します。
     this.focusedRowIndex += 1;
     this.focusedColumnIndex = 0;
-
-    // 新しい行を生成し、DOMに挿入します。
-    const textLine = this.createTextLine();
-    this.textLines.splice(this.focusedRowIndex, 0, textLine);
-    this.characters.splice(this.focusedRowIndex, 0, []);
-    this.textLines[this.focusedRowIndex - 1].after(this.getFocusedTextLine());
-
-    // 改行に伴う移動処理対象となる文字があるならば含めます。
-    for (const initialCharacter of cutAndPasteCharacters) {
-      this.characters[this.focusedRowIndex].push(initialCharacter);
-      this.getFocusedTextLine().appendChild(initialCharacter);
-    }
-
-    // 行末文字を追加します。
-    const EOL = this.createEOL();
-    this.characters[this.focusedRowIndex].push(EOL);
-    this.getFocusedTextLine().appendChild(EOL);
-
-    // 余白内にダミー行を追加します。
-    const dummyTextLine = this.createDummyTextLine();
-    this.dummyTextLines.push(dummyTextLine);
-    this.negativeSpace.before(dummyTextLine);
-  };
-
-  /**
-   * TextArea.autoScrollメソッドから水平方向の自動スクロール処理を抜き出したものです。
-   */
-  autoHorizontalScroll = () => {
-
-    // そもそもスクロールできないならば、することがないので処理から抜けます。
-    if (!(this.root.offsetWidth < this.root.scrollWidth)) {
-      return;
-    }
-
-    // フォーカスしている文字が見づらい位置にあるならば見やすい位置にまでスクロールします。
-    // 文字領域右側の場合は余白の横幅が自動スクロールの基準となります。
-    // 文字領域左側の場合は当メソッド内で定義された横幅を基準とします。
-    const focusX = this.getFocusedCharacter().getBoundingClientRect().left - this.root.getBoundingClientRect().left;
-    const overLeftZone = parseFloat(getComputedStyle(this.root).fontSize) - focusX;
-    if (overLeftZone > 0) {
-      this.root.scrollLeft -= overLeftZone;
-      return;
-    }
-    const overRightZone = focusX - (this.root.getBoundingClientRect().width - this.negativeSpaceWrapper.getBoundingClientRect().width);
-    if (overRightZone > 0) {
-      this.root.scrollLeft += overRightZone;
-      return;
-    }
-  };
-
-  /**
-   * 文字領域のビューポートに対するフォーカス文字の座標に基づいて自動スクロールを実行します。
-   * @param {number} focusedLineNumberScrollTop フォーカスされた行番号のスクロール量です。
-   */
-  autoScroll = (focusedLineNumberScrollTop) => {
-    this.autoVirticalScroll(focusedLineNumberScrollTop);
-    this.autoHorizontalScroll();
-  };
-
-  /**
-   * TextArea.autoScrollメソッドから垂直方向の自動スクロール処理を抜き出したものです。
-   * 文字領域のスクロール量は行番号領域のスクロール量から求められます。
-   * @param {number} focusedLineNumberScrollTop フォーカスされた行番号のスクロール量です。
-   */
-  autoVirticalScroll = (focusedLineNumberScrollTop) => {
-    this.scrollVertically(this.getFocusedTextLine().getBoundingClientRect().top - focusedLineNumberScrollTop);
   };
 
   /**
@@ -182,35 +121,22 @@ const TextArea = class {
    * @returns {string} 文字列化した範囲選択された値です。
    */
   convertSelectedRangeIntoText = (cutFlag) => {
-
-    // 戻り値となる文字列です。
     let convertedText = "";
+    if (this.selectionRange.length) {
 
-    // 範囲選択されていないならば空文字を返します。
-    if (typeof this.selectionRangeStartRowIndex === "undefined") {
-      return convertedText;
-    }
-
-    // 1文字ずつ取得していきます。
-    let checkingRowIndex = this.selectionRangeStartRowIndex;
-    let checkingColumnIndex = this.selectionRangeStartColumnIndex;
-    while (true) {
-      if (checkingColumnIndex === this.characters[checkingRowIndex].length - 1) {
-        convertedText += "\n";
-        checkingRowIndex += 1;
-        checkingColumnIndex = 0;
-      } else {
-        convertedText += this.characters[checkingRowIndex][checkingColumnIndex].innerHTML;
-        checkingColumnIndex += 1;
+      // 選択範囲が複数行にまたがるとき、最後の行以外の末尾文字が選択範囲に含まれていますので改行文字に置きかえます。
+      for (const textLine of this.selectionRange) {
+        for (const character of textLine) {
+          if (character.classList.contains("tom-editor__text-area__character--eol")) {
+            convertedText += "\n";
+            break;
+          }
+          convertedText += character.innerHTML;
+        }
       }
-      if (
-        checkingRowIndex > this.selectionRangeEndRowIndex ||
-        (checkingRowIndex === this.selectionRangeEndRowIndex && checkingColumnIndex > this.selectionRangeEndColumnIndex)
-      ) {
-        break;
-      }
+    } else {
+      convertedText = "";
     }
-
     if (cutFlag) {
       this.removeCharactersInSelectionRange();
     }
@@ -218,682 +144,962 @@ const TextArea = class {
   };
 
   /**
-   * 文字を表すHTML要素を作成します。
-   * @param {number|string} value HTML要素に挿れる文字です。
-   * @returns {Element} 文字を表すHTML要素です。
+   * 文字を生成します。
+   * @param {number|string} innerText 文字となるHTML要素に入れる値です。
+   * @returns {HTMLSpanElement} 文字です。
    */
-  createCharacter = (value) => {
+  createCharacter = (innerHTML) => {
     const character = document.createElement("span");
-    character.classList.add("tom-editor__text-area__character");
-    character.innerHTML = value;
-    return character;
+    character.classList.add(this.CSSClass.character.element);
+    character.innerHTML = innerHTML;
+    return character
   };
 
   /**
-   * 余白領域に追加するダミー行を表すHTML要素を作成します。
-   * @returns {Element} ダミー行を表すHTML要素です。
-   */
-  createDummyTextLine = () => {
-    const textLine = document.createElement("div");
-    textLine.style.height = `${parseFloat(getComputedStyle(this.root).lineHeight)}px`;
-    return textLine;
-  };
-
-  /**
-   * 行末文字を表すHTML要素を作成します。
-   * @returns {Element} 行末文字を表すHTML要素です。
+   * 行末文字を生成します。
+   * @returns {HTMLSpanElement} 行末文字です。
    */
   createEOL = () => {
     const EOL = document.createElement("span");
-    EOL.classList.add("tom-editor__text-area__character");
+    EOL.classList.add(this.CSSClass.character.element, this.CSSClass.character.modifier.EOL);
     EOL.innerHTML = " ";
     return EOL;
   };
 
   /**
-   * 行を表すHTML要素を作成します。
-   * @returns {Element} 行を表すHTML要素です。
+   * 文字領域を作成します。
+   * @returns {HTMLDivElement} 文字領域です。
+   */
+  createTextArea = () => {
+    const textArea = document.createElement("div");
+    textArea.classList.add(this.CSSClass.textArea.element);
+    return textArea;
+  };
+
+  /**
+   * 行を生成します。
+   * @returns {HTMLDivElement} 行です。
    */
   createTextLine = () => {
     const textLine = document.createElement("div");
+    textLine.classList.add(this.CSSClass.textLine.element);
     return textLine;
   };
 
   /**
-   * 選択範囲を解除し、選択範囲を指すインデックス値も空にします。
+   * 現在の入力内容と現在表示中の編集履歴の入力内容の間に差異があるかを確認します。
+   * MutationObserverオブジェクトが使えるかと思ったのですが当該オブジェクトは少しでも変更があるたびに走ってしまうので、
+   * ペースト処理や日本語入力処理などとの相性が悪いと判断して独自の変更検知処理を用意しました。
+   * @returns {boolean} 差異がある場合はtrueを返します。
    */
-  deselectSelectionRange = () => {
-    if (typeof this.selectionRangeStartRowIndex === "undefined") {
-      return;
+  differenceBetweenCurrentAndHistory = () => {
+
+    // 行数が異なる場合は差異があると見なします。
+    if (this.characters.length !== this.history.data[this.history.index].characters.length) {
+      return true;
     }
-    let targetRowIndex = this.selectionRangeStartRowIndex;
-    let targetColumnIndex = this.selectionRangeStartColumnIndex;
-    while (true) {
-      this.characters[targetRowIndex][targetColumnIndex].classList.remove("tom-editor__text-area__character--select");
-      targetColumnIndex += 1;
-      if (typeof this.characters[targetRowIndex][targetColumnIndex] === "undefined") {
-        targetRowIndex += 1;
-        targetColumnIndex = 0;
+
+    for (let i = 0; i < this.characters.length; i += 1) {
+
+      // 1行あたりの文字数が異なる場合も差異があると見なします。
+      if (this.characters[i].length !== this.history.data[this.history.index].characters[i].length) {
+        return true;
       }
-      if (targetRowIndex > this.selectionRangeEndRowIndex) {
-        break;
-      }
-      if (targetRowIndex === this.selectionRangeEndRowIndex) {
-        if (targetColumnIndex > this.selectionRangeEndColumnIndex) {
-          break;
+
+      // 行数に差異がなく、1行あたりの文字数も同じなので1文字ずつ突合させていきます。
+      for (let j = 0; j < this.characters[i].length; j += 1) {
+        if (this.characters[i][j] !== this.history.data[this.history.index].characters[i][j]) {
+          return true;
         }
       }
-      this.characters[targetRowIndex][targetColumnIndex].classList.remove("tom-editor__text-area__character--select");
     }
-    this.selectionRangeStartRowIndex = undefined;
-    this.selectionRangeStartColumnIndex = undefined;
-    this.selectionRangeEndRowIndex = undefined;
-    this.selectionRangeEndColumnIndex = undefined;
-    return;
+
+    return false;
   };
 
   /**
-   * フォーカスしている文字を返します。
-   * @returns {Element} フォーカスしている文字です。
+   * カスタムイベントを発信します。
+   */
+  dispatchEvents = () => {
+
+    // フォーカス座標の通知処理は変更の有無を問わず通知します。
+    // そのため最後に送信されたときの値を保存する必要はありません。
+    const focusedCharacterPoint = {};
+    if (this.getFocusedCharacter() === null) {
+      focusedCharacterPoint.left = null;
+      focusedCharacterPoint.top = null;
+    } else {
+      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
+      const editor = this.editor.getBoundingClientRect();
+      focusedCharacterPoint.left = focusedCharacter.left - editor.left;
+      focusedCharacterPoint.top = focusedCharacter.top - editor.top;
+    }
+    this.editor.dispatchEvent(new CustomEvent("custom-moveFocusPoint", {
+      detail: {
+        left: focusedCharacterPoint.left,
+        top: focusedCharacterPoint.top
+      }
+    }));
+
+    // フォーカスしている行番号と行数の通知処理は値の性質上、後者のほうが先に呼び出される必要があります。
+    const currentLength = this.textLines.length;
+    if (currentLength !== this.lastDispatchedEventValue.length) {
+      this.lastDispatchedEventValue.length = currentLength;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeNumberOfTextLines", {
+        detail: {
+          length: this.lastDispatchedEventValue.length
+        }
+      }));
+    }
+    const currentIndex = this.focusedRowIndex;
+    if (currentIndex !== this.lastDispatchedEventValue.index) {
+      this.lastDispatchedEventValue.index = currentIndex;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeFocusedRowIndex", {
+        detail: {
+          index: this.lastDispatchedEventValue.index
+        }
+      }));
+    }
+
+    // その他の値は変更があったときのみ実行します。
+    const currentScrollLeft = this.textArea.scrollLeft;
+    if (currentScrollLeft !== this.lastDispatchedEventValue.scrollLeft) {
+      this.lastDispatchedEventValue.scrollLeft = currentScrollLeft;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollLeft", {
+        detail: {
+          scrollLeft: this.lastDispatchedEventValue.scrollLeft
+        }
+      }));
+    }
+    const currentScrollTop = this.textArea.scrollTop;
+    if (currentScrollTop !== this.lastDispatchedEventValue.scrollTop) {
+      this.lastDispatchedEventValue.scrollTop = currentScrollTop;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollTop", {
+        detail: {
+          scrollTop: this.lastDispatchedEventValue.scrollTop
+        }
+      }));
+    }
+    const currentSelectingRange = Boolean(this.selectionRange.length);
+    if (currentSelectingRange !== this.lastDispatchedEventValue.selecingRange) {
+      this.lastDispatchedEventValue.selecingRange = currentSelectingRange;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeSelectingRange", {
+        detail: {
+          selectingRange: this.lastDispatchedEventValue.selecingRange
+        }
+      }));
+    }
+    const currentViewportHeightRatio = this.textArea.clientHeight / this.textArea.scrollHeight;
+    if (currentViewportHeightRatio !== this.lastDispatchedEventValue.viewportHeightRatio) {
+      this.lastDispatchedEventValue.viewportHeightRatio = currentViewportHeightRatio;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportHeightRatio", {
+        detail: {
+          viewportHeightRatio: this.lastDispatchedEventValue.viewportHeightRatio
+        }
+      }));
+    }
+    const currentViewportWidthRatio = this.textArea.clientWidth / this.textArea.scrollWidth;
+    if (currentViewportWidthRatio !== this.lastDispatchedEventValue.viewportWidthRatio) {
+      this.lastDispatchedEventValue.viewportWidthRatio = currentViewportWidthRatio;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportWidthRatio", {
+        detail: {
+          viewportWidthRatio: this.lastDispatchedEventValue.viewportWidthRatio
+        }
+      }));
+    }
+  };
+
+  /**
+   * 現在フォーカスしている行の最後の文字のインデックスを返します。
+   */
+  getColumnsLastIndex = () => {
+    return this.characters[this.focusedRowIndex].length - 1;
+  };
+
+  /**
+   * 現在フォーカスしている文字を返します。
+   * @returns {null|HTMLSpanElement} フォーカスしている文字です。
    */
   getFocusedCharacter = () => {
+    if (this.focusedRowIndex === null) {
+      return null;
+    }
     return this.characters[this.focusedRowIndex][this.focusedColumnIndex];
   };
 
   /**
-   * フォーカスしている行を返します。
-   * @returns {Element} フォーカスしている文字です。
+   * Webページに挿入中の行のうち、最後の行のインデックスを返します。
    */
-  getFocusedTextLine = () => {
-    return this.textLines[this.focusedRowIndex];
+  getRowsLastIndex = () => {
+    return this.textLines.length - 1;
   };
 
   /**
-   * フォーカス中の文字の1つ次の文字を返します。
-   * 存在しない場合はnullを返します。
-   * @returns {null|Element} フォーカスしている文字の1つ次の文字です。
+   * 任意の編集履歴を文字領域に反映します。
+   * @param {number} index 反映させたい編集履歴を指すインデックスです。
    */
-  getNextFocusedCharacter = () => {
-    if (this.isEndOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-      return null;
-    }
-    if (this.focusedColumnIndex === this.characters[this.focusedRowIndex].length - 1) {
-      return this.characters[this.focusedRowIndex + 1][0];
-    }
-    return this.characters[this.focusedRowIndex][this.focusedColumnIndex + 1];
-  };
-
-  /**
-   * フォーカス中の文字の1つ前の文字を返します。
-   * 存在しない場合はnullを返します。
-   * @returns {null|Element} フォーカスしている文字の1つ前の文字です。
-   */
-  getPreviousFocusedCharacter = () => {
-    if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-      return null;
-    }
-    if (this.focusedColumnIndex === 0) {
-      return this.characters[this.focusedRowIndex - 1][this.characters[this.focusedRowIndex - 1].length - 1];
-    }
-    return this.characters[this.focusedRowIndex][this.focusedColumnIndex - 1];
-  };
-
-  /**
-   * Element.addEventListenerのコールバック引数に渡されたイベント情報からキャレットを配置すべき文字を特定します。
-   * @param {Object} event 判定材料となるイベント情報です。
-   */
-  identifyCharacterForPlacingCaret = (event) => {
-
-    // 行群よりも下部の空間をクリックしたときは最末尾の文字を配置対象とします。
-    if (event.target === this.root || event.target === this.textLinesWrapper || event.target === this.negativeSpace) {
-      this.focusedRowIndex = this.characters.length - 1;
-      this.focusedColumnIndex = this.characters[this.focusedRowIndex].length - 1;
+  loadHistory = (index) => {
+    if (!this.history.data[index]) {
       return;
     }
 
-    // HTMLDivElementの場合は行であると見なして一致する行を探します。
-    // 一致する行が見つかったら、その行の末尾の文字を配置対象とします。
-    if (event.target instanceof HTMLDivElement) {
-      if (event.path[1] === this.textLinesWrapper) {
-        for (let i = 0; i < this.textLines.length; i += 1) {
-          if (event.target === this.textLines[i]) {
-            this.focusedRowIndex = i;
-            this.focusedColumnIndex = this.characters[this.focusedRowIndex].length - 1;
-            return;
-          }
-        }
-        throw new Error("キャレットの配置対象となる行が見つかりません。");
+    // 反映する編集履歴に保存された文字領域直下のHTML要素の状態を反映してから、
+    // 各プロパティへの値の更新を行います。
+    this.textArea.innerHTML = "";
+    for (let i = 0; i < this.history.data[index].textLines.length; i += 1) {
+      const textLine = this.history.data[index].textLines[i];
+      textLine.innerHTML = "";
+      for (const character of this.history.data[index].characters[i]) {
+        textLine.appendChild(character);
       }
-      if (event.path[1] === this.negativeSpaceWrapper) {
-        for (let i = 0; i < this.dummyTextLines.length; i += 1) {
-          if (event.target === this.dummyTextLines[i]) {
-            this.focusedRowIndex = i;
-            this.focusedColumnIndex = this.characters[this.focusedRowIndex].length - 1;
-            return;
-          }
-        }
-        throw new Error("キャレットの配置対象となる行が見つかりません。");
-      }
-      throw new Error("キャレットの配置対象となる行が見つかりません。");
+      this.textArea.appendChild(textLine);
     }
 
-    // HTMLSpanElementの場合は文字であると見なして一致する文字を探します。
-    // といっても1文字ずつ突合させていては処理が重くなるため、まずは一致する行を見つけることにします。
-    if (event.target instanceof HTMLSpanElement) {
-      for (let i = 0; i < this.textLines.length; i += 1) {
-        if (event.path[1] === this.textLines[i]) {
-          this.focusedRowIndex = i;
-          for (let j = 0; j < this.characters[this.focusedRowIndex].length; j += 1) {
-            if (event.target === this.characters[this.focusedRowIndex][j]) {
-              this.focusedColumnIndex = j;
-              return;
+    this.characters = this.history.data[index].characters.map((characters) => {
+      return Array.from(characters);
+    });
+    this.focusedColumnIndex = this.history.data[index].focusedColumnIndex;
+    this.focusedRowIndex = this.history.data[index].focusedRowIndex;
+    this.textArea.scrollLeft = this.history.data[index].scrollLeft;
+    this.textArea.scrollTop = this.history.data[index].scrollTop;
+    this.textLines = Array.from(this.history.data[index].textLines);
+  };
+
+  /**
+   * 矢印キーと移動キーによるフォーカス位置と選択範囲の更新処理です。
+   * @param {string} key 押された方向です。
+   * @param {boolean} shiftKey Shiftキーが押されているときはtrueになります。
+   */
+  moveFocusPointByArrowKey = (key, shiftKey) => {
+    if (key === "ArrowDown") {
+      const goalRowIndex = this.focusedRowIndex + 1;
+      const goalColumnIndex = this.focusedColumnIndex;
+      while (
+        !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex === goalColumnIndex) &&
+        !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex < goalColumnIndex) &&
+        !(this.focusedRowIndex === this.getRowsLastIndex() && this.focusedColumnIndex === this.getColumnsLastIndex())
+      ) {
+        this.moveFocusPointByArrowKey("ArrowRight", shiftKey);
+      }
+      return;
+    }
+    if (key === "ArrowLeft") {
+      if (this.focusedColumnIndex === 0) {
+        if (this.focusedRowIndex === 0) {
+
+          // 文頭にいるときは何もできないので処理から抜けます。
+          return;
+        }
+
+        // 行頭にいるときは前の行の行末文字に移動します。
+        this.focusedRowIndex -= 1;
+        this.focusedColumnIndex = this.getColumnsLastIndex();
+        if (!shiftKey) {
+          return;
+        }
+
+        // 新しく範囲選択を始めるときの処理です。
+        if (!this.selectionRange.length) {
+          this.getFocusedCharacter().classList.add("tom-editor__text-area__character--select");
+          this.selectionRange.push([this.getFocusedCharacter()]);
+          return;
+        }
+
+        // 選択範囲が拡大されるときの処理です。
+        if (!this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+          this.getFocusedCharacter().classList.add("tom-editor__text-area__character--select");
+          this.selectionRange.unshift([this.getFocusedCharacter()]);
+          return;
+        }
+
+        // 選択範囲が縮小されるときの処理です。
+        this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
+        this.selectionRange.pop();
+        if (!this.selectionRange.length) {
+          this.selectionRange = [];
+        }
+        return;
+      }
+
+      // 文中にいるときは1つ前の文字に移動します。
+      this.focusedColumnIndex -= 1;
+      if (!shiftKey) {
+        return;
+      }
+
+      // 新しく範囲選択を始めるときの処理です。
+      if (!this.selectionRange.length) {
+        this.getFocusedCharacter().classList.add("tom-editor__text-area__character--select");
+        this.selectionRange.push([this.getFocusedCharacter()]);
+        return;
+      }
+
+      // 選択範囲が拡大されるときの処理です。
+      if (!this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+        this.getFocusedCharacter().classList.add("tom-editor__text-area__character--select");
+        this.selectionRange[0].unshift(this.getFocusedCharacter());
+        return;
+      }
+
+      // 選択範囲が縮小されるときの処理です。
+      this.getFocusedCharacter().classList.remove("tom-editor__text-area__character--select");
+      this.selectionRange[this.selectionRange.length - 1].pop();
+      if (!this.selectionRange[0].length && this.selectionRange.length === 1) {
+        this.selectionRange = [];
+      }
+      return;
+    }
+    if (key === "ArrowRight") {
+      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        if (this.focusedRowIndex === this.getRowsLastIndex()) {
+
+          // 文末にいるときは何もできないので処理から抜けます。
+          return;
+        }
+
+        // 行末にいるときは次の行の先頭に移動します。
+        this.focusedRowIndex += 1;
+        this.focusedColumnIndex = 0;
+        if (!shiftKey) {
+          return;
+        }
+
+        const previousFocusedCharacter = this.characters[this.focusedRowIndex - 1][this.characters[this.focusedRowIndex - 1].length - 1];
+
+        // 新しく範囲選択を始めるときの処理です。
+        if (!this.selectionRange.length) {
+          previousFocusedCharacter.classList.add("tom-editor__text-area__character--select");
+          this.selectionRange.push([previousFocusedCharacter]);
+          return;
+        }
+
+        // 選択範囲が拡大されるときの処理です。
+        if (!previousFocusedCharacter.classList.contains("tom-editor__text-area__character--select")) {
+          previousFocusedCharacter.classList.add("tom-editor__text-area__character--select");
+          this.selectionRange[this.selectionRange.length - 1].push(previousFocusedCharacter);
+          this.selectionRange.push([]);
+          return;
+        }
+
+        // 選択範囲が縮小されるときの処理です。
+        previousFocusedCharacter.classList.remove("tom-editor__text-area__character--select");
+        this.selectionRange.shift();
+        if (!this.selectionRange.length) {
+          this.selectionRange = [];
+        }
+        return;
+      }
+
+      // 文中にいるときは1つ次の文字に移動します。
+      this.focusedColumnIndex += 1;
+      if (!shiftKey) {
+        return;
+      }
+
+      const previousFocusedCharacter = this.characters[this.focusedRowIndex][this.focusedColumnIndex - 1];
+
+      // 新しく範囲選択を始めるときの処理です。
+      if (!this.selectionRange.length) {
+        previousFocusedCharacter.classList.add("tom-editor__text-area__character--select");
+        this.selectionRange.push([previousFocusedCharacter]);
+        return;
+      }
+
+      // 選択範囲が拡大されるときの処理です。
+      if (!previousFocusedCharacter.classList.contains("tom-editor__text-area__character--select")) {
+        previousFocusedCharacter.classList.add("tom-editor__text-area__character--select");
+        this.selectionRange[this.selectionRange.length - 1].push(previousFocusedCharacter);
+        return;
+      }
+
+      // 選択範囲が縮小されるときの処理です。
+      previousFocusedCharacter.classList.remove("tom-editor__text-area__character--select");
+      this.selectionRange[0].shift();
+      if (!this.selectionRange[0].length) {
+        this.selectionRange = [];
+      }
+      return;
+    }
+    if (key === "ArrowUp") {
+      const goalRowIndex = this.focusedRowIndex - 1;
+      const goalColumnIndex = this.focusedColumnIndex;
+      while (
+        !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex === goalColumnIndex) &&
+        !(this.focusedRowIndex === goalRowIndex && this.focusedColumnIndex < goalColumnIndex) &&
+        !(this.focusedRowIndex === 0 && this.focusedColumnIndex === 0)
+      ) {
+        this.moveFocusPointByArrowKey("ArrowLeft", shiftKey);
+      }
+      return;
+    }
+    if (key === "End") {
+      for (let i = 0; i < this.getColumnsLastIndex() - this.focusedColumnIndex; i += 1) {
+        this.moveFocusPointByArrowKey("ArrowDown", shiftKey);
+      }
+      return;
+    }
+    if (key === "Home") {
+      for (let i = 0; i < this.focusedColumnIndex; i += 1) {
+        this.moveFocusPointByArrowKey("ArrowUp", shiftKey);
+      }
+      return;
+    }
+    throw new Error(`想定外の引数です（${key}）。`);
+  };
+
+  /**
+   * ドラッグ操作（エディター本体でのmousemoveイベント）の対象となったHTML要素に応じて、
+   * フォーカス位置を更新するとともに選択範囲を更新します。
+   * @param {Element} target イベントの対象となったHTML要素です。
+   * @returns {boolean} 対象となるHTML要素が処理の対象だった場合はtrueを返します。
+   */
+  moveFocusPointByDragTarget = (target) => {
+
+    // まずは対象となるHTML要素からフォーカス位置を求めます。
+    // フォーカス対象でない場合、現在のフォーカス位置と対象の位置が同じ場合は処理から抜けます。
+    let targetRowIndex;
+    let targetColumnIndex;
+    if (target.classList.contains("tom-editor__text-area__character")) {
+      targetRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === target.parentElement;
+      });
+      targetColumnIndex = this.characters[targetRowIndex].findIndex((character) => {
+        return character === target;
+      });
+    } else if (target.classList.contains("tom-editor__text-area__text-line")) {
+      targetRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === target;
+      });
+      targetColumnIndex = this.getColumnsLastIndex();
+    } else {
+      return false;
+    }
+    if (targetRowIndex === this.focusedRowIndex && targetColumnIndex === this.focusedColumnIndex) {
+      return false;
+    }
+
+    // 対象が行か文字だったということでフォーカス位置と選択範囲の更新処理を行います。
+    while (targetRowIndex < this.focusedRowIndex) {
+      this.moveFocusPointByArrowKey("ArrowUp", true);
+    }
+    while (targetRowIndex > this.focusedRowIndex) {
+      this.moveFocusPointByArrowKey("ArrowDown", true);
+    }
+    while (targetColumnIndex < this.focusedColumnIndex) {
+      this.moveFocusPointByArrowKey("ArrowLeft", true);
+    }
+    while (targetColumnIndex > this.focusedColumnIndex) {
+      this.moveFocusPointByArrowKey("ArrowRight", true);
+    }
+
+    return true;
+  };
+
+  /**
+   * mousedownイベントが発生したHTML要素に応じてフォーカス位置を更新します。
+   * @param {Event} event mousedownイベントのEventオブジェクトです。
+   */
+  moveFocusPointByMousedownTarget = (event) => {
+
+    // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
+    if (event.target.classList.contains("tom-editor__text-area__character")) {
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.path[1];
+      });
+      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
+        return character === event.target;
+      });
+      return;
+    }
+
+    // 行がクリックされたときは当該行の行末文字をフォーカス位置とします。
+    if (event.target.classList.contains("tom-editor__text-area__text-line")) {
+      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
+        return textLine === event.target;
+      });
+      this.focusedColumnIndex = this.getColumnsLastIndex();
+      return;
+    }
+  };
+
+  /**
+   * キャレット上で押されたキーに応じた処理を実行します。
+   * 一部のキー処理で非同期のClipboard APIを利用しているため、
+   * その他同期的なキー入力処理と同じ使い勝手になるように全体をPromiseで囲って非同期処理化しています。
+   * @param {Event} event EventTarget.addEventListenerメソッドから取得したイベント情報です。
+   * @returns {Promise} 押されたキーが有効だった場合はtrueを返します。
+   */
+  reflectKey = (event) => {
+    return new Promise(async (resolve) => {
+
+      // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
+      if (event.detail.ctrlKey) {
+
+        // Ctrl + aで全文選択です。
+        // フォーカス位置は文末になります。
+        if (event.detail.key === "a") {
+          this.selectionRange = this.characters.map((characters) => {
+            return Array.from(characters);
+          });
+          this.selectionRange[this.selectionRange.length - 1].pop();
+          for (const characters of this.selectionRange) {
+            for (const character of characters) {
+              character.classList.add("tom-editor__text-area__character--select");
             }
           }
-          throw new Error("キャレットの配置対象となる文字が見つかりません。");
+          this.focusedRowIndex = this.getRowsLastIndex();
+          this.focusedColumnIndex = this.getColumnsLastIndex();
+          return resolve(true);
         }
+
+        // Ctrl + cで範囲選択中の文字をクリップボードにコピーします。
+        if (event.detail.key === "c") {
+          const convertedText = this.convertSelectedRangeIntoText(false);
+          await navigator.clipboard.writeText(convertedText);
+          return resolve(true);
+        }
+
+        // Ctrl + vでクリップボードの文字を文字領域にペーストします。
+        if (event.detail.key === "v") {
+          await navigator.clipboard.readText().then((textInClipboard) => {
+            if (this.selectionRange.length) {
+              this.removeCharactersInSelectionRange();
+            }
+            for (const character of textInClipboard) {
+
+              // Async Clipboard APIで改行を取得すると「\n」ではなく「\r」「\n」の2文字で表現されます。
+              // そのままDOMに突っ込むと2回改行されてしまうため「\r」は無視するようにします。
+              if (character === "\r") {
+                continue;
+              }
+
+              if (character === "\n") {
+                const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
+                this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
+                continue;
+              }
+              this.appendCharacter(character);
+            }
+          });
+          return resolve(true);
+        }
+
+        // Ctrl + xで選択範囲中の文字をカットします。
+        if (event.detail.key === "x") {
+          const convertedText = this.convertSelectedRangeIntoText(true);
+          await navigator.clipboard.writeText(convertedText);
+          return resolve(true);
+        }
+
+        // Ctrl + yで1つ後の編集状態に移動します。
+        if (event.detail.key === "y") {
+          if (!this.history.data[this.history.index + 1]) {
+            return resolve(false);
+          }
+          this.history.index += 1;
+          this.loadHistory(this.history.index);
+          return resolve(true);
+        }
+
+        // Ctrl + zで1つ前の編集状態に移動します。
+        if (event.detail.key === "z") {
+          if (!this.history.data[this.history.index - 1]) {
+            return resolve(false);
+          }
+          this.history.index -= 1;
+          this.loadHistory(this.history.index);
+          return resolve(true);
+        }
+
+        // Ctrlキーが押されている間はショートカット処理の制御のみを行います。
+        // その他キー処理は実行せず、ここで処理から抜けます。
+        return resolve(false);
       }
-      throw new Error("キャレットの配置対象となる行が見つかりません。");
-    }
+
+      // 文字入力処理です。
+      // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
+      if (event.detail.key.length === 1) {
+        if (this.selectionRange.length) {
+          this.removeCharactersInSelectionRange();
+        }
+        this.appendCharacter(event.detail.key);
+        return resolve(true);
+      }
+
+      // 矢印キーと移動キーによるフォーカス位置の変更と範囲選択の更新処理です。
+      // 範囲選択がされている状態でShiftキーを押さずに矢印キーが押された場合は、選択範囲の解除だけを行います。
+      if (event.detail.key.includes("Arrow") || ["End", "Home"].includes(event.detail.key)) {
+        if (!event.detail.shiftKey && this.selectionRange.length) {
+          this.unselctRange();
+        } else {
+          this.moveFocusPointByArrowKey(event.detail.key, event.detail.shiftKey);
+        }
+        return resolve(true);
+      }
+
+      // BackspaceキーとDeleteキーによる、文字あるいは選択範囲の削除処理です。
+      // 範囲選択がされているならばShiftキーが押されているかどうかを問わず、選択範囲を削除します。
+      if (["Backspace", "Delete"].includes(event.detail.key)) {
+        if (this.selectionRange.length) {
+          this.removeCharactersInSelectionRange();
+        } else {
+          this.removeCharacter(event.detail.key);
+        }
+        return resolve(true);
+      }
+
+      // その他キー入力です。
+      if (event.detail.key === "Enter") {
+        if (!event.detail.shiftKey && this.selectionRange.length) {
+          this.removeCharactersInSelectionRange();
+        }
+        const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
+        this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
+        return resolve(true);
+      }
+      if (event.detail.key === "Tab") {
+        if (event.detail.shiftKey) {
+          return resolve(false);
+        }
+        if (this.selectionRange.length) {
+          this.removeCharactersInSelectionRange();
+        }
+        const tab = "    ";
+        for (const character of tab) {
+          this.appendCharacter(character);
+        }
+        return resolve(true);
+      }
+
+      return resolve(false);
+    });
   };
 
   /**
-   * 余白領域を包むHTML要素を初期化します。
+   * Backspaceキー、あるいはDeleteキーによる文字削除処理を実行します。
+   * @param {string} key 押されたキーです。
    */
-  initializeNegativeSpaceWrapper = () => {
-    this.negativeSpaceWrapper = document.createElement("div");
-    this.root.appendChild(this.negativeSpaceWrapper);
-
-    // ダミー行の1行目を追加します。
-    this.dummyTextLines[0] = this.createDummyTextLine();
-    this.negativeSpaceWrapper.appendChild(this.dummyTextLines[0]);
-
-    // 余白を挿入します。
-    this.negativeSpace = document.createElement("div");
-    this.negativeSpace.classList.add("tom-editor__text-area__negative-space");
-    this.resetNegativeSpaceHeight();
-    this.negativeSpaceWrapper.appendChild(this.negativeSpace);
-  };
-
-  /**
-   * 行を表すHTML要素群を包むHTML要素を初期化します。
-   */
-  initializeTextLinesWrapper = () => {
-    this.textLinesWrapper = document.createElement("div");
-    this.textLinesWrapper.classList.add("tom-editor__text-area__text-lines-wrapper");
-    this.root.appendChild(this.textLinesWrapper);
-    this.textLines[0] = this.createTextLine();
-    this.characters.push([]);
-    this.textLinesWrapper.appendChild(this.textLines[0]);
-    const EOL = this.createEOL();
-    this.characters[0].push(EOL);
-    this.textLines[0].appendChild(EOL);
-  };
-
-  /**
-   * 引数で指定されたインデックス値が指す文字が文頭（行頭ではない）ならばtrueを返します。
-   * @param {number} targetRowIndex 検査対象となる行を指すインデックス値です。
-   * @param {number} targetColumnIndex 検査対象となる列を指すインデックス値です。
-   * @returns {boolean} 文頭ならばtrueを返します。
-   */
-  isBeginningOfText = (targetRowIndex, targetColumnIndex) => {
-    if (targetRowIndex === 0 && targetColumnIndex === 0) {
-      return true;
-    }
-    return false;
-  };
-
-  /**
-   * 引数で指定されたインデックス値が指す文字が文末（行末ではない）ならばtrueを返します。
-   * @param {number} targetRowIndex 検査対象となる行を指すインデックス値です。
-   * @param {number} targetColumnIndex 検査対象となる列を指すインデックス値です。
-   * @returns {boolean} 文頭ならばtrueを返します。
-   */
-  isEndOfText = (targetRowIndex, targetColumnIndex) => {
-    if (targetRowIndex === this.characters.length - 1 && targetColumnIndex === this.characters[this.focusedRowIndex].length - 1) {
-      return true;
-    }
-    return false;
-  };
-
-  /**
-   * 引数で指定された文字を削除します。
-   * @param {string} option 挙動を制御する値です。
-   */
-  removeCharacter = (option) => {
-    if (option === "Backspace") {
-      if (!(this.duringSelectionRange) && typeof this.selectionRangeStartRowIndex !== "undefined") {
-        this.removeCharactersInSelectionRange();
+  removeCharacter = (key) => {
+    if (key === "Backspace") {
+      if (this.focusedColumnIndex === 0) {
+        if (this.focusedRowIndex === 0) {
+          return;
+        }
+        this.focusedRowIndex -= 1;
+        this.focusedColumnIndex = this.getColumnsLastIndex();
+        this.removeTextLine();
         return;
       }
-      this.removeCharacterByBackspace();
+      this.focusedColumnIndex -= 1;
+      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
       return;
     }
-    if (option === "Delete") {
-      if (!(this.duringSelectionRange) && typeof this.selectionRangeStartRowIndex !== "undefined") {
-        this.removeCharactersInSelectionRange();
+    if (key === "Delete") {
+      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        if (this.focusedRowIndex === this.getRowsLastIndex()) {
+          return;
+        }
+        this.removeTextLine();
         return;
       }
-      this.removeCharacterByDelete();
+      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
       return;
     }
+    throw new Error(`想定外の引数です（${key}）。`);
   };
 
   /**
-   * Backspaceキーによる文字削除処理です。
-   */
-  removeCharacterByBackspace = () => {
-    if (this.focusedColumnIndex === 0) {
-
-      // フォーカス位置が文頭の場合は何もできないので処理から抜けます。
-      if (this.focusedRowIndex === 0) {
-        return;
-      }
-
-      // フォーカス位置が2行目以降の行頭の場合は行削除処理に任せます。
-      this.removeTextLine();
-      return;
-    }
-
-    // フォーカス位置が1列目でない場合は普通に削除します。
-    this.focusedColumnIndex -= 1;
-    this.getFocusedCharacter().remove();
-    this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1);
-    return;
-  };
-
-  /**
-   * Deleteキーによる文字削除処理です。
-   */
-  removeCharacterByDelete = () => {
-    if (this.characters[this.focusedRowIndex].length - 1 === this.focusedColumnIndex) {
-
-      // フォーカス位置が行末で、かつ次の行が無い場合は何もできないので処理から抜けます。
-      if (typeof this.textLines[this.focusedRowIndex + 1] === "undefined") {
-        return;
-      }
-
-      // フォーカス位置が行末で、かつ次行が存在する場合は行削除処理に任せます。
-      this.focusedRowIndex += 1;
-      this.focusedColumnIndex = 0;
-      this.removeTextLine();
-      return;
-    }
-
-    // フォーカス位置が行末でない場合は普通に削除します。
-    this.getFocusedCharacter().remove();
-    this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1);
-    return;
-  };
-
-  /**
-   * 選択範囲に含まれている文字を全て削除します。
+   * 範囲選択された文字を全て削除します。
    */
   removeCharactersInSelectionRange = () => {
-    if (typeof this.selectionRangeStartRowIndex === "undefined") {
-      return;
+    let numberOfCharacters = 0;
+    for (const row of this.selectionRange) {
+      numberOfCharacters += row.length;
     }
-
-    // まずはフォーカス位置を選択範囲末尾にします。
-    // さらに、Backspaceキーによる文字削除処理を使用する関係上、1文字だけ文末方向にフォーカスを移動させておきます。
-    this.focusedRowIndex = this.selectionRangeEndRowIndex;
-    this.focusedColumnIndex = this.selectionRangeEndColumnIndex;
-    if (this.focusedColumnIndex === this.characters[this.focusedRowIndex].length - 1) {
-      this.focusedRowIndex += 1;
-      this.focusedColumnIndex = 0;
+    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
+      for (let i = 0; i < numberOfCharacters; i += 1) {
+        this.removeCharacter("Delete");
+      }
     } else {
-      this.focusedColumnIndex += 1;
+      for (let i = 0; i < numberOfCharacters; i += 1) {
+        this.removeCharacter("Backspace");
+      }
     }
-
-    // Backspaceキーによる文字削除処理を使って選択範囲にある文字を全て削除します。
-    while (!(this.focusedRowIndex === this.selectionRangeStartRowIndex && this.focusedColumnIndex === this.selectionRangeStartColumnIndex)) {
-      this.removeCharacterByBackspace();
-    }
-
-    // 選択範囲情報を削除します。
-    this.selectionRangeStartRowIndex = undefined;
-    this.selectionRangeStartColumnIndex = undefined;
-    this.selectionRangeEndRowIndex = undefined;
-    this.selectionRangeEndColumnIndex = undefined;
+    this.selectionRange = [];
+    return;
   };
 
   /**
-   * フォーカス位置を基準に行を削除します。
-   * 改行に伴う文字移動処理も当メソッドで担当します。
+   * 行の削除と、行の削除に伴う文字移動を行います。
    */
   removeTextLine = () => {
 
-    // 改行時に新規行に持っていく文字を抽出します（行末文字も含めます）。
-    const cutAndPasteCharacters = this.characters[this.focusedRowIndex].slice(0);
+    // 文字を移動します。
+    const movingCharacters = this.characters[this.focusedRowIndex + 1].splice(0);
+    for (const character of movingCharacters.reverse()) {
+      this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex + 1, 0, character);
+      this.getFocusedCharacter().after(character);
+    }
 
-    // フォーカス位置を前の行の末尾に移します。
-    this.focusedRowIndex -= 1;
-    this.focusedColumnIndex = this.characters[this.focusedRowIndex].length - 1;
-
-    // 当メソッド呼び出し時点でフォーカスされていた行を削除します。
-    this.textLines[this.focusedRowIndex + 1].remove();
-    this.textLines.splice(this.focusedRowIndex + 1, 1);
+    // 文字が全て抽出されて不要になった行を削除します。
+    this.textLines.splice(this.focusedRowIndex + 1, 1)[0].remove();
     this.characters.splice(this.focusedRowIndex + 1, 1);
 
-    // 改行に伴う移動処理対象となる文字があるならば含めます。
-    for (const character of cutAndPasteCharacters) {
-      this.characters[this.focusedRowIndex].push(character);
-      this.getFocusedTextLine().appendChild(character);
-    }
-
-    // このままだと1つの行に2つの行末文字が存在することになります。
-    // 現在フォーカスしているのは改行先の行末文字なので、これを削除します。
-    this.removeCharacterByDelete();
-
-    // 余白内にある行も削除します。
-    this.dummyTextLines[this.dummyTextLines.length - 1].remove();
-    this.dummyTextLines.pop();
+    // このままだと1つの行に2つのEOLが混在するので元々入っていたほうのEOLを削除します。
+    this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, 1)[0].remove();
   };
 
   /**
-   * フォーカス情報を更新します。
-   * Shiftキーが押されている場合はフォーカスの更新に合わせて選択範囲も更新します。
-   * @param {string} option 挙動を制御する値です。
+   * 編集履歴を保存します。
    */
-  resetFocusAndSelectionRange = (option) => {
+  saveHistory = () => {
 
-    // 引数が指定されていないときはフォーカスの解除と選択範囲の解除を行います。
-    if (typeof option === "undefined") {
-      this.focusedRowIndex = undefined;
-      this.focusedColumnIndex = undefined;
-      this.deselectSelectionRange();
+    // 初期化時の処理です。
+    if (typeof this.history === "undefined") {
+      this.history = {
+        data: [{
+          characters: this.characters.map((characters) => {
+            return Array.from(characters);
+          }),
+          focusedColumnIndex: 0,
+          focusedRowIndex: 0,
+          scrollLeft: 0,
+          scrollTop: 0,
+          textLines: Array.from(this.textLines)
+        }],
+        index: 0
+      };
       return;
     }
 
-    // Shiftキーが押されていないが範囲選択は行われている状況で矢印キーが押されたときは選択範囲の解除を行います。
-    if (option.includes("Arrow") && !(this.duringSelectionRange) && typeof this.selectionRangeStartRowIndex !== "undefined") {
-      this.deselectSelectionRange();
-      return;
-    }
+    // 現在の状態が編集履歴の最新となるように保存します。
+    // Redo中ならば未来の履歴は全て削除します。
+    this.history.data.splice(this.history.index + 1);
+    this.history.data.push({
+      characters: this.characters.map((characters) => {
+        return Array.from(characters);
+      }),
+      focusedColumnIndex: this.focusedColumnIndex,
+      focusedRowIndex: this.focusedRowIndex,
+      scrollLeft: this.textArea.scrollLeft,
+      scrollTop: this.textArea.scrollTop,
+      textLines: Array.from(this.textLines)
+    });
+    this.history.index += 1;
+  };
 
-    // 以下処理は矢印キーによる普通のフォーカス移動処理です。
-    // Shiftキーが押されているならば選択範囲の更新処理も行います。
-    if (option === "ArrowDown") {
-      let numberOfArrowRight = 0;
-      numberOfArrowRight += this.characters[this.focusedRowIndex].length - 1 - this.focusedColumnIndex;
-      if (!(this.isEndOfText(this.focusedRowIndex, this.characters[this.focusedRowIndex].length - 1))) {
-        if (typeof this.characters[this.focusedRowIndex + 1][this.focusedColumnIndex] === "undefined") {
-          numberOfArrowRight += 1 + this.characters[this.focusedRowIndex + 1].length - 1;
-        } else {
-          numberOfArrowRight += 1 + this.focusedColumnIndex;
+  /**
+   * 現在のフォーカス位置がビューポート外や見えにくい位置にあるときは自動的にスクロールします。
+   */
+  scrollAutomatically = () => {
+
+    // 自動スクロールはフォーカスされた文字が文字領域外に出たときには必ず実行されます。
+    // ただ、それだと当該文字が文字領域縁ギリギリのところに置かれつづけるために視認性が悪いという問題が残ります、
+    // そこで、いくらか内側にも処理の対象範囲を広げています。
+    // 以下4つの変数は上下左右の対象範囲を何文字分広げるかという値です。
+    const innerRangeTop = 0.5;
+    const innerRangeBottom = 1.5;
+    const innerRangeLeft = 1.5;
+    const innerRangeRight = 2.5;
+
+    const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
+    const textAreaRect = this.textArea.getBoundingClientRect();
+    if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
+      this.textArea.scrollTop -= (textAreaRect.top + focusedCharacterRect.height * innerRangeTop) - focusedCharacterRect.top;
+    } else if (focusedCharacterRect.bottom > textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom) {
+      this.textArea.scrollTop += focusedCharacterRect.bottom - (textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom);
+    }
+    if (focusedCharacterRect.left < textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) {
+      this.textArea.scrollLeft -= (textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) - focusedCharacterRect.left;
+    } else if (focusedCharacterRect.right > textAreaRect.right - focusedCharacterRect.width * innerRangeRight) {
+      this.textArea.scrollLeft += focusedCharacterRect.right - (textAreaRect.right - focusedCharacterRect.width * innerRangeRight);
+    }
+  };
+
+  /**
+   * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
+   */
+  setEventListeners = (readonlyFlag) => {
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // IMEによる入力処理の状態や値をまとめたオブジェクトです。
+      const compositionState = {
+        lastData: null,
+        startColumnIndex: null,
+        startSelectionStart: null
+      };
+
+      // IMEによる入力処理のフラグです。
+      let isComposing = false;
+
+      // マウスドラッグによる範囲選択処理のフラグです。
+      let isDragging = false;
+
+      // 文字領域がクリックされたので、クリックされた場所に応じてフォーカス位置を更新します。
+      // また、範囲選択状態にあるならば当該状態を解除するとともにマウスドラッグ処理のフラグを立てます。
+      this.textArea.addEventListener("mousedown", (event) => {
+        isDragging = true;
+        this.unselctRange();
+        this.moveFocusPointByMousedownTarget(event);
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
+
+      // キャレットが外れたので、フォーカスも外します。
+      this.editor.addEventListener("custom-blur", () => {
+        this.unselctRange();
+        this.focusedRowIndex = null;
+        this.focusedColumnIndex = null;
+        this.dispatchEvents();
+      });
+
+      // IMEによる入力処理のフラグを下ろし、当該処理に関する値を消去します。
+      this.editor.addEventListener("custom-compositionend", () => {
+        isComposing = false;
+        compositionState.lastData = null;
+        compositionState.startColumnIndex = null;
+        compositionState.startSelectionStart = null;
+        if (this.differenceBetweenCurrentAndHistory()) {
+          this.saveHistory();
         }
-      }
-      for (let i = 0; i < numberOfArrowRight; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowRight();
-      }
-      return;
-    }
-    if (option === "ArrowLeft") {
-      this.resetFocusAndSelectionRangeByArrowLeft();
-      return;
-    }
-    if (option === "ArrowRight") {
-      this.resetFocusAndSelectionRangeByArrowRight();
-      return;
-    }
-    if (option === "ArrowUp") {
-      let numberOfArrowLeft = 0;
-      numberOfArrowLeft += this.focusedColumnIndex;
-      if (!this.isBeginningOfText(this.focusedRowIndex, 0)) {
-        if (typeof this.characters[this.focusedRowIndex - 1][this.focusedColumnIndex] === "undefined") {
-          numberOfArrowLeft += 1;
-        } else {
-          numberOfArrowLeft += 1 + this.characters[this.focusedRowIndex - 1].length - 1 - this.focusedColumnIndex;
+      });
+
+      // IMEによる入力処理のフラグを立て、当該処理に関する値を初期化します。
+      this.editor.addEventListener("custom-compositionstart", () => {
+        isComposing = true;
+        compositionState.lastData = "";
+        compositionState.startColumnIndex = this.focusedColumnIndex;
+        compositionState.startSelectionStart = null;
+      });
+
+      // 行番号のドラッグ操作による範囲選択処理を実行します。
+      this.editor.addEventListener("custom-dragLineNumber", (event) => {
+        while (event.detail.index < this.focusedRowIndex) {
+          this.moveFocusPointByArrowKey("ArrowUp", true);
         }
-      }
-      for (let i = 0; i < numberOfArrowLeft; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowLeft();
-      }
-      return;
+        while (event.detail.index > this.focusedRowIndex) {
+          this.moveFocusPointByArrowKey("ArrowDown", true);
+        }
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
+
+      // IMEによる入力処理中のみ走る専用の入力処理を実行します。
+      this.editor.addEventListener("custom-input", (event) => {
+        if (!isComposing) {
+          return;
+        }
+
+        // IME入力処理の最初の入力時におけるHTMLInputElement.selectionStartプロパティを取得します。
+        // 当処理中のフォーカス位置を特定するのに当該プロパティ（の処理開始時点での値）が必要になります。
+        if (compositionState.startSelectionStart === null) {
+          compositionState.startSelectionStart = event.detail.selectionStart - event.detail.data.length;
+        }
+
+        // 変換内容が変わっている場合はHTMLを書きかえます。
+        // 入力されている内容を全て消してから最新の状態に上書きします。
+        if (event.detail.data !== compositionState.lastData) {
+          this.focusedColumnIndex = compositionState.startColumnIndex;
+          for (let i = 0; i < compositionState.lastData.length; i += 1) {
+            this.removeCharacter("Delete");
+          }
+          compositionState.lastData = event.detail.data;
+          if (compositionState.lastData !== null) {
+            for (const character of compositionState.lastData) {
+              this.appendCharacter(character);
+            }
+          }
+        }
+
+        // フォーカス位置を更新します。
+        this.focusedColumnIndex = compositionState.startColumnIndex;
+        for (let i = 0; i < event.detail.selectionStart - compositionState.startSelectionStart; i += 1) {
+          this.moveFocusPointByArrowKey("ArrowRight", false);
+        }
+
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
+
+      // キャレットにキー入力があったので、押されたキーに応じた処理を実行します。
+      this.editor.addEventListener("custom-keydown", async (event) => {
+        if (isComposing) {
+          return;
+        }
+        if (!await this.reflectKey(event)) {
+          return;
+        }
+        this.scrollAutomatically();
+        if (this.differenceBetweenCurrentAndHistory()) {
+          this.saveHistory();
+        }
+        this.dispatchEvents();
+      });
+
+      // 行番号のクリック操作による範囲選択処理を開始します。
+      this.editor.addEventListener("custom-mousedonwLineNumber", (event) => {
+        this.unselctRange();
+        this.focusedRowIndex = event.detail.index;
+        this.focusedColumnIndex = 0;
+        this.moveFocusPointByArrowKey("ArrowDown", true);
+        this.scrollAutomatically();
+        this.dispatchEvents();
+      });
+
+      // フラグが立っているならば、マウスドラッグ処理を実行します。
+      this.editor.addEventListener("custom-mousemove", (event) => {
+        if (!isDragging) {
+          return;
+        }
+        this.moveFocusPointByDragTarget(event.detail.target);
+        this.dispatchEvents();
+      });
+
+      // マウスドラッグ処理のフラグを下ろします。
+      this.editor.addEventListener("custom-mouseup", () => {
+        isDragging = false;
+        this.dispatchEvents();
+      });
     }
 
-    // その他キーだった場合の処理です。
-    if (option === "End") {
-      let numberOfArrowRight = 0;
-      numberOfArrowRight += this.characters[this.focusedRowIndex].length - 1 - this.focusedColumnIndex;
-      for (let i = 0; i < numberOfArrowRight; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowRight();
-      }
-      return;
-    }
-    if (option === "Home") {
-      let numberOfArrowLeft = 0;
-      numberOfArrowLeft += this.focusedColumnIndex;
-      for (let i = 0; i < numberOfArrowLeft; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowLeft();
-      }
-    }
+    // エディターの横幅が変化したので、変更後の状態を通知します。
+    this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
+      this.dispatchEvents();
+    });
+
+    // エディターの横幅が変化したので、文字領域の横幅を調整します。
+    this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
+      this.textArea.style.maxWidth = `${event.detail.width}px`;
+      this.dispatchEvents();
+    });
+
+    // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    this.editor.addEventListener("custom-scrollHorizontally", (event) => {
+      this.textArea.scrollLeft += event.detail.scrollSize;
+      this.dispatchEvents();
+    });
+
+    // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    this.editor.addEventListener("custom-scrollVertically", (event) => {
+      this.textArea.scrollTop += event.detail.scrollSize;
+      this.dispatchEvents();
+    });
   };
 
   /**
-   * TextArea.resetFocusAndSelectionRangeメソッドから左矢印キー用の処理を抜き出したものです。
+   * 選択範囲を解除します。
    */
-  resetFocusAndSelectionRangeByArrowLeft = () => {
-
-    // 文頭にフォーカスしているときはできることがないので早々に処理から抜けます。
-    if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-      return;
-    }
-
-    // フォーカスを1文字分、文頭方向に移動させます。
-    if (this.focusedColumnIndex === 0) {
-      this.focusedRowIndex -= 1;
-      this.focusedColumnIndex = this.characters[this.focusedRowIndex].length - 1;
-    } else {
-      this.focusedColumnIndex -= 1;
-    }
-
-    // Shiftキーが押されていないならば、ここで処理から抜けます。
-    // Shiftキーが押されているならば、フォーカス位置を選択範囲に含める・外す処理を追加で行います。
-    if (!(this.duringSelectionRange)) {
-      return;
-    }
-
-    // 選択範囲用背景色の切り替えを行います。
-    this.getFocusedCharacter().classList.toggle("tom-editor__text-area__character--select");
-
-    // 選択範囲を表すインデックス値を更新します。
-    // 範囲選択中でないならば――今回新たに範囲選択が始まった場合は現在フォーカスしている位置が選択範囲の始端であり終端となります。
-    // 範囲選択中ならば、先ほどの処理フォーカス位置に選択範囲用背景色が適用されたかどうかで選択範囲が広がったか狭まったかが求められます。
-    if (typeof this.selectionRangeStartRowIndex === "undefined") {
-      this.selectionRangeStartRowIndex = this.focusedRowIndex;
-      this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
-      this.selectionRangeEndRowIndex = this.focusedRowIndex;
-      this.selectionRangeEndColumnIndex = this.focusedColumnIndex;
-      return;
-    }
-
-    // 現在フォーカスしている文字が選択範囲に含まれているかどうかで、選択範囲が広がったのか狭まったのかを求めることができます。
-    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
-
-      // 以下、広がった場合の処理です。
-      this.selectionRangeStartRowIndex = this.focusedRowIndex;
-      this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
-      return;
-    }
-
-    // 以下、狭まった場合の処理です。
-    if (this.isBeginningOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-
-      // 選択範囲が狭まったにも関わらず、現在フォーカスしているのが文頭であるということは選択範囲が消失したことを意味します。
-      this.selectionRangeStartRowIndex = undefined;
-      this.selectionRangeStartColumnIndex = undefined;
-      this.selectionRangeEndRowIndex = undefined;
-      this.selectionRangeEndColumnIndex = undefined;
-      return;
-    }
-
-    // 以下、文頭以外の位置にいる場合の処理です。
-    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
-
-      // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれているならば選択範囲の末尾情報のみ更新します。
-      this.selectionRangeEndRowIndex = this.focusedRowIndex;
-      this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
-      return;
-    }
-
-    // 範囲選択が解除された文字の1つ前の文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
-    this.selectionRangeStartRowIndex = undefined;
-    this.selectionRangeStartColumnIndex = undefined;
-    this.selectionRangeEndRowIndex = undefined;
-    this.selectionRangeEndColumnIndex = undefined;
-    return;
-  };
-
-  /**
-   * TextArea.resetFocusAndSelectionRangeメソッドから右矢印キー用の処理を抜き出したものです。
-   */
-  resetFocusAndSelectionRangeByArrowRight = () => {
-
-    // 文末にフォーカスしているときはできることがないので早々に処理から抜けます。
-    if (this.isEndOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-      return;
-    }
-
-    // フォーカスを1文字分、文末方向に移動させます。
-    if (this.focusedColumnIndex === this.characters[this.focusedRowIndex].length - 1) {
-      this.focusedRowIndex += 1;
-      this.focusedColumnIndex = 0;
-    } else {
-      this.focusedColumnIndex += 1;
-    }
-
-    // Shiftキーが押されていないならば、ここで処理から抜けます。
-    // Shiftキーが押されているならば、フォーカス位置を選択範囲に含める・外す処理を追加で行います。
-    if (!(this.duringSelectionRange)) {
-      return;
-    }
-
-    // 選択範囲用背景色の切り替えを行います。
-    this.getPreviousFocusedCharacter().classList.toggle("tom-editor__text-area__character--select");
-
-    // 選択範囲を表すインデックス値を更新します。
-    // 範囲選択中でないならば――今回新たに範囲選択が始まった場合は現在フォーカスしている位置の1つ前の文字が選択範囲の始端であり終端となります。
-    // 範囲選択中ならば、先ほどの処理フォーカス位置に選択範囲用背景色が適用されたかどうかで選択範囲が広がったか狭まったかが求められます。
-    if (typeof this.selectionRangeStartRowIndex === "undefined") {
-      if (this.focusedColumnIndex === 0) {
-        this.selectionRangeStartRowIndex = this.focusedRowIndex - 1;
-        this.selectionRangeStartColumnIndex = this.characters[this.focusedRowIndex - 1].length - 1;
-        this.selectionRangeEndRowIndex = this.focusedRowIndex - 1;
-        this.selectionRangeEndColumnIndex = this.characters[this.focusedRowIndex - 1].length - 1;
-        return;
-      }
-      this.selectionRangeStartRowIndex = this.focusedRowIndex;
-      this.selectionRangeStartColumnIndex = this.focusedColumnIndex - 1;
-      this.selectionRangeEndRowIndex = this.focusedRowIndex;
-      this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
-      return;
-    }
-    if (this.getPreviousFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
-
-      // 以下、広がった場合の処理です。
-      if (this.focusedColumnIndex === 0) {
-        this.selectionRangeEndRowIndex = this.focusedRowIndex - 1;
-        this.selectionRangeEndColumnIndex = this.characters[this.focusedRowIndex - 1].length - 1;
-        return;
-      }
-      this.selectionRangeEndRowIndex = this.focusedRowIndex;
-      this.selectionRangeEndColumnIndex = this.focusedColumnIndex - 1;
-      return;
-    }
-
-    // 以下、狭まった場合の処理です。
-    if (this.isEndOfText(this.focusedRowIndex, this.focusedColumnIndex)) {
-
-      // 現在フォーカスしているのが文末であるということは先ほど選択範囲から外れた文字は文末の1つ直前の文字ということになります。
-      // 文末は選択範囲に入りませんので、これは選択範囲そのものが消失したことを意味します。
-      this.selectionRangeStartRowIndex = undefined;
-      this.selectionRangeStartColumnIndex = undefined;
-      this.selectionRangeEndRowIndex = undefined;
-      this.selectionRangeEndColumnIndex = undefined;
-      return;
-    }
-    if (this.getFocusedCharacter().classList.contains("tom-editor__text-area__character--select")) {
-
-      // 現在フォーカスしている文字が選択範囲に含まれているならば選択範囲の先頭情報のみ更新します。
-      this.selectionRangeStartRowIndex = this.focusedRowIndex;
-      this.selectionRangeStartColumnIndex = this.focusedColumnIndex;
-      return;
-    }
-
-    // 現在フォーカスしている文字が選択範囲に含まれていないということは選択範囲そのものが消失したことを意味します。
-    this.selectionRangeStartRowIndex = undefined;
-    this.selectionRangeStartColumnIndex = undefined;
-    this.selectionRangeEndRowIndex = undefined;
-    this.selectionRangeEndColumnIndex = undefined;
-    return;
-  };
-
-  /**
-   * 余白の縦幅を変更します。
-   */
-  resetNegativeSpaceHeight = () => {
-    const areaHeight = this.root.getBoundingClientRect().height
-    const textLineHeight = parseFloat(getComputedStyle(this.root).lineHeight);
-    this.negativeSpace.style.height = `${areaHeight - parseFloat(getComputedStyle(this.root).paddingTop) - textLineHeight}px`;
-  };
-
-  /**
-   * 引数で指定された量だけ横方向にスクロールします。
-   * @param {number} scrollSize スクロールする量です。
-   */
-  scrollHorizontally = (scrollSize) => {
-    this.root.scrollLeft += scrollSize;
-  };
-
-  /**
-   * 引数で指定された量だけ縦方向にスクロールします。
-   * @param {number} scrollSize スクロールする量です。
-   */
-  scrollVertically = (scrollSize) => {
-    this.root.scrollTop += scrollSize;
-  };
-
-  /**
-   * マウスのドラッグによる選択範囲の更新処理です。
-   * @param {object} event EventTarget.addEventListenerメソッドのイベント情報をまとめたオブジェクトです。
-   */
-  updateSelectionRangeByMouseDragging = (event) => {
-
-    // まずはドラッグの移動先を求めます。
-    // このとき、あらかじめ現在のフォーカス位置を残しておき戻せるようにしておきます。
-    const temporarilyStoredFocusedRowIndex = this.focusedRowIndex;
-    const temporarilyStoredFocusedColumnIndex = this.focusedColumnIndex;
-    this.identifyCharacterForPlacingCaret(event);
-    const goalFocusedRowIndex = this.focusedRowIndex;
-    const goalFocusedColumnIndex = this.focusedColumnIndex;
-    this.focusedRowIndex = temporarilyStoredFocusedRowIndex;
-    this.focusedColumnIndex = temporarilyStoredFocusedColumnIndex;
-
-    // 移動先となる文字まで移動します。
-    // まずは行移動で一気に距離を詰めます。
-    if (this.focusedRowIndex < goalFocusedRowIndex) {
-      for (let i = 0; i < goalFocusedRowIndex - this.focusedRowIndex; i += 1) {
-        this.resetFocusAndSelectionRange("ArrowDown");
-      }
-    } else if (this.focusedRowIndex > goalFocusedRowIndex) {
-      for (let i = 0; i < this.focusedRowIndex - goalFocusedRowIndex; i += 1) {
-        this.resetFocusAndSelectionRange("ArrowUp");
+  unselctRange = () => {
+    for (const charactersInSelectionRange of this.selectionRange) {
+      for (const characterInSelectionRange of charactersInSelectionRange) {
+        characterInSelectionRange.classList.remove("tom-editor__text-area__character--select");
       }
     }
-
-    // 移動先の文字と同じ行になったので列を合わせます。
-    if (this.focusedColumnIndex < goalFocusedColumnIndex) {
-      for (let i = 0; goalFocusedColumnIndex - this.focusedColumnIndex; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowRight();
-      }
-      return;
-    }
-    if (this.focusedColumnIndex > goalFocusedColumnIndex) {
-      for (let i = 0; this.focusedColumnIndex - goalFocusedColumnIndex; i += 1) {
-        this.resetFocusAndSelectionRangeByArrowLeft();
-      }
-      return;
-    }
+    this.selectionRange = [];
   };
 };
 

@@ -2,9 +2,19 @@
 
 TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
 
-現在、バージョン2.1.0です。以下より動作確認ができます。
+現在、バージョン2.2.0です。以下より動作確認ができます。
 
-[TOM Editor 2.1.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 2.2.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+
+## 更新履歴
+
+### 2021/08/13: v2.2.0
+
+Ctrlキーとzキーの同時押しでUndoができるようになりました。
+
+Ctrlキーとyキーの同時押しでRedoができるようになりました。
+
+スタイルを調整しました。
 
 ## 導入手順
 
