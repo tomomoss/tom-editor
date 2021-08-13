@@ -2,43 +2,57 @@
 
 /**
  * 行番号領域です。
+ * @param {HTMLDivElement} editor エディター本体です。
+ * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
  */
 const LineNumberArea = class {
+  constructor(editor, readonlyFlag) {
+    Object.seal(this);
+    this.editor = editor;
+    this.lineNumberArea = this.createLineNumberArea();
+    this.editor.appendChild(this.lineNumberArea);
+    this.appendLineNumber();
 
-  /**
-   * 行番号領域を初期化します。
-   * @param {Element} superRoot エディター本体を表すHTML要素です。
-   */
-  constructor(superRoot) {
-
-    // 行番号領域の横幅を決めるために、半角英数字の横幅を求めます。
+    // 行番号領域の横幅を求めています。
+    // 横幅は「半角英数字の横幅 * 表示する桁数 + 行番号のpadding-rightプロパティの値」とします。
+    // 表示する桁数ですが、そのまま指定するとエディターの縁との隙間がほとんどないので少し余裕をもたせます。
     const temporaryElement = document.createElement("span");
     temporaryElement.innerHTML = "0";
-    superRoot.appendChild(temporaryElement);
-    const alphanumericWidth = temporaryElement.getBoundingClientRect().width;
+    temporaryElement.style.display = "inline-block";
+    this.lineNumberArea.appendChild(temporaryElement);
+    const alphanumericWidth = temporaryElement.clientWidth;
     temporaryElement.remove();
-    
-    // 行番号領域を初期化します。
-    this.root = document.createElement("div");
-    this.root.classList.add("tom-editor__line-number-area");
-    this.root.style.flexBasis = `${alphanumericWidth * 4}px`;
-    superRoot.appendChild(this.root);
-    this.negativeSpace = document.createElement("div");
-    this.root.appendChild(this.negativeSpace);
-    this.appendLineNumber();
+    const maximumNumberOfDigits = 4.5;
+    const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
+    this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
+
+    this.setEventListeners(readonlyFlag);
   }
 
-  /** @type {number} フォーカスしている行を指すインデックス値です。 */
-  focusedLineNumberIndex;
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    lineNumber: {
+      element: "tom-editor__line-number-area__line-number",
+      modifier: {
+        focus: "tom-editor__line-number-area__line-number--focus"
+      }
+    },
+    lineNumberArea: {
+      element: "tom-editor__line-number-area"
+    }
+  };
 
-  /** @type {Array<Element>} DOMに挿入中の行番号達です。 */
+  /** @type {HTMLDivElement} エディター本体です。 */
+  editor;
+
+  /** @type {null|number} フォーカスしている行番号を指すインデックスです。 */
+  focusedLineNumberIndex = null;
+
+  /** @type {HTMLDivElement} 行番号領域です */
+  lineNumberArea;
+
+  /** @type {Array<HTMLDivElement>} 現在Webページに挿入されている行番号です。 */
   lineNumbers = [];
-
-  /** @type {Element} 領域下部の余白を表すHTML要素です。 */
-  negativeSpace;
-
-  /** @type {Element} 自身（行番号領域）を表すHTML要素です。 */
-  root;
 
   /**
    * 行番号を1つ追加します。
@@ -46,112 +60,139 @@ const LineNumberArea = class {
   appendLineNumber = () => {
     const lineNumber = this.createLineNumber();
     this.lineNumbers.push(lineNumber);
-    this.negativeSpace.before(this.lineNumbers[this.lineNumbers.length - 1]);
+    this.lineNumberArea.appendChild(lineNumber);
   };
 
   /**
-   * フォーカスしている位置に応じて自動的にスクロールします。
-   * 行番号領域のスクロール量が文字領域のスクロール量に影響を与えます。
+   * 行番号のフォーカス状態を更新します。
+   * @param {null|number} index フォーカスする行番号を指すインデックスです。
    */
-  autoScroll = () => {
+  changeFocusLineNumber = (index) => {
 
-    // そもそもスクロールできないならば、することがないので処理から抜けます。
-    if (!(this.root.offsetHeight < this.root.scrollHeight)) {
+    // 引数にnullが指定されているということはフォーカスする行番号がないということなので、フォーカス状態を解除します。
+    if (index === null) {
+      if (this.focusedLineNumberIndex === null) {
+        return;
+      }
+      if (this.lineNumbers[this.focusedLineNumberIndex].classList.contains(this.CSSClass.lineNumber.modifier.focus)) {
+        this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
+      }
+      this.focusedLineNumberIndex = null;
       return;
     }
 
-    const focusedLineNumberPositionY = this.lineNumbers[this.focusedLineNumberIndex].getBoundingClientRect().top;
-    const lineNumberAreaPositionY = this.root.getBoundingClientRect().top;
-    const remHeight = parseFloat(getComputedStyle(this.root).fontSize);
-
-    // 行番号上縁より0.5rem以上は自動スクロールの対象となります。
-    if (focusedLineNumberPositionY < lineNumberAreaPositionY + remHeight * 0.5) {
-      this.scrollVertically(focusedLineNumberPositionY - lineNumberAreaPositionY - remHeight * 0.5);
+    // 引数で指定された行番号とフォーカスしている行番号が同じ場合は、何もすることがないので処理から抜けます。
+    if (index === this.focusedLineNumberIndex) {
       return;
     }
 
-    // 行番号下縁より3.5rem以下は自動スクロールの対象となります。
-    const lineNumberAreaHeight = this.root.getBoundingClientRect().height;
-    if (focusedLineNumberPositionY > lineNumberAreaPositionY + lineNumberAreaHeight - remHeight * 3.5) {
-      this.scrollVertically(focusedLineNumberPositionY - lineNumberAreaPositionY - lineNumberAreaHeight + remHeight * 3.5);
-      return;
+
+    if (this.focusedLineNumberIndex !== null && this.lineNumbers[this.focusedLineNumberIndex]) {
+      this.lineNumbers[this.focusedLineNumberIndex].classList.remove(this.CSSClass.lineNumber.modifier.focus);
     }
+    this.focusedLineNumberIndex = index;
+    this.lineNumbers[this.focusedLineNumberIndex].classList.add(this.CSSClass.lineNumber.modifier.focus);
   };
 
   /**
-   * 行番号を表すHTML要素を生成します。
-   * @returns {Element} 行番号を表すHTML要素です。
+   * 行番号を生成します。
+   * @returns {HTMLDivElement} 行番号です。
    */
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
+    lineNumber.classList.add(this.CSSClass.lineNumber.element);
     lineNumber.innerHTML = this.lineNumbers.length + 1;
-    lineNumber.classList.add("tom-editor__line-number-area__line-number");
     return lineNumber;
   };
 
   /**
-   * 行番号を1つ消します。
+   * 行番号領域を生成します。
+   * @returns {HTMLDivElement} 行番号領域です。
+   */
+  createLineNumberArea = () => {
+    const lineNumberArea = document.createElement("div");
+    lineNumberArea.classList.add(this.CSSClass.lineNumberArea.element);
+    return lineNumberArea;
+  };
+
+  /**
+   * 行番号を1つ減らします。
    */
   removeLineNumber = () => {
     this.lineNumbers.pop().remove();
   };
 
   /**
-   * 行番号を更新します。
-   * @param {number} numberOfTextLines 行数です。
-   * @param {number} focusedTextLineIndex フォーカスしている行を指すインデックスです。
+   * イベントリスナーを実装します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  resetLineNumber = (numberOfTextLines, focusedTextLineIndex) => {
-    if (typeof numberOfTextLines === "undefined") {
-      if (typeof this.focusedLineNumberIndex !== "undefined") {
-        this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
-        this.focusedLineNumberIndex = undefined;
-        return;
-      }
-      return;
+  setEventListeners = (readonlyFlag) => {
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // 行番号を対象とするドラッグ操作処理のフラグです。
+      // 処理中は、最後にドラッグした行番号のインデックス値が入ります。
+      let lastDragedIndex = null;
+
+      // 行番号がクリックされたときは、文字領域にクリックされた行番号を通知します。
+      // また、ドラッグフラグを立てます。
+      this.lineNumberArea.addEventListener("mousedown", (event) => {
+        lastDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
+          return lineNumber === event.target;
+        });
+        this.editor.dispatchEvent(new CustomEvent("custom-mousedonwLineNumber", {
+          detail: {
+            index: lastDragedIndex
+          }
+        }));
+      });
+
+      // フラグが立っているときは、行番号を対象とするドラッグ操作処理を実行します。
+      this.editor.addEventListener("custom-mousemove", (event) => {
+        if (lastDragedIndex === null) {
+          return;
+        }
+        const currentDragedIndex = this.lineNumbers.findIndex((lineNumber) => {
+          return lineNumber === event.detail.target;
+        });
+        if (currentDragedIndex === lastDragedIndex) {
+          return;
+        }
+        lastDragedIndex = currentDragedIndex;
+        this.editor.dispatchEvent(new CustomEvent("custom-dragLineNumber", {
+          detail: {
+            index: lastDragedIndex
+          }
+        }));
+      });
+
+      // ドラッグ処理フラグを下ろします。
+      this.editor.addEventListener("custom-mouseup", () => {
+        lastDragedIndex = null;
+      });
+
+      // 文字領域でフォーカスしている行が変更されたため、行番号領域のフォーカス行番号も変更します。
+      this.editor.addEventListener("custom-changeFocusedRowIndex", (event) => {
+        this.changeFocusLineNumber(event.detail.index);
+      });
     }
 
-    // 行番号数を更新します。
-    if (this.lineNumbers.length < numberOfTextLines) {
-      for (let i = 0; numberOfTextLines - this.lineNumbers.length; i += 1) {
+    // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
+    this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
+      while (event.detail.length > this.lineNumbers.length) {
         this.appendLineNumber();
       }
-    } else if (this.lineNumbers.length > numberOfTextLines) {
-      for (let i = 0; this.lineNumbers.length - numberOfTextLines; i += 1) {
+      while (event.detail.length < this.lineNumbers.length) {
         this.removeLineNumber();
       }
-    }
+    });
 
-    // フォーカス行を更新します。
-    if (this.focusedLineNumberIndex === focusedTextLineIndex) {
-      return;
-    }
-    if (typeof this.focusedLineNumberIndex !== "undefined" && typeof this.lineNumbers[this.focusedLineNumberIndex] !== "undefined") {
-      this.lineNumbers[this.focusedLineNumberIndex].classList.remove("tom-editor__line-number-area__line-number--focus");
-    }
-    this.focusedLineNumberIndex = focusedTextLineIndex;
-    this.lineNumbers[this.focusedLineNumberIndex].classList.add("tom-editor__line-number-area__line-number--focus");
-  };
-
-  /**
-   * 余白の縦幅を更新します。
-   */
-  resetNegativeSpaceHeight = () => {
-    const areaHeight = this.root.getBoundingClientRect().height;
-    const sampleLineNumber = this.createLineNumber();
-    this.root.appendChild(sampleLineNumber);
-    const lineNumberHeight = sampleLineNumber.getBoundingClientRect().height;
-    sampleLineNumber.remove();
-    const negativeSpaceHeight = `${areaHeight - parseFloat(getComputedStyle(this.root).paddingTop) - lineNumberHeight}px`;
-    this.negativeSpace.style.height = negativeSpaceHeight;
-  };
-
-  /**
-   * 引数で指定された量だけ縦方向にスクロールします。
-   * @param {number} scrollSize スクロールする量です。
-   */
-  scrollVertically = (scrollSize) => {
-    this.root.scrollTop += scrollSize;
+    // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
+    this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
   };
 };
 
