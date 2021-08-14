@@ -13,16 +13,6 @@
   --character-height: 1.25rem;
 }
 
-.tom-editor {
-  background: rgb(255, 255, 255);
-  display: flex;
-  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
-  height: 100%;
-  justify-content: space-between;
-  overflow: hidden;
-  position: relative;
-  white-space: pre;
-}
 .tom-editor__caret {
   background: transparent;
   border: none;
@@ -52,6 +42,25 @@
 }
 .tom-editor__decoration-underline--active {
   display: block;
+}
+.tom-editor__editor {
+  background: rgb(255, 255, 255);
+  bottom: 0;
+  display: flex;
+  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
+  justify-content: space-between;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 0;
+  white-space: pre;
+  width: 100%;
+}
+.tom-editor__editor-wrapper {
+  height: 100%;
+  position: relative;
+  width: 100%;
 }
 .tom-editor__horizontal-scrollbar-area {
   bottom: 0;

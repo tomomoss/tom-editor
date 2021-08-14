@@ -21,16 +21,12 @@ import {
 
 /**
  * 簡素なエディターです。
+ * 当コンストラクタは外部に露出するため引数検査を実施します。
+ * @param {Element} editorContainer エディターの実装対象となるHTML要素です。
+ * @param {object} option エディターの挙動を制御する引数です。省略可能です。
+ * @param {...any} rest ※引数検査用の引数です。
  */
 const TOMEditor = class {
-
-  /**
-   * エディターを初期化します。
-   * 当コンストラクタは外部に露出するため引数検査を実施します。
-   * @param {Element} editorContainer エディターの実装対象となるHTML要素です。
-   * @param {object} option エディターの挙動を制御する引数です。省略可能です。
-   * @param {...any} rest ※引数検査用の引数です。
-   */
   constructor(editorContainer, option, ...rest) {
     if (typeof editorContainer === "undefined") {
       throw new TypeError("第1引数が指定されていません。");
@@ -62,15 +58,19 @@ const TOMEditor = class {
     // 1つのHTML要素の直下にTOM Editorが複数実装されないように、実装前に当該HTML要素の内容を消去します。
     editorContainer.innerHTML = "";
 
-    // エディターを構成する主要な要素を初期化します。
+    // エディターの挙動を制御するオプションの値を利用できる状態に加工します。
     let readonlyFlag;
     if (typeof option === "undefined") {
       readonlyFlag = false;
     } else {
       readonlyFlag = option.readonly;
     }
+
+    // エディターを構成する主要な要素を初期化します。
+    const editorWrapper = this.createEditorWrapper();
+    editorContainer.appendChild(editorWrapper);
     this.editor = this.createEditor();
-    editorContainer.appendChild(this.editor);
+    editorWrapper.appendChild(this.editor);
     this.lineNumberArea = new LineNumberArea(this.editor, readonlyFlag);
     this.textArea = new TextArea(this.editor, readonlyFlag);
     this.virticalScrollbarArea = new VirticalScrollbarArea(this.editor, readonlyFlag);
@@ -168,6 +168,16 @@ const TOMEditor = class {
   /** @type {Caret} キャレットです。 */
   caret;
 
+  /** @type {object} 当クラス内で使用するCSSクラスです。 */
+  CSSClass = {
+    editor: {
+      element: "tom-editor__editor"
+    },
+    editorWrapper: {
+      element: "tom-editor__editor-wrapper"
+    }
+  };
+
   /** @type {DecorationUnderline} 装飾下線です。 */
   decorationUnderline;
 
@@ -192,8 +202,18 @@ const TOMEditor = class {
    */
   createEditor = () => {
     const editor = document.createElement("div");
-    editor.classList.add("tom-editor");
+    editor.classList.add(this.CSSClass.editor.element);
     return editor;
+  };
+
+  /**
+   * エディター本体のラッパー要素を生成します。
+   * @returns {HTMLDivElement} エディター本体のラッパー要素です。
+   */
+  createEditorWrapper = () => {
+    const editorWrapper = document.createElement("div");
+    editorWrapper.classList.add(this.CSSClass.editorWrapper.element);
+    return editorWrapper;
   };
 
   /**
