@@ -4,7 +4,7 @@
   "description": "簡素なエディターを実装するライブラリです。",
   "main": "",
   "scripts": {
-    "build": "webpack --config ./webpack.config.module.js ; webpack --config ./webpack.config.window.js ; Move-Item ./src/tom-editor.css ./dist"
+    "build": "webpack --config ./webpack.config.module.js ; webpack --config ./webpack.config.window.js ; Copy-Item ./src/tom-editor.css ./dist"
   },
   "repository": {
     "type": "git",

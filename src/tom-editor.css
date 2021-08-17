@@ -1,0 +1,156 @@
+@charset "UTF-8";
+
+@keyframes caret-blinking {
+  0% {
+    border-left-color: rgb(51, 51, 51);
+  }
+  50% {
+    border-left-color: transparent;
+  }
+}
+
+:root {
+  --character-height: 1.25rem;
+}
+
+.tom-editor__caret {
+  background: transparent;
+  border: none;
+  border-left: solid 0.15rem;
+  display: none;
+  height: var(--character-height);
+  outline: none;
+  overflow: hidden;
+  padding: 0;
+  pointer-events: none;
+  position: absolute;
+  resize: none;
+  width: 0;
+}
+.tom-editor__caret--active {
+  animation: caret-blinking 1.25s steps(1) infinite both;
+}
+.tom-editor__caret--focus {
+  display: inline-block;
+}
+.tom-editor__decoration-underline {
+  border-bottom: solid 0.1rem rgb(238, 238, 238);
+  height: var(--character-height);
+  pointer-events: none;
+  position: absolute;
+  display: none;
+}
+.tom-editor__decoration-underline--active {
+  display: block;
+}
+.tom-editor__editor {
+  background: rgb(255, 255, 255);
+  bottom: 0;
+  display: flex;
+  font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
+  justify-content: space-between;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 0;
+  white-space: pre;
+  width: 100%;
+}
+.tom-editor__editor-wrapper {
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+.tom-editor__horizontal-scrollbar-area {
+  bottom: 0;
+  display: none;
+  height: 1rem;
+  position: absolute;
+}
+.tom-editor__horizontal-scrollbar-area--active {
+  display: block;
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar {
+  background: rgb(238, 238, 238);
+  height: 100%;
+  position: absolute;
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:hover {
+  background: rgb(221, 221, 221);
+}
+.tom-editor__horizontal-scrollbar-area__horizontal-scrollbar:active {
+  background: rgb(204, 204, 204);
+}
+.tom-editor__line-number-area {
+  background: rgb(255, 255, 255);
+  cursor: default;
+  flex: 0 0;
+  overflow: hidden;
+  text-align: right;
+  z-index: 1;
+}
+.tom-editor__line-number-area__line-number {
+  color: rgb(204, 204, 204);
+  padding: 0 2rem 0 0;
+}
+.tom-editor__line-number-area__line-number::selection {
+  background: transparent;
+}
+.tom-editor__line-number-area__line-number:not(.tom-editor__line-number-area__line-number--focus):hover {
+  color: rgb(153, 153, 153);
+}
+.tom-editor__line-number-area__line-number:last-of-type {
+  height: 100%;
+}
+.tom-editor__line-number-area__line-number--focus {
+  color: rgb(102, 102, 102);
+}
+.tom-editor__text-area {
+  background: rgb(255, 255, 255);
+  cursor: text;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.tom-editor__text-area__character {
+  display: inline-block;
+  vertical-align: top;
+}
+.tom-editor__text-area__character::selection {
+  background: transparent;
+}
+.tom-editor__text-area__character--eol {
+  margin: 0 3rem 0 0;
+}
+.tom-editor__text-area__character--select {
+  background: rgb(221, 238, 255);
+}
+.tom-editor__text-area__text-line {
+  height: var(--character-height);
+}
+.tom-editor__text-area__text-line:last-of-type {
+  height: 100%;
+}
+.tom-editor__virtical-scrollbar-area {
+  background: rgb(255, 255, 255);
+  border-left: 0.1rem solid rgb(238, 238, 238);
+  flex: 0 0 1rem;
+  position: relative;
+  width: 1rem;
+  z-index: 1;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar {
+  background: rgb(238, 238, 238);
+  display: none;
+  position: absolute;
+  width: 100%;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active {
+  display: block;
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active:hover {
+  background: rgb(221, 221, 221);
+}
+.tom-editor__virtical-scrollbar-area__virtical-scrollbar--active:active {
+  background: rgb(204, 204, 204);
+}
