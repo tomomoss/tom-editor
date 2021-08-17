@@ -667,6 +667,13 @@ const TextArea = class {
 
         // Ctrl + vでクリップボードの文字を文字領域にペーストします。
         if (event.detail.key === "v") {
+
+          // Firefoxではnavigator.clipboard.readTextメソッドはブラウザの拡張機能でのみ機能します。
+          if (!navigator.clipboard.readText) {
+            alert("【！ 申し訳ございません ！】\nお使いのブラウザではペースト機能は非対応となっております。\nペースト機能をご利用いただく場合は別のブラウザでお願いします。");
+            return resolve(false);
+          }
+
           await navigator.clipboard.readText().then((textInClipboard) => {
             if (this.selectionRange.length) {
               this.removeCharactersInSelectionRange();
