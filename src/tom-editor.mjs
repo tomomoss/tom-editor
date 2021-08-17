@@ -241,6 +241,12 @@ const TOMEditor = class {
     // ResizeObserverオブジェクトによって最後に検知されたエディターの縦幅です。
     let lastEditorWidth;
 
+    // タッチ操作で最後に検知された水平座標です。
+    let lastTouchX = null;
+
+    // タッチ操作で最後に検知された垂直座標です。
+    let lastTouchY = null;
+
     // ResizeObserverオブジェクトを利用してエディターの寸法の変化、ひいては文字領域の寸法の変化を監視しています。
     // なぜ監視対象を文字領域にしていないのかというと、同領域にはFlexboxを適用しているために横幅の変化が思ったとおりに検知できないためです。
     // なお、縦幅の監視は文字領域に適用しても問題ないのですが、横幅を監視しているついでに監視することにしました。    
@@ -275,6 +281,38 @@ const TOMEditor = class {
           y: event.y
         }
       }));
+    });
+
+    // タッチによるドラッグ移動処理のフラグを下ろします。
+    this.editor.addEventListener("touchend", () => {
+      lastTouchX = null;
+      lastTouchY = null;
+    });
+
+    // フラグが立っているならばタッチ操作によるスクロール処理を実行します。
+    this.editor.addEventListener("touchmove", (event) => {
+      if (lastTouchX !== null) {
+        this.editor.dispatchEvent(new CustomEvent("custom-scrollHorizontally", {
+          detail: {
+            scrollSize: event.touches[0].pageX - lastTouchX
+          }
+        }));
+        lastTouchX = event.touches[0].pageX;
+      }
+      if (lastTouchY !== null) {
+        this.editor.dispatchEvent(new CustomEvent("custom-scrollVertically", {
+          detail: {
+            scrollSize: event.touches[0].pageY - lastTouchY
+          }
+        }));
+        lastTouchY = event.touches[0].pageY;
+      }
+    });
+
+    // タッチによるドラッグ移動処理のフラグを立てます。
+    this.editor.addEventListener("touchstart", (event) => {
+      lastTouchX = event.touches[0].pageX;
+      lastTouchY = event.touches[0].pageY;
     });
 
     // wheelイベントが発生したとき、発生位置によって垂直スクロールか水平スクロール化を判定して、

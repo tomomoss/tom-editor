@@ -94,6 +94,9 @@
   color: rgb(204, 204, 204);
   padding: 0 2rem 0 0;
 }
+.tom-editor__line-number-area__line-number::selection {
+  background: transparent;
+}
 .tom-editor__line-number-area__line-number:not(.tom-editor__line-number-area__line-number--focus):hover {
   color: rgb(153, 153, 153);
 }
@@ -112,6 +115,9 @@
 .tom-editor__text-area__character {
   display: inline-block;
   vertical-align: top;
+}
+.tom-editor__text-area__character::selection {
+  background: transparent;
 }
 .tom-editor__text-area__character--eol {
   margin: 0 3rem 0 0;

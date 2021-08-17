@@ -261,13 +261,14 @@ const TextArea = class {
       }));
     }
 
-    // その他の値は変更があったときのみ実行します。
-    const currentScrollLeft = this.textArea.scrollLeft;
-    if (currentScrollLeft !== this.lastDispatchedEventValue.scrollLeft) {
-      this.lastDispatchedEventValue.scrollLeft = currentScrollLeft;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollLeft", {
+    // 文字領域の実際の縦幅に対するビューポートの縦幅の割合とスクロール量は値の性質上、
+    // 前者のほうが先に呼び出される必要があります。
+    const currentViewportHeightRatio = this.textArea.clientHeight / this.textArea.scrollHeight;
+    if (currentViewportHeightRatio !== this.lastDispatchedEventValue.viewportHeightRatio) {
+      this.lastDispatchedEventValue.viewportHeightRatio = currentViewportHeightRatio;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportHeightRatio", {
         detail: {
-          scrollLeft: this.lastDispatchedEventValue.scrollLeft
+          viewportHeightRatio: this.lastDispatchedEventValue.viewportHeightRatio
         }
       }));
     }
@@ -280,30 +281,35 @@ const TextArea = class {
         }
       }));
     }
-    const currentSelectingRange = Boolean(this.selectionRange.length);
-    if (currentSelectingRange !== this.lastDispatchedEventValue.selecingRange) {
-      this.lastDispatchedEventValue.selecingRange = currentSelectingRange;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeSelectingRange", {
-        detail: {
-          selectingRange: this.lastDispatchedEventValue.selecingRange
-        }
-      }));
-    }
-    const currentViewportHeightRatio = this.textArea.clientHeight / this.textArea.scrollHeight;
-    if (currentViewportHeightRatio !== this.lastDispatchedEventValue.viewportHeightRatio) {
-      this.lastDispatchedEventValue.viewportHeightRatio = currentViewportHeightRatio;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportHeightRatio", {
-        detail: {
-          viewportHeightRatio: this.lastDispatchedEventValue.viewportHeightRatio
-        }
-      }));
-    }
+
+    // 文字領域の実際の横幅に対するビューポートの横幅の割合とスクロール量は値の性質上、
+    // 前者のほうが先に呼び出される必要があります。
     const currentViewportWidthRatio = this.textArea.clientWidth / this.textArea.scrollWidth;
     if (currentViewportWidthRatio !== this.lastDispatchedEventValue.viewportWidthRatio) {
       this.lastDispatchedEventValue.viewportWidthRatio = currentViewportWidthRatio;
       this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportWidthRatio", {
         detail: {
           viewportWidthRatio: this.lastDispatchedEventValue.viewportWidthRatio
+        }
+      }));
+    }
+    const currentScrollLeft = this.textArea.scrollLeft;
+    if (currentScrollLeft !== this.lastDispatchedEventValue.scrollLeft) {
+      this.lastDispatchedEventValue.scrollLeft = currentScrollLeft;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollLeft", {
+        detail: {
+          scrollLeft: this.lastDispatchedEventValue.scrollLeft
+        }
+      }));
+    }
+
+    // その他の値は順番を気にせず呼びだします。
+    const currentSelectingRange = Boolean(this.selectionRange.length);
+    if (currentSelectingRange !== this.lastDispatchedEventValue.selecingRange) {
+      this.lastDispatchedEventValue.selecingRange = currentSelectingRange;
+      this.editor.dispatchEvent(new CustomEvent("custom-changeSelectingRange", {
+        detail: {
+          selectingRange: this.lastDispatchedEventValue.selecingRange
         }
       }));
     }
@@ -661,6 +667,13 @@ const TextArea = class {
 
         // Ctrl + vでクリップボードの文字を文字領域にペーストします。
         if (event.detail.key === "v") {
+
+          // Firefoxではnavigator.clipboard.readTextメソッドはブラウザの拡張機能でのみ機能します。
+          if (!navigator.clipboard.readText) {
+            alert("【！ 申し訳ございません ！】\nお使いのブラウザではペースト機能は非対応となっております。\nペースト機能をご利用いただく場合は別のブラウザでお願いします。");
+            return resolve(false);
+          }
+
           await navigator.clipboard.readText().then((textInClipboard) => {
             if (this.selectionRange.length) {
               this.removeCharactersInSelectionRange();
@@ -1079,13 +1092,13 @@ const TextArea = class {
 
     // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
     this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize;
+      this.textArea.scrollLeft += event.detail.scrollSize / this.textArea.clientWidth * this.textArea.scrollWidth;
       this.dispatchEvents();
     });
 
     // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
     this.editor.addEventListener("custom-scrollVertically", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize;
+      this.textArea.scrollTop += event.detail.scrollSize / this.textArea.clientHeight * this.textArea.scrollHeight;
       this.dispatchEvents();
     });
   };
