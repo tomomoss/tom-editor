@@ -1,6 +1,6 @@
 # TOM Editor
 
-TOM EditorはJavaScriptだけで構築されたエディターライブラリです。
+TOM Editorは簡素なエディターライブラリです。
 
 現在、バージョン2.3.0です。以下より動作確認ができます。
 
@@ -8,33 +8,56 @@ TOM EditorはJavaScriptだけで構築されたエディターライブラリで
 
 ## 導入手順
 
-`src` ディレクトリに格納されているファイルがTOM Editorを構成するファイルとなります。
+### <script>タグで読みこむ場合
 
-`tom-editor.css` は適当な階層に配置し `<style>` タグなどで読み込んでください。
+`dist` ディレクトリにある `tom-editor.css` を適当な階層に配置し、 `<link>` タグなどで読みこんでください。
 
-`.mjs` ファイルは全て同じ階層に配置してください。その後、当ライブラリのエントリポイントとなる `tom-editor.mjs` を適当なJavaScriptファイルから読み込んでください。
-
-```javascript
-// ./script/main.js
-import {
-  TOMEditor
-} from "./tom-editor/tom-editor.mjs";
-```
+`dist` ディレクトリにある `tom-editor.js` を適当な階層に配置し、当該ファイルを参照するJavaScriptファイルをよりも先に読みこんでください。
 
 ```html
-<script defer src="./script/main.js" type="module"></script>
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="./tom-editor.js"></script>
+    <script src="./main.js"></script>
+  </head>
+</html>
+<body> ... </body>
 ```
 
-`tom-editor.mjs` が公開している `TOMEditor` クラスをインスタンス化してください。このときエディターを実装したいHTML要素をコンストラクタに渡してください。インスタンス化と同時にエディターが初期化されて使えるようになります。エディターの寸法は当該HTML要素の寸法に依存します。
+グローバルに公開されている `TOMEditor` クラスをインスタンス化してください。エディターを実装する対象となるHTML要素を第1引数に渡してください。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 ```
 
+### ES Modulesとしてimport文で読みこむ場合
+
+`dist` ディレクトリにある `tom-editor.css` を適当な階層に配置し `<link>` タグなどで読みこんでください。
+
+`dist` ディレクトリにある `tom-editor.mjs` を適当な階層に配置し、適当なJavaScriptファイル内から読みこんでください。
+
+```javascript
+import {
+  TOMEditor
+} from "./tom-editor.mjs";
+```
+
+`tom-editor.mjs` が公開している `TOMEditor` クラスをインスタンス化してください。エディターを実装する対象となるHTML要素を第1引数に渡してください。
+
+```javascript
+import {
+  TOMEditor
+} from "./tom-editor.mjs";
+
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const tomEditor = new TOMEditor(tomEditorContainer);
+```
+
 ## 設定
 
-インスタンス化時にエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。省略された場合は基本設定が適用されます。
+インスタンス化時にエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。第2引数に当該オブジェクトを指定してください。省略された場合は基本設定が適用されます。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
