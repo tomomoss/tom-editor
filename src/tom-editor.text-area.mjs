@@ -1085,13 +1085,13 @@ const TextArea = class {
 
     // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
     this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize;
+      this.textArea.scrollLeft += event.detail.scrollSize / this.textArea.clientWidth * this.textArea.scrollWidth;
       this.dispatchEvents();
     });
 
     // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
     this.editor.addEventListener("custom-scrollVertically", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize;
+      this.textArea.scrollTop += event.detail.scrollSize / this.textArea.clientHeight * this.textArea.scrollHeight;
       this.dispatchEvents();
     });
   };

@@ -144,7 +144,7 @@ const VirticalScrollbarArea = class {
       lastY = event.detail.y;
       this.editor.dispatchEvent(new CustomEvent("custom-scrollVertically", {
         detail: {
-          scrollSize: differenceY / this.editor.clientHeight * (this.editor.clientHeight + this.editor.clientHeight * lastViewportHeightRatio)
+          scrollSize: differenceY
         }
       }));
     });

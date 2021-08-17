@@ -149,7 +149,7 @@ const HorizontalScrollbarArea = class {
       lastX = event.detail.x;
       this.editor.dispatchEvent(new CustomEvent("custom-scrollHorizontally", {
         detail: {
-          scrollSize: differenceX / this.horizontalScrollbarArea.clientWidth * (this.horizontalScrollbarArea.clientWidth + this.horizontalScrollbarArea.clientWidth * lastViewportWidthRatio)
+          scrollSize: differenceX
         }
       }));
     });
