@@ -2,9 +2,9 @@
 
 TOM Editorは簡素なエディターライブラリです。
 
-現在、バージョン2.3.0です。以下より動作確認ができます。
+現在、バージョン3.0.0です。以下より動作確認ができます。
 
-[TOM Editor 2.3.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 3.0.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
 
 ## 導入手順
 
