@@ -4,7 +4,8 @@
   "description": "簡素なエディターを実装するライブラリです。",
   "main": "",
   "scripts": {
-    "build": "webpack --config ./webpack.config.module.js ; if (-not $?) { return } ; webpack --config ./webpack.config.window.js"
+    "build": "webpack --config ./webpack.config.module.js ; if (-not $?) { return } ; webpack --config ./webpack.config.window.js",
+    "development-mode": "webpack --config ./webpack.config.module.js --watch"
   },
   "repository": {
     "type": "git",
