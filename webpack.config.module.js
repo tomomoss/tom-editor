@@ -6,6 +6,12 @@ module.exports = {
     outputModule: true
   },
   mode: "production",
+  module: {
+    rules: [{
+      test: /\.css$/,
+      use: ["style-loader", "css-loader"]
+    }]
+  },
   output: {
     filename: "tom-editor.mjs",
     library: {

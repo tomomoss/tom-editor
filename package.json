@@ -4,7 +4,7 @@
   "description": "簡素なエディターを実装するライブラリです。",
   "main": "",
   "scripts": {
-    "build": "webpack --config ./webpack.config.module.js ; webpack --config ./webpack.config.window.js ; Copy-Item ./src/tom-editor.css ./dist"
+    "build": "webpack --config ./webpack.config.module.js ; webpack --config ./webpack.config.window.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/tomomoss/tom-editor#readme",
   "devDependencies": {
+    "css-loader": "^6.2.0",
+    "style-loader": "^3.2.1",
     "webpack": "^5.50.0",
     "webpack-cli": "^4.8.0"
   }

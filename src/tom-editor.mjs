@@ -1,6 +1,10 @@
 "use strict";
 
 import {
+  css
+} from "./tom-editor.css";
+
+import {
   Caret
 } from "./tom-editor.caret.mjs";
 import {
