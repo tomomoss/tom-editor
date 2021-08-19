@@ -1,5 +1,7 @@
 "use strict";
 
+import "./tom-editor.scss";
+
 import {
   Caret
 } from "./tom-editor.caret.mjs";
@@ -56,7 +58,7 @@ const TOMEditor = class {
     Object.seal(this);
 
     // 1つのHTML要素の直下にTOM Editorが複数実装されないように、実装前に当該HTML要素の内容を消去します。
-    editorContainer.innerHTML = "";
+    editorContainer.textContent = "";
 
     // エディターの挙動を制御するオプションの値を利用できる状態に加工します。
     let readonlyFlag;
@@ -101,7 +103,7 @@ const TOMEditor = class {
           convertedText += "\n";
           break;
         }
-        convertedText += this.textArea.characters[i][j].innerHTML;
+        convertedText += this.textArea.characters[i][j].textContent;
       }
     }
     return convertedText;
@@ -121,7 +123,7 @@ const TOMEditor = class {
     this.textArea.focusedRowIndex = null;
     this.textArea.selectionRange = [];
     this.textArea.textLines = [];
-    this.textArea.textArea.innerHTML = "";
+    this.textArea.textArea.textContent = "";
     for (const textLineOfNewValue of newValue.split("\n")) {
       const textLine = this.textArea.createTextLine();
       this.textArea.textLines.push(textLine);
@@ -319,16 +321,17 @@ const TOMEditor = class {
     // それぞれに対応したEventTarget.dispatchEvenメソッドを実行します。
     // 各要素に実装してもいいのですが面倒くさいのでエディター本体を対象にまとめて実装しています。
     this.editor.addEventListener("wheel", (event) => {
+      const scrollSIze = Math.sign(event.deltaY) * absoluteScrollSize;
       if (event.path.includes(horizontalScrollbarArea)) {
         this.editor.dispatchEvent(new CustomEvent("custom-scrollHorizontally", {
           detail: {
-            scrollSize: Math.sign(event.deltaY) * absoluteScrollSize
+            scrollSize: scrollSIze
           }
         }));
       } else {
         this.editor.dispatchEvent(new CustomEvent("custom-scrollVertically", {
           detail: {
-            scrollSize: Math.sign(event.deltaY) * absoluteScrollSize
+            scrollSize: scrollSIze
           }
         }));
       }

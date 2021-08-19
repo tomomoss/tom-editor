@@ -2,17 +2,15 @@
 
 TOM Editorは簡素なエディターライブラリです。
 
-現在、バージョン3.0.0です。以下より動作確認ができます。
+現在、バージョン4.0.0です。以下より動作確認ができます。
 
-[TOM Editor 3.0.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 4.0.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
 
 ## 導入手順
 
-### <script>タグで読みこむ場合
+当ライブラリでは `<script>` タグで読みこむ方法と、 `import` 文で読みこむ方法の2種類を用意しています。
 
-`dist` ディレクトリにある `tom-editor.css` を適当な階層に配置し、 `<link>` タグなどで読みこんでください。
-
-`dist` ディレクトリにある `tom-editor.js` を適当な階層に配置し、当該ファイルを参照するJavaScriptファイルをよりも先に読みこんでください。
+`<script>` タグで読みこむ場合は `dist` ディレクトリにある `tom-editor.js` を適当な階層に配置し、当該ファイルを参照するスクリプトファイルをよりも先に読みこんでください。
 
 ```html
 <!DOCTYPE html>
@@ -25,18 +23,7 @@ TOM Editorは簡素なエディターライブラリです。
 <body> ... </body>
 ```
 
-グローバルに公開されている `TOMEditor` クラスをインスタンス化してください。エディターを実装する対象となるHTML要素を第1引数に渡してください。
-
-```javascript
-const tomEditorContainer = document.querySelector(".tom-editor-container");
-const tomEditor = new TOMEditor(tomEditorContainer);
-```
-
-### ES Modulesとしてimport文で読みこむ場合
-
-`dist` ディレクトリにある `tom-editor.css` を適当な階層に配置し `<link>` タグなどで読みこんでください。
-
-`dist` ディレクトリにある `tom-editor.mjs` を適当な階層に配置し、適当なJavaScriptファイル内から読みこんでください。
+`import` 文でエディターオブジェクトをES Modulesとして読みこむ場合は `dist` ディレクトリにある `tom-editor.mjs` を適当な階層に配置し、適当なスクリプトファイル内から読みこんでください。
 
 ```javascript
 import {
@@ -44,28 +31,33 @@ import {
 } from "./tom-editor.mjs";
 ```
 
-`tom-editor.mjs` が公開している `TOMEditor` クラスをインスタンス化してください。エディターを実装する対象となるHTML要素を第1引数に渡してください。
+それぞれの方法で読みこんだ後はライブラリから公開されている `TOMEditor` クラスをインスタンス化してください。
+
+第1引数にはエディターを実装する対象となるHTML要素を指定してください。第1引数を省略することはできません。エディターの寸法は第1引数に指定されたHTML要素の寸法に依存します。
+
+第2引数にはエディターの挙動を制御するオブジェクトを渡すことができます。第2引数は省略することができます。省略した場合は初期設定が適用されます。
 
 ```javascript
+// <script>タグで読みこんだ場合
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = { ... };
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+```
+
+```javascript
+// ES Modulesとして読みこんだ場合
 import {
   TOMEditor
 } from "./tom-editor.mjs";
 
 const tomEditorContainer = document.querySelector(".tom-editor-container");
-const tomEditor = new TOMEditor(tomEditorContainer);
+const setting = { ... };
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
 ```
 
 ## 設定
 
-インスタンス化時にエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。第2引数に当該オブジェクトを指定してください。省略された場合は基本設定が適用されます。
-
-```javascript
-const tomEditorContainer = document.querySelector(".tom-editor-container");
-const setting = {
-  readonly: true
-};
-const tomEditor = new TOMEditor(tomEditorContainer, setting);
-```
+`TOMEditor` クラスのコンストラクタの第2引数にはエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。
 
 ### readonly
 

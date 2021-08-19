@@ -17,7 +17,7 @@ const LineNumberArea = class {
     // 横幅は「半角英数字の横幅 * 表示する桁数 + 行番号のpadding-rightプロパティの値」とします。
     // 表示する桁数ですが、そのまま指定するとエディターの縁との隙間がほとんどないので少し余裕をもたせます。
     const temporaryElement = document.createElement("span");
-    temporaryElement.innerHTML = "0";
+    temporaryElement.textContent = "0";
     temporaryElement.style.display = "inline-block";
     this.lineNumberArea.appendChild(temporaryElement);
     const alphanumericWidth = temporaryElement.clientWidth;
@@ -101,7 +101,7 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.classList.add(this.CSSClass.lineNumber.element);
-    lineNumber.innerHTML = this.lineNumbers.length + 1;
+    lineNumber.textContent = this.lineNumbers.length + 1;
     return lineNumber;
   };
 

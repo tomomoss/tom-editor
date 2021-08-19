@@ -9,7 +9,7 @@ const TextArea = class {
   constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
-    this.textArea = this.createTextArea();
+    this.textArea = this.createTextArea(readonlyFlag);
     this.editor.appendChild(this.textArea);
 
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
@@ -131,7 +131,7 @@ const TextArea = class {
             convertedText += "\n";
             break;
           }
-          convertedText += character.innerHTML;
+          convertedText += character.textContent;
         }
       }
     } else {
@@ -145,13 +145,13 @@ const TextArea = class {
 
   /**
    * 文字を生成します。
-   * @param {number|string} innerText 文字となるHTML要素に入れる値です。
+   * @param {number|string} characterNode 文字となるHTML要素に入れる値です。
    * @returns {HTMLSpanElement} 文字です。
    */
-  createCharacter = (innerHTML) => {
+  createCharacter = (characterNode) => {
     const character = document.createElement("span");
     character.classList.add(this.CSSClass.character.element);
-    character.innerHTML = innerHTML;
+    character.textContent = characterNode;
     return character
   };
 
@@ -162,17 +162,21 @@ const TextArea = class {
   createEOL = () => {
     const EOL = document.createElement("span");
     EOL.classList.add(this.CSSClass.character.element, this.CSSClass.character.modifier.EOL);
-    EOL.innerHTML = " ";
+    EOL.textContent = " ";
     return EOL;
   };
 
   /**
    * 文字領域を作成します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    * @returns {HTMLDivElement} 文字領域です。
    */
-  createTextArea = () => {
+  createTextArea = (readonlyFlag) => {
     const textArea = document.createElement("div");
     textArea.classList.add(this.CSSClass.textArea.element);
+    if (readonlyFlag) {
+      textArea.style.cursor = "default";
+    }
     return textArea;
   };
 
@@ -351,10 +355,10 @@ const TextArea = class {
 
     // 反映する編集履歴に保存された文字領域直下のHTML要素の状態を反映してから、
     // 各プロパティへの値の更新を行います。
-    this.textArea.innerHTML = "";
+    this.textArea.textContent = "";
     for (let i = 0; i < this.history.data[index].textLines.length; i += 1) {
       const textLine = this.history.data[index].textLines[i];
-      textLine.innerHTML = "";
+      textLine.textContent = "";
       for (const character of this.history.data[index].characters[i]) {
         textLine.appendChild(character);
       }
@@ -1091,14 +1095,28 @@ const TextArea = class {
     });
 
     // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
     this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize / this.textArea.clientWidth * this.textArea.scrollWidth;
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollLeft += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollLeft += event.detail.scrollRatio / this.textArea.clientWidth * this.textArea.scrollWidth;
+      } else {
+        return;
+      }      
       this.dispatchEvents();
     });
 
     // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
     this.editor.addEventListener("custom-scrollVertically", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize / this.textArea.clientHeight * this.textArea.scrollHeight;
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollTop += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollTop += event.detail.scrollRatio / this.textArea.clientHeight * this.textArea.scrollHeight;
+      } else {
+        return;
+      }
       this.dispatchEvents();
     });
   };
