@@ -1,4 +1,21 @@
 @charset "UTF-8";
+
+// 文字領域の行の高さ、ひいては文字の高さです。
+// 多くのプロパティから参照される値のため変数で保持しています。
+$character-height: 1.25rem;
+
+// エディターの標準背景色です。
+$default-background-color: rgb(255, 255, 255);
+
+// スクロールバーの通常時の色です。
+$scrollbar-default-color: rgb(238, 238, 238);
+
+// スクロールバーが操作されているときの色です。
+$scrollbar-dragging-color: rgb(204, 204, 204);
+
+// スクロールバー上にマウスが乗っているときの色です。
+$scrollbar-hovering-color: rgb(221, 221, 221);
+
 @keyframes caret-blinking {
   0% {
     border-left-color: rgb(51, 51, 51);
@@ -8,18 +25,15 @@
   }
 }
 
-:root {
-  --character-height: 1.25rem;
-}
-
 .tom-editor {
 
+  // キャレットです。
   &__caret {
     background: transparent;
     border: none;
     border-left: solid 0.15rem;
     display: none;
-    height: var(--character-height);
+    height: $character-height;
     outline: none;
     overflow: hidden;
     padding: 0;
@@ -37,9 +51,10 @@
     }
   }
 
+  // 装飾下線です。
   &__decoration-underline {
     border-bottom: solid 0.1rem rgb(238, 238, 238);
-    height: var(--character-height);
+    height: $character-height;
     pointer-events: none;
     position: absolute;
     display: none;
@@ -49,11 +64,15 @@
     }
   }
 
+  // エディター本体です。
   &__editor {
-    background: rgb(255, 255, 255);
+    background: $default-background-color;
     bottom: 0;
     display: flex;
-    font: normal 1rem / var(--character-height) Consolas, "Courier New", monospace;
+
+    // Sassではスラッシュ記号は算術演算子と見なされるため文字列であることを明示化しています。
+    font: normal 1rem / #{$character-height} Consolas, "Courier New", monospace;
+
     justify-content: space-between;
     left: 0;
     overflow: hidden;
@@ -64,12 +83,14 @@
     width: 100%;
   }
   
+  // エディターのラッパー要素です。
   &__editor-wrapper {
     height: 100%;
     position: relative;
     width: 100%;
   }
 
+  // 水平スクロールバー領域です。
   &__horizontal-scrollbar-area {
     bottom: 0;
     display: none;
@@ -80,29 +101,32 @@
       display: block;
     }
 
+    // 水平スクロールバーです。
     &__horizontal-scrollbar {
-      background: rgb(238, 238, 238);
+      background: $scrollbar-default-color;
       height: 100%;
       position: absolute;
-    }
 
-    &:hover {
-      background: rgb(221, 221, 221);
-    }
-
-    &:active {
-      background: rgb(204, 204, 204);
+      &:hover {
+        background: $scrollbar-hovering-color;
+      }
+      
+      &:active {
+        background: $scrollbar-dragging-color;
+      }
     }
   }
 
+  // 行番号領域です。
   &__line-number-area {
-    background: rgb(255, 255, 255);
+    background: $default-background-color;
     cursor: default;
     flex: 0 0;
     overflow: hidden;
     text-align: right;
     z-index: 1;
 
+    // 行番号です。
     &__line-number {
       color: rgb(204, 204, 204);
       padding: 0 2rem 0 0;
@@ -125,12 +149,14 @@
     }
   }
 
+  // 文字領域です。
   &__text-area {
-    background: rgb(255, 255, 255);
+    background: $default-background-color;
     cursor: text;
     flex: 1 1 auto;
     overflow: hidden;
 
+    // 文字です。
     &__character {
       display: inline-block;
       vertical-align: top;
@@ -148,8 +174,9 @@
       }
     }
 
+    // 行です。
     &__text-line {
-      height: var(--character-height);
+      height: $character-height;
 
       &:last-of-type {
         height: 100%;
@@ -157,25 +184,28 @@
     }
   }
 
+  // 垂直スクロールバー領域です。
   &__virtical-scrollbar-area {
-    background: rgb(255, 255, 255);
+    background: $default-background-color;
     border-left: 0.1rem solid rgb(238, 238, 238);
     flex: 0 0 1rem;
     position: relative;
     width: 1rem;
     z-index: 1;
 
+    // 垂直スクロールバーです。
     &__virtical-scrollbar {
-      background: rgb(238, 238, 238);
+      background: $scrollbar-default-color;
       display: none;
       position: absolute;
       width: 100%;
+
       &:hover {
-        background: rgb(221, 221, 221);
+        background: $scrollbar-hovering-color;
       }
 
       &:active {
-        background: rgb(204, 204, 204);
+        background: $scrollbar-dragging-color;
       }
 
       &--active {
