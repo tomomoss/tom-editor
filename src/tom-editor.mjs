@@ -1,8 +1,6 @@
 "use strict";
 
-import {
-  css
-} from "./tom-editor.css";
+import "./tom-editor.scss";
 
 import {
   Caret

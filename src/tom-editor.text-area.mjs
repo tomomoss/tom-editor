@@ -9,7 +9,7 @@ const TextArea = class {
   constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
-    this.textArea = this.createTextArea();
+    this.textArea = this.createTextArea(readonlyFlag);
     this.editor.appendChild(this.textArea);
 
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
@@ -168,11 +168,15 @@ const TextArea = class {
 
   /**
    * 文字領域を作成します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    * @returns {HTMLDivElement} 文字領域です。
    */
-  createTextArea = () => {
+  createTextArea = (readonlyFlag) => {
     const textArea = document.createElement("div");
     textArea.classList.add(this.CSSClass.textArea.element);
+    if (readonlyFlag) {
+      textArea.style.cursor = "default";
+    }
     return textArea;
   };
 
