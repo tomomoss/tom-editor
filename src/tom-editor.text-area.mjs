@@ -131,7 +131,7 @@ const TextArea = class {
             convertedText += "\n";
             break;
           }
-          convertedText += character.innerHTML;
+          convertedText += character.textContent;
         }
       }
     } else {
@@ -145,13 +145,13 @@ const TextArea = class {
 
   /**
    * 文字を生成します。
-   * @param {number|string} innerText 文字となるHTML要素に入れる値です。
+   * @param {number|string} characterNode 文字となるHTML要素に入れる値です。
    * @returns {HTMLSpanElement} 文字です。
    */
-  createCharacter = (innerHTML) => {
+  createCharacter = (characterNode) => {
     const character = document.createElement("span");
     character.classList.add(this.CSSClass.character.element);
-    character.innerHTML = innerHTML;
+    character.textContent = characterNode;
     return character
   };
 
@@ -162,7 +162,7 @@ const TextArea = class {
   createEOL = () => {
     const EOL = document.createElement("span");
     EOL.classList.add(this.CSSClass.character.element, this.CSSClass.character.modifier.EOL);
-    EOL.innerHTML = " ";
+    EOL.textContent = " ";
     return EOL;
   };
 
@@ -355,10 +355,10 @@ const TextArea = class {
 
     // 反映する編集履歴に保存された文字領域直下のHTML要素の状態を反映してから、
     // 各プロパティへの値の更新を行います。
-    this.textArea.innerHTML = "";
+    this.textArea.textContent = "";
     for (let i = 0; i < this.history.data[index].textLines.length; i += 1) {
       const textLine = this.history.data[index].textLines[i];
-      textLine.innerHTML = "";
+      textLine.textContent = "";
       for (const character of this.history.data[index].characters[i]) {
         textLine.appendChild(character);
       }

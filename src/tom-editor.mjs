@@ -58,7 +58,7 @@ const TOMEditor = class {
     Object.seal(this);
 
     // 1つのHTML要素の直下にTOM Editorが複数実装されないように、実装前に当該HTML要素の内容を消去します。
-    editorContainer.innerHTML = "";
+    editorContainer.textContent = "";
 
     // エディターの挙動を制御するオプションの値を利用できる状態に加工します。
     let readonlyFlag;
@@ -103,7 +103,7 @@ const TOMEditor = class {
           convertedText += "\n";
           break;
         }
-        convertedText += this.textArea.characters[i][j].innerHTML;
+        convertedText += this.textArea.characters[i][j].textContent;
       }
     }
     return convertedText;
@@ -123,7 +123,7 @@ const TOMEditor = class {
     this.textArea.focusedRowIndex = null;
     this.textArea.selectionRange = [];
     this.textArea.textLines = [];
-    this.textArea.textArea.innerHTML = "";
+    this.textArea.textArea.textContent = "";
     for (const textLineOfNewValue of newValue.split("\n")) {
       const textLine = this.textArea.createTextLine();
       this.textArea.textLines.push(textLine);
