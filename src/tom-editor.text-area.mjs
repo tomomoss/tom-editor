@@ -1095,14 +1095,28 @@ const TextArea = class {
     });
 
     // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
     this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      this.textArea.scrollLeft += event.detail.scrollSize / this.textArea.clientWidth * this.textArea.scrollWidth;
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollLeft += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollLeft += event.detail.scrollRatio / this.textArea.clientWidth * this.textArea.scrollWidth;
+      } else {
+        return;
+      }      
       this.dispatchEvents();
     });
 
     // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
     this.editor.addEventListener("custom-scrollVertically", (event) => {
-      this.textArea.scrollTop += event.detail.scrollSize / this.textArea.clientHeight * this.textArea.scrollHeight;
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollTop += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollTop += event.detail.scrollRatio / this.textArea.clientHeight * this.textArea.scrollHeight;
+      } else {
+        return;
+      }
       this.dispatchEvents();
     });
   };

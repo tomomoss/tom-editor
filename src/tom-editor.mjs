@@ -321,16 +321,17 @@ const TOMEditor = class {
     // それぞれに対応したEventTarget.dispatchEvenメソッドを実行します。
     // 各要素に実装してもいいのですが面倒くさいのでエディター本体を対象にまとめて実装しています。
     this.editor.addEventListener("wheel", (event) => {
+      const scrollSIze = Math.sign(event.deltaY) * absoluteScrollSize;
       if (event.path.includes(horizontalScrollbarArea)) {
         this.editor.dispatchEvent(new CustomEvent("custom-scrollHorizontally", {
           detail: {
-            scrollSize: Math.sign(event.deltaY) * absoluteScrollSize
+            scrollSize: scrollSIze
           }
         }));
       } else {
         this.editor.dispatchEvent(new CustomEvent("custom-scrollVertically", {
           detail: {
-            scrollSize: Math.sign(event.deltaY) * absoluteScrollSize
+            scrollSize: scrollSIze
           }
         }));
       }
