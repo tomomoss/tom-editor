@@ -151,7 +151,7 @@ const TOMEditor = class {
       throw new TypeError("第1引数がFunction型ではありません。");
     }
     this.editor.addEventListener("custom-compositionend", () => {
-      if (this.textArea.tedifferenceBetweenCurrentAndHistory()) {
+      if (this.textArea.differenceBetweenCurrentAndHistory()) {
         handler(this.value);
         return;
       }
