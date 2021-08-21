@@ -939,6 +939,43 @@ const TextArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
+    // エディターの横幅が変化したので、変更後の状態を通知します。
+    this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
+      this.dispatchEvents();
+    });
+
+    // エディターの横幅が変化したので、文字領域の横幅を調整します。
+    this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
+      this.textArea.style.maxWidth = `${event.detail.width}px`;
+      this.dispatchEvents();
+    });
+
+    // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
+    this.editor.addEventListener("custom-scrollHorizontally", (event) => {
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollLeft += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollLeft += event.detail.scrollRatio / this.textArea.clientWidth * this.textArea.scrollWidth;
+      } else {
+        return;
+      }      
+      this.dispatchEvents();
+    });
+
+    // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
+    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
+    this.editor.addEventListener("custom-scrollVertically", (event) => {
+      if (event.detail.hasOwnProperty("scrollSize")) {
+        this.textArea.scrollTop += event.detail.scrollSize;
+      } else if (event.detail.hasOwnProperty("scrollRatio")) {
+        this.textArea.scrollTop += event.detail.scrollRatio / this.textArea.clientHeight * this.textArea.scrollHeight;
+      } else {
+        return;
+      }
+      this.dispatchEvents();
+    });
+
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
     // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
     if (!readonlyFlag) {
@@ -1082,43 +1119,6 @@ const TextArea = class {
         this.dispatchEvents();
       });
     }
-
-    // エディターの横幅が変化したので、変更後の状態を通知します。
-    this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
-      this.dispatchEvents();
-    });
-
-    // エディターの横幅が変化したので、文字領域の横幅を調整します。
-    this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
-      this.textArea.style.maxWidth = `${event.detail.width}px`;
-      this.dispatchEvents();
-    });
-
-    // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
-    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
-    this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      if (event.detail.hasOwnProperty("scrollSize")) {
-        this.textArea.scrollLeft += event.detail.scrollSize;
-      } else if (event.detail.hasOwnProperty("scrollRatio")) {
-        this.textArea.scrollLeft += event.detail.scrollRatio / this.textArea.clientWidth * this.textArea.scrollWidth;
-      } else {
-        return;
-      }      
-      this.dispatchEvents();
-    });
-
-    // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
-    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
-    this.editor.addEventListener("custom-scrollVertically", (event) => {
-      if (event.detail.hasOwnProperty("scrollSize")) {
-        this.textArea.scrollTop += event.detail.scrollSize;
-      } else if (event.detail.hasOwnProperty("scrollRatio")) {
-        this.textArea.scrollTop += event.detail.scrollRatio / this.textArea.clientHeight * this.textArea.scrollHeight;
-      } else {
-        return;
-      }
-      this.dispatchEvents();
-    });
   };
 
   /**

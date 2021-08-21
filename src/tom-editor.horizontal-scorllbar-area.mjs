@@ -67,13 +67,6 @@ const HorizontalScrollbarArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
-    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
-    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
-    if (!readonlyFlag) {
-
-      // 水平スクロールバー領域には省略される値やイベントリスナーはありません。
-    }
-
     // スクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
 
@@ -163,6 +156,13 @@ const HorizontalScrollbarArea = class {
     this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
       this.horizontalScrollbarArea.style.width = `${event.detail.width}px`;
     });
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // ※水平スクロールバー領域には省略される値やイベントリスナーはありません。
+    }
   };
 };
 

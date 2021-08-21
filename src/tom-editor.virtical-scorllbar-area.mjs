@@ -64,13 +64,6 @@ const VirticalScrollbarArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
-    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
-    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
-    if (!readonlyFlag) {
-
-      // 垂直スクロールバー領域には省略される値やイベントリスナーはありません。
-    }
-
     // マウスホイール操作、および垂直スクロールバー領域の余白をクリックしたときに実行する、
     // 垂直スクロール処理で用いるスクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
@@ -153,6 +146,13 @@ const VirticalScrollbarArea = class {
     this.editor.addEventListener("custom-mouseup", () => {
       lastY = null;
     });
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // ※垂直スクロールバー領域には省略される値やイベントリスナーはありません。
+    }
   };
 };
 

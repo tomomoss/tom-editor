@@ -128,6 +128,21 @@ const LineNumberArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
+    // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
+    this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
+      while (event.detail.length > this.lineNumbers.length) {
+        this.appendLineNumber();
+      }
+      while (event.detail.length < this.lineNumbers.length) {
+        this.removeLineNumber();
+      }
+    });
+
+    // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
+    this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
+
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
     // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
     if (!readonlyFlag) {
@@ -178,21 +193,6 @@ const LineNumberArea = class {
         this.changeFocusLineNumber(event.detail.index);
       });
     }
-
-    // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
-    this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
-      while (event.detail.length > this.lineNumbers.length) {
-        this.appendLineNumber();
-      }
-      while (event.detail.length < this.lineNumbers.length) {
-        this.removeLineNumber();
-      }
-    });
-
-    // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
-    this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
   };
 };
 

@@ -227,13 +227,6 @@ const TOMEditor = class {
    */
   setEventListeners = (lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, readonlyFlag) => {
 
-    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
-    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
-    if (!readonlyFlag) {
-
-      // エディター本体には省略される値やイベントリスナーはありません。
-    }
-
     // マウスホイールの操作によるスクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
 
@@ -341,6 +334,13 @@ const TOMEditor = class {
     window.addEventListener("mouseup", () => {
       this.editor.dispatchEvent(new CustomEvent("custom-mouseup"));
     });
+
+    // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
+    // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
+    if (!readonlyFlag) {
+
+      // ※エディター本体には省略される値やイベントリスナーはありません。
+    }
   };
 };
 
