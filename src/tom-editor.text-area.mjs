@@ -1037,6 +1037,9 @@ const TextArea = class {
         }
         while (event.detail.index > this.focusedRowIndex - 1) {
           this.moveFocusPointByArrowKey("ArrowDown", true);
+          if (this.focusedRowIndex === this.getRowsLastIndex()) {
+            break;
+          }
         }
         this.scrollAutomatically();
         this.dispatchEvents();
