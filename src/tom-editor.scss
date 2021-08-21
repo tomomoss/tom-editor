@@ -16,7 +16,7 @@ $scrollbar-dragging-color: rgb(204, 204, 204);
 // スクロールバー上にマウスが乗っているときの色です。
 $scrollbar-hovering-color: rgb(221, 221, 221);
 
-@keyframes caret-blinking {
+@keyframes tom-editor-caret-blinking {
   0% {
     border-left-color: rgb(51, 51, 51);
   }
@@ -43,7 +43,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     width: 0;
 
     &--active {
-      animation: caret-blinking 1.25s steps(1) infinite both;
+      animation: tom-editor-caret-blinking 1.25s steps(1) infinite both;
     }
 
     &--focus {
