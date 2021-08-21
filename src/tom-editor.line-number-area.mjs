@@ -9,7 +9,7 @@ const LineNumberArea = class {
   constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
-    this.lineNumberArea = this.createLineNumberArea();
+    this.lineNumberArea = this.createLineNumberArea(readonlyFlag);
     this.editor.appendChild(this.lineNumberArea);
     this.appendLineNumber();
 
@@ -34,11 +34,15 @@ const LineNumberArea = class {
     lineNumber: {
       element: "tom-editor__line-number-area__line-number",
       modifier: {
-        focus: "tom-editor__line-number-area__line-number--focus"
+        focus: "tom-editor__line-number-area__line-number--focus",
+        readOnly: "tom-editor__line-number-area__line-number--read-only"
       }
     },
     lineNumberArea: {
-      element: "tom-editor__line-number-area"
+      element: "tom-editor__line-number-area",
+      modifier: {
+        readOnly: "tom-editor__line-number-area--read-only"
+      }
     }
   };
 
@@ -101,17 +105,24 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.classList.add(this.CSSClass.lineNumber.element);
+    if (this.lineNumberArea.classList.contains(this.CSSClass.lineNumberArea.modifier.readOnly)) {
+      lineNumber.classList.add(this.CSSClass.lineNumber.modifier.readOnly);
+    }
     lineNumber.textContent = this.lineNumbers.length + 1;
     return lineNumber;
   };
 
   /**
    * 行番号領域を生成します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    * @returns {HTMLDivElement} 行番号領域です。
    */
-  createLineNumberArea = () => {
+  createLineNumberArea = (readonlyFlag) => {
     const lineNumberArea = document.createElement("div");
     lineNumberArea.classList.add(this.CSSClass.lineNumberArea.element);
+    if (readonlyFlag) {
+      lineNumberArea.classList.add(this.CSSClass.lineNumberArea.modifier.readOnly);
+    }
     return lineNumberArea;
   };
 
