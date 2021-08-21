@@ -4,13 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width" name="viewport">
-  <title>TOM Editor 4.1.0 動作確認ページ</title>
+  <title>TOM Editor 4.2.0 動作確認ページ</title>
   <link href="./common.css" rel="stylesheet">
   <script defer src="./main.js" type="module"></script>
 </head>
 
 <body class="body">
-  <div class="tom-editor-container"></div>
+  <div class="editor-type-radio">
+    <label><input checked name="editor-type" type="radio" value="single">Single Editor</label>
+    <label><input name="editor-type" type="radio" value="multiple">Multiple Editors</label>
+  </div>
+  <main class="main"></main>
 </body>
 
 </html>

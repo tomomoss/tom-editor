@@ -135,7 +135,10 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
         background: transparent;
       }
 
-      &:not(.tom-editor__line-number-area__line-number--focus):hover {
+      &:not(
+        .tom-editor__line-number-area__line-number--focus,
+        .tom-editor__line-number-area__line-number--read-only
+      ):hover {
         color: rgb(153, 153, 153);
       }
 

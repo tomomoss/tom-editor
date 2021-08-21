@@ -1,17 +1,32 @@
 @charset "UTF-8";
 
-html {
-  height: 100%;
-}
-
 .body {
   display: flex;
-  height: 100%;
-  margin: 0;
-}
-.tom-editor-container {
-  border: solid .1rem rgb(238, 238, 238);
-  box-sizing: border-box;
-  flex: 1 1 auto;
+  flex-flow: column nowrap;
+  height: calc(100vh - 2rem);
   margin: 1rem;
+}
+.editor-type-radio {
+  font: normal 1rem / 1rem Consolas, "Courier New", monospace;
+  margin-bottom: 1rem;
+}
+.editor-type-radio > label {
+  margin: 0 .5rem;
+}
+.main {
+  flex-grow: 1;
+}
+.main--multiple {
+  display: flex;
+}
+.main__tom-editor-container {
+  border: .1rem solid rgb(238, 238, 238);
+  height: 100%;
+  width: 100%;
+}
+.main__tom-editor-container--multiple {
+  flex-grow: 1;
+}
+.main__tom-editor-container--multiple:last-of-type {
+  margin-left: 1rem;
 }

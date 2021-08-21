@@ -9,7 +9,7 @@ const LineNumberArea = class {
   constructor(editor, readonlyFlag) {
     Object.seal(this);
     this.editor = editor;
-    this.lineNumberArea = this.createLineNumberArea();
+    this.lineNumberArea = this.createLineNumberArea(readonlyFlag);
     this.editor.appendChild(this.lineNumberArea);
     this.appendLineNumber();
 
@@ -34,11 +34,15 @@ const LineNumberArea = class {
     lineNumber: {
       element: "tom-editor__line-number-area__line-number",
       modifier: {
-        focus: "tom-editor__line-number-area__line-number--focus"
+        focus: "tom-editor__line-number-area__line-number--focus",
+        readOnly: "tom-editor__line-number-area__line-number--read-only"
       }
     },
     lineNumberArea: {
-      element: "tom-editor__line-number-area"
+      element: "tom-editor__line-number-area",
+      modifier: {
+        readOnly: "tom-editor__line-number-area--read-only"
+      }
     }
   };
 
@@ -101,17 +105,24 @@ const LineNumberArea = class {
   createLineNumber = () => {
     const lineNumber = document.createElement("div");
     lineNumber.classList.add(this.CSSClass.lineNumber.element);
+    if (this.lineNumberArea.classList.contains(this.CSSClass.lineNumberArea.modifier.readOnly)) {
+      lineNumber.classList.add(this.CSSClass.lineNumber.modifier.readOnly);
+    }
     lineNumber.textContent = this.lineNumbers.length + 1;
     return lineNumber;
   };
 
   /**
    * 行番号領域を生成します。
+   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    * @returns {HTMLDivElement} 行番号領域です。
    */
-  createLineNumberArea = () => {
+  createLineNumberArea = (readonlyFlag) => {
     const lineNumberArea = document.createElement("div");
     lineNumberArea.classList.add(this.CSSClass.lineNumberArea.element);
+    if (readonlyFlag) {
+      lineNumberArea.classList.add(this.CSSClass.lineNumberArea.modifier.readOnly);
+    }
     return lineNumberArea;
   };
 
@@ -127,6 +138,21 @@ const LineNumberArea = class {
    * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
   setEventListeners = (readonlyFlag) => {
+
+    // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
+    this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
+      while (event.detail.length > this.lineNumbers.length) {
+        this.appendLineNumber();
+      }
+      while (event.detail.length < this.lineNumbers.length) {
+        this.removeLineNumber();
+      }
+    });
+
+    // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
+    this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
+      this.lineNumberArea.scrollTop = event.detail.scrollTop;
+    });
 
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
     // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
@@ -178,21 +204,6 @@ const LineNumberArea = class {
         this.changeFocusLineNumber(event.detail.index);
       });
     }
-
-    // 文字領域に表示されている行数が増減したため、行番号領域の行数も合わせます。
-    this.editor.addEventListener("custom-changeNumberOfTextLines", (event) => {
-      while (event.detail.length > this.lineNumbers.length) {
-        this.appendLineNumber();
-      }
-      while (event.detail.length < this.lineNumbers.length) {
-        this.removeLineNumber();
-      }
-    });
-
-    // 文字領域の垂直方向のスクロール量が変化したため、行番号領域も合わせます。
-    this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
-      this.lineNumberArea.scrollTop = event.detail.scrollTop;
-    });
   };
 };
 
