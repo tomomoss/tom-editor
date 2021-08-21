@@ -1032,10 +1032,10 @@ const TextArea = class {
 
       // 行番号のドラッグ操作による範囲選択処理を実行します。
       this.editor.addEventListener("custom-dragLineNumber", (event) => {
-        while (event.detail.index < this.focusedRowIndex) {
+        while (event.detail.index < this.focusedRowIndex - 1) {
           this.moveFocusPointByArrowKey("ArrowUp", true);
         }
-        while (event.detail.index > this.focusedRowIndex) {
+        while (event.detail.index > this.focusedRowIndex - 1) {
           this.moveFocusPointByArrowKey("ArrowDown", true);
         }
         this.scrollAutomatically();
