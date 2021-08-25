@@ -315,7 +315,17 @@ const TOMEditor = class {
     // 各要素に実装してもいいのですが面倒くさいのでエディター本体を対象にまとめて実装しています。
     this.editor.addEventListener("wheel", (event) => {
       const scrollSIze = Math.sign(event.deltaY) * absoluteScrollSize;
-      if (event.path.includes(horizontalScrollbarArea)) {
+
+      // WheelEvent.pathプロパティが非標準につき一部のブラウザで実装されていないので、
+      // 当該プロパティと同等の結果を内包する配列を用意して、それを利用することにします。
+      const path = [];
+      let checkingTarget = event.target;
+      while (checkingTarget !== null) {
+        path.push(checkingTarget);
+        checkingTarget = checkingTarget.parentElement;
+      }
+
+      if (path.includes(horizontalScrollbarArea)) {
         this.editor.dispatchEvent(new CustomEvent("custom-scrollHorizontally", {
           detail: {
             scrollSize: scrollSIze
