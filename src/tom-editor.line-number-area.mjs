@@ -12,20 +12,6 @@ const LineNumberArea = class {
     this.lineNumberArea = this.createLineNumberArea(readonlyFlag);
     this.editor.appendChild(this.lineNumberArea);
     this.appendLineNumber();
-
-    // 行番号領域の横幅を求めています。
-    // 横幅は「半角英数字の横幅 * 表示する桁数 + 行番号のpadding-rightプロパティの値」とします。
-    // 表示する桁数ですが、そのまま指定するとエディターの縁との隙間がほとんどないので少し余裕をもたせます。
-    const temporaryElement = document.createElement("span");
-    temporaryElement.textContent = "0";
-    temporaryElement.style.display = "inline-block";
-    this.lineNumberArea.appendChild(temporaryElement);
-    const alphanumericWidth = temporaryElement.clientWidth;
-    temporaryElement.remove();
-    const maximumNumberOfDigits = 4.5;
-    const lineNumberPaddingRight = parseFloat(getComputedStyle(this.lineNumbers[0]).paddingRight);
-    this.lineNumberArea.style.flexBasis = `${alphanumericWidth * maximumNumberOfDigits + lineNumberPaddingRight}px`;
-
     this.setEventListeners(readonlyFlag);
   }
 

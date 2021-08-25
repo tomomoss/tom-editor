@@ -7,6 +7,9 @@ $character-height: 1.25rem;
 // エディターの標準背景色です。
 $default-background-color: rgb(255, 255, 255);
 
+// 行番号のpadding-rightプロパティ値です。
+$line-number-padding-right: 2rem;
+
 // スクロールバーの通常時の色です。
 $scrollbar-default-color: rgb(238, 238, 238);
 
@@ -69,10 +72,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     background: $default-background-color;
     bottom: 0;
     display: flex;
-
-    // Sassではスラッシュ記号は算術演算子と見なされるため文字列であることを明示化しています。
-    font: normal 1rem / #{$character-height} Consolas, "Courier New", monospace;
-
+    font: normal 1rem/#{$character-height} Consolas, "Courier New", monospace;
     justify-content: space-between;
     left: 0;
     overflow: hidden;
@@ -121,7 +121,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
   &__line-number-area {
     background: $default-background-color;
     cursor: default;
-    flex: 0 0;
+    flex: 0 0 calc(5ch + #{$line-number-padding-right});
     overflow: hidden;
     text-align: right;
     z-index: 1;
@@ -129,7 +129,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     // 行番号です。
     &__line-number {
       color: rgb(204, 204, 204);
-      padding: 0 2rem 0 0;
+      padding: 0 $line-number-padding-right 0 0;
 
       &::selection {
         background: transparent;
