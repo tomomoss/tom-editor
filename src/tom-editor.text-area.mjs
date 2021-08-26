@@ -11,11 +11,13 @@ const TextArea = class {
     this.editor = editor;
     this.textArea = this.createTextArea(readonlyFlag);
     this.editor.appendChild(this.textArea);
+    this.textLinesWrapper = this.createTextLinesWrapper();
+    this.textArea.appendChild(this.textLinesWrapper);
 
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
     const textLine = this.createTextLine();
     this.textLines.push(textLine);
-    this.textArea.appendChild(textLine);
+    this.textLinesWrapper.appendChild(textLine);
     this.characters.push([]);
     const EOL = this.createEOL();
     this.characters[0].push(EOL);
@@ -47,6 +49,9 @@ const TextArea = class {
     },
     textLine: {
       element: "tom-editor__text-area__text-line"
+    },
+    textLinesWrapper: {
+      element: "tom-editor__text-area__text-lines-wrapper"
     }
   };
 
@@ -76,6 +81,9 @@ const TextArea = class {
 
   /** @type {Array<HTMLDivElement>} Webページに挿入されている行です。 */
   textLines = [];
+
+  /** @type {HTMLDivElement} 行のラッパー要素です。 */
+  textLinesWrapper;
 
   /**
    * 引数に指定された文字を文章に挿入します。
@@ -188,6 +196,16 @@ const TextArea = class {
     const textLine = document.createElement("div");
     textLine.classList.add(this.CSSClass.textLine.element);
     return textLine;
+  };
+
+  /**
+   * 行のラッパー要素を生成します。
+   * @returns {HTMLDivElement} 行のラッパー要素です。
+   */
+  createTextLinesWrapper = () => {
+    const textLinesWrapper = document.createElement("div");
+    textLinesWrapper.classList.add(this.CSSClass.textLinesWrapper.element);
+    return textLinesWrapper;
   };
 
   /**
@@ -362,7 +380,7 @@ const TextArea = class {
       for (const character of this.history.data[index].characters[i]) {
         textLine.appendChild(character);
       }
-      this.textArea.appendChild(textLine);
+      this.textLinesWrapper.appendChild(textLine);
     }
 
     this.characters = this.history.data[index].characters.map((characters) => {
@@ -591,15 +609,27 @@ const TextArea = class {
     // 対象が行か文字だったということでフォーカス位置と選択範囲の更新処理を行います。
     while (targetRowIndex < this.focusedRowIndex) {
       this.moveFocusPointByArrowKey("ArrowUp", true);
+      if (this.focusedRowIndex === 0 && this.focusedColumnIndex === 0) {
+        break;
+      }
     }
     while (targetRowIndex > this.focusedRowIndex) {
       this.moveFocusPointByArrowKey("ArrowDown", true);
+      if (this.focusedRowIndex === this.getRowsLastIndex() && this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        break;
+      }
     }
     while (targetColumnIndex < this.focusedColumnIndex) {
       this.moveFocusPointByArrowKey("ArrowLeft", true);
+      if (this.focusedColumnIndex === 0) {
+        break;
+      }
     }
     while (targetColumnIndex > this.focusedColumnIndex) {
       this.moveFocusPointByArrowKey("ArrowRight", true);
+      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        break;
+      }
     }
 
     return true;
@@ -613,8 +643,18 @@ const TextArea = class {
 
     // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
     if (event.target.classList.contains("tom-editor__text-area__character")) {
+
+      // MousedonwEvent.pathプロパティが非標準につき一部のブラウザで実装されていないので、
+      // 当該プロパティと同等の結果を内包する配列を用意して、それを利用することにします。
+      const path = [];
+      let checkingTarget = event.target;
+      while (checkingTarget !== null) {
+        path.push(checkingTarget);
+        checkingTarget = checkingTarget.parentElement;
+      }
+
       this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.path[1];
+        return textLine === path[1];
       });
       this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
         return character === event.target;
@@ -682,14 +722,7 @@ const TextArea = class {
             if (this.selectionRange.length) {
               this.removeCharactersInSelectionRange();
             }
-            for (const character of textInClipboard) {
-
-              // Async Clipboard APIで改行を取得すると「\n」ではなく「\r」「\n」の2文字で表現されます。
-              // そのままDOMに突っ込むと2回改行されてしまうため「\r」は無視するようにします。
-              if (character === "\r") {
-                continue;
-              }
-
+            for (const character of textInClipboard.replaceAll("\r\n", "\n")) {
               if (character === "\n") {
                 const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
                 this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
@@ -946,7 +979,6 @@ const TextArea = class {
 
     // エディターの横幅が変化したので、文字領域の横幅を調整します。
     this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
-      this.textArea.style.maxWidth = `${event.detail.width}px`;
       this.dispatchEvents();
     });
 
