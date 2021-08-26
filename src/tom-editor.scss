@@ -7,6 +7,9 @@ $character-height: 1.25rem;
 // エディターの標準背景色です。
 $default-background-color: rgb(255, 255, 255);
 
+// borderプロパティの標準設定です。
+$default-border: .1rem solid rgb(238, 238, 238);
+
 // 行番号のpadding-rightプロパティ値です。
 $line-number-padding-right: 2rem;
 
@@ -34,7 +37,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
   &__caret {
     background: transparent;
     border: none;
-    border-left: solid 0.15rem;
+    border-left: solid .15rem;
     display: none;
     height: $character-height;
     outline: none;
@@ -56,7 +59,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
 
   // 装飾下線です。
   &__decoration-underline {
-    border-bottom: solid 0.1rem rgb(238, 238, 238);
+    border-bottom: $default-border;
     height: $character-height;
     pointer-events: none;
     position: absolute;
@@ -197,7 +200,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
   // 垂直スクロールバー領域です。
   &__virtical-scrollbar-area {
     background: $default-background-color;
-    border-left: 0.1rem solid rgb(238, 238, 238);
+    border-left: $default-border;
     flex: 0 0 1rem;
     position: relative;
     width: 1rem;
