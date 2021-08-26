@@ -165,7 +165,6 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     // 文字です。
     &__character {
       display: inline-block;
-      vertical-align: top;
 
       &::selection {
         background: transparent;
@@ -182,7 +181,6 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
 
     // 行です。
     &__text-line {
-      height: $character-height;
 
       &:last-of-type {
         height: 100%;
