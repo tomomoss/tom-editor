@@ -972,7 +972,7 @@ const TextArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
-    // エディターの横幅が変化したので、変更後の状態を通知します。
+    // エディターの縦幅が変化したので、変更後の状態を通知します。
     this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
       this.dispatchEvents();
     });
