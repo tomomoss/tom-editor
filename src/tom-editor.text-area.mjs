@@ -643,8 +643,18 @@ const TextArea = class {
 
     // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
     if (event.target.classList.contains("tom-editor__text-area__character")) {
+
+      // MousedonwEvent.pathプロパティが非標準につき一部のブラウザで実装されていないので、
+      // 当該プロパティと同等の結果を内包する配列を用意して、それを利用することにします。
+      const path = [];
+      let checkingTarget = event.target;
+      while (checkingTarget !== null) {
+        path.push(checkingTarget);
+        checkingTarget = checkingTarget.parentElement;
+      }
+
       this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.path[1];
+        return textLine === path[1];
       });
       this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
         return character === event.target;
