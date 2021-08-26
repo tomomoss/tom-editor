@@ -66,7 +66,7 @@ const VirticalScrollbarArea = class {
 
     // マウスホイール操作、および垂直スクロールバー領域の余白をクリックしたときに実行する、
     // 垂直スクロール処理で用いるスクロール量です。
-    const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
+    const absoluteScrollSize = parseFloat(getComputedStyle(this.virticalScrollbarArea).lineHeight) * 3.5;
 
     // 最後に検知した、文字領域の垂直方向のスクロール量です。
     let lastScrollTop;

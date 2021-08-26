@@ -68,7 +68,7 @@ const HorizontalScrollbarArea = class {
   setEventListeners = (readonlyFlag) => {
 
     // スクロール量です。
-    const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
+    const absoluteScrollSize = parseFloat(getComputedStyle(this.horizontalScrollbarArea).lineHeight) * 3.5;
 
     // 最後に検知した、文字領域の水平方向のスクロール量です。
     let lastScrollLeft;

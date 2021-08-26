@@ -251,10 +251,9 @@ const TextArea = class {
       focusedCharacterPoint.left = null;
       focusedCharacterPoint.top = null;
     } else {
-      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-      const editor = this.editor.getBoundingClientRect();
-      focusedCharacterPoint.left = focusedCharacter.left - editor.left;
-      focusedCharacterPoint.top = focusedCharacter.top - editor.top;
+      const focusedCharacter = this.getFocusedCharacter();
+      focusedCharacterPoint.left = focusedCharacter.offsetLeft - this.textArea.scrollLeft;
+      focusedCharacterPoint.top = focusedCharacter.offsetTop - this.textArea.scrollTop;
     }
     this.editor.dispatchEvent(new CustomEvent("custom-moveFocusPoint", {
       detail: {
