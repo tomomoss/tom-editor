@@ -155,6 +155,8 @@ const HorizontalScrollbarArea = class {
     // エディターの横幅が変更されたことで文字領域の横幅が変更されたので、当領域の横幅を合わせます。
     this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
       this.horizontalScrollbarArea.style.width = `${event.detail.width}px`;
+      this.horizontalScrollbar.style.left = `${lastViewportWidthRatio * lastScrollLeft}px`;
+      this.horizontalScrollbar.style.width = `${lastViewportWidthRatio * 100}%`;
     });
 
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。

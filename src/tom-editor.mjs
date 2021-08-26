@@ -230,35 +230,11 @@ const TOMEditor = class {
     // マウスホイールの操作によるスクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
 
-    // ResizeObserverオブジェクトによって最後に検知されたエディターの縦幅です。
-    let lastEditorHeight;
-
-    // ResizeObserverオブジェクトによって最後に検知されたエディターの縦幅です。
-    let lastEditorWidth;
-
     // タッチ操作で最後に検知された水平座標です。
     let lastTouchX = null;
 
     // タッチ操作で最後に検知された垂直座標です。
     let lastTouchY = null;
-
-    // ResizeObserverオブジェクトを利用してエディターの寸法の変化、ひいては文字領域の寸法の変化を監視しています。
-    // なぜ監視対象を文字領域にしていないのかというと、同領域にはFlexboxを適用しているために横幅の変化が思ったとおりに検知できないためです。
-    // なお、縦幅の監視は文字領域に適用しても問題ないのですが、横幅を監視しているついでに監視することにしました。    
-    new ResizeObserver((entries) => {
-      if (entries[0].contentRect.height !== lastEditorHeight) {
-        lastEditorHeight = entries[0].contentRect.height;
-        this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaHeight"));
-      }
-      if (entries[0].contentRect.width !== lastEditorWidth) {
-        lastEditorWidth = entries[0].contentRect.width;
-        this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaWidth", {
-          detail: {
-            width: lastEditorWidth - lineNumberArea.offsetWidth - virticalScrollbarArea.offsetWidth
-          }
-        }));
-      }
-    }).observe(this.editor);
 
     // mousedownイベントによってキャレットを配置しようとするとき、
     // どういうわけかmousedownした瞬間にblurしてしまうためmousedownイベントの既定の動作を実行しないようにしています。
