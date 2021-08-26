@@ -712,14 +712,7 @@ const TextArea = class {
             if (this.selectionRange.length) {
               this.removeCharactersInSelectionRange();
             }
-            for (const character of textInClipboard) {
-
-              // Async Clipboard APIで改行を取得すると「\n」ではなく「\r」「\n」の2文字で表現されます。
-              // そのままDOMに突っ込むと2回改行されてしまうため「\r」は無視するようにします。
-              if (character === "\r") {
-                continue;
-              }
-
+            for (const character of textInClipboard.replaceAll("\r\n", "\n")) {
               if (character === "\n") {
                 const deleteCount = this.getColumnsLastIndex() - this.focusedColumnIndex;
                 this.appendTextLine(this.characters[this.focusedRowIndex].splice(this.focusedColumnIndex, deleteCount));
