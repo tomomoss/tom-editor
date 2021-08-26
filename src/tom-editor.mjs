@@ -58,7 +58,7 @@ const TOMEditor = class {
     Object.seal(this);
 
     // 1つのHTML要素の直下にTOM Editorが複数実装されないように、実装前に当該HTML要素の内容を消去します。
-    editorContainer.textContent = "";
+    editorContainer.innerHTML = "";
 
     // エディターの挙動を制御するオプションの値を利用できる状態に加工します。
     let readonlyFlag;
