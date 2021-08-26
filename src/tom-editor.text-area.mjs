@@ -24,13 +24,15 @@ const TextArea = class {
     textLine.appendChild(EOL);
 
     this.lastDispatchedEventValue = {
+      height: this.textArea.clientHeight,
       index: this.focusedRowIndex,
       length: this.textLines.length,
       scrollLeft: this.textArea.scrollLeft,
       scrollTop: this.textArea.scrollTop,
       selecingRange: Boolean(this.selectionRange.length),
       viewportHeightRatio: this.textArea.clientHeight / this.textArea.scrollHeight,
-      viewportWidthRatio: this.textArea.clientWidth / this.textArea.scrollWidth
+      viewportWidthRatio: this.textArea.clientWidth / this.textArea.scrollWidth,
+      width: this.textArea.clientWidth
     };
     this.saveHistory();
     this.setEventListeners(readonlyFlag);
@@ -251,10 +253,9 @@ const TextArea = class {
       focusedCharacterPoint.left = null;
       focusedCharacterPoint.top = null;
     } else {
-      const focusedCharacter = this.getFocusedCharacter().getBoundingClientRect();
-      const editor = this.editor.getBoundingClientRect();
-      focusedCharacterPoint.left = focusedCharacter.left - editor.left;
-      focusedCharacterPoint.top = focusedCharacter.top - editor.top;
+      const focusedCharacter = this.getFocusedCharacter();
+      focusedCharacterPoint.left = focusedCharacter.offsetLeft - this.textArea.scrollLeft;
+      focusedCharacterPoint.top = focusedCharacter.offsetTop - this.textArea.scrollTop;
     }
     this.editor.dispatchEvent(new CustomEvent("custom-moveFocusPoint", {
       detail: {
@@ -326,12 +327,26 @@ const TextArea = class {
     }
 
     // その他の値は順番を気にせず呼びだします。
+    const currentHeight = this.textArea.clientHeight;
+    if (currentHeight !== this.lastDispatchedEventValue.height) {
+      this.lastDispatchedEventValue.height = currentHeight;
+      this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaHeight"));
+    }
     const currentSelectingRange = Boolean(this.selectionRange.length);
     if (currentSelectingRange !== this.lastDispatchedEventValue.selecingRange) {
       this.lastDispatchedEventValue.selecingRange = currentSelectingRange;
       this.editor.dispatchEvent(new CustomEvent("custom-changeSelectingRange", {
         detail: {
           selectingRange: this.lastDispatchedEventValue.selecingRange
+        }
+      }));
+    }
+    const currentWidth = this.textArea.clientWidth;
+    if (currentWidth !== this.lastDispatchedEventValue.width) {
+      this.lastDispatchedEventValue.width = currentWidth;
+      this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaWidth", {
+        detail: {
+          width: this.lastDispatchedEventValue.width
         }
       }));
     }
@@ -972,15 +987,8 @@ const TextArea = class {
    */
   setEventListeners = (readonlyFlag) => {
 
-    // エディターの縦幅が変化したので、変更後の状態を通知します。
-    this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
-      this.dispatchEvents();
-    });
-
-    // エディターの横幅が変化したので、文字領域の横幅を調整します。
-    this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
-      this.dispatchEvents();
-    });
+    // エディターの寸法が変化したのを通知します。
+    new ResizeObserver(this.dispatchEvents).observe(this.textArea);
 
     // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
     // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
