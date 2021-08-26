@@ -80,12 +80,7 @@ const TOMEditor = class {
     this.horizontalScrollbarArea = new HorizontalScrollbarArea(this.editor, textAreaLeft, readonlyFlag);
     this.caret = new Caret(this.editor, readonlyFlag);
     this.decorationUnderline = new DecorationUnderline(this.editor, textAreaLeft, readonlyFlag);
-    this.setEventListeners(
-      this.lineNumberArea.lineNumberArea,
-      this.virticalScrollbarArea.virticalScrollbarArea,
-      this.horizontalScrollbarArea.horizontalScrollbarArea,
-      readonlyFlag
-    );
+    this.setEventListeners(this.horizontalScrollbarArea.horizontalScrollbarArea, readonlyFlag);
   };
 
   /**
@@ -220,12 +215,10 @@ const TOMEditor = class {
 
   /**
    * イベントリスナーを実装します。
-   * @param {HTMLDivElement} lineNumberArea 行番号領域です。
-   * @param {HTMLDivElement} virticalScrollbarArea 垂直スクロールバー領域です。
    * @param {HTMLDivElement} horizontalScrollbarArea 水平スクロールバー領域です。
    * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
-  setEventListeners = (lineNumberArea, virticalScrollbarArea, horizontalScrollbarArea, readonlyFlag) => {
+  setEventListeners = (horizontalScrollbarArea, readonlyFlag) => {
 
     // マウスホイールの操作によるスクロール量です。
     const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
