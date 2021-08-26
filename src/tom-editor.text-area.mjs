@@ -11,11 +11,13 @@ const TextArea = class {
     this.editor = editor;
     this.textArea = this.createTextArea(readonlyFlag);
     this.editor.appendChild(this.textArea);
+    this.textLinesWrapper = this.createTextLinesWrapper();
+    this.textArea.appendChild(this.textLinesWrapper);
 
     // 1行目の挿入処理はちょっと特殊なのでここにべた書きします。
     const textLine = this.createTextLine();
     this.textLines.push(textLine);
-    this.textArea.appendChild(textLine);
+    this.textLinesWrapper.appendChild(textLine);
     this.characters.push([]);
     const EOL = this.createEOL();
     this.characters[0].push(EOL);
@@ -47,6 +49,9 @@ const TextArea = class {
     },
     textLine: {
       element: "tom-editor__text-area__text-line"
+    },
+    textLinesWrapper: {
+      element: "tom-editor__text-area__text-lines-wrapper"
     }
   };
 
@@ -76,6 +81,9 @@ const TextArea = class {
 
   /** @type {Array<HTMLDivElement>} Webページに挿入されている行です。 */
   textLines = [];
+
+  /** @type {HTMLDivElement} 行のラッパー要素です。 */
+  textLinesWrapper;
 
   /**
    * 引数に指定された文字を文章に挿入します。
@@ -188,6 +196,16 @@ const TextArea = class {
     const textLine = document.createElement("div");
     textLine.classList.add(this.CSSClass.textLine.element);
     return textLine;
+  };
+
+  /**
+   * 行のラッパー要素を生成します。
+   * @returns {HTMLDivElement} 行のラッパー要素です。
+   */
+  createTextLinesWrapper = () => {
+    const textLinesWrapper = document.createElement("div");
+    textLinesWrapper.classList.add(this.CSSClass.textLinesWrapper.element);
+    return textLinesWrapper;
   };
 
   /**
@@ -362,7 +380,7 @@ const TextArea = class {
       for (const character of this.history.data[index].characters[i]) {
         textLine.appendChild(character);
       }
-      this.textArea.appendChild(textLine);
+      this.textLinesWrapper.appendChild(textLine);
     }
 
     this.characters = this.history.data[index].characters.map((characters) => {
@@ -946,7 +964,6 @@ const TextArea = class {
 
     // エディターの横幅が変化したので、文字領域の横幅を調整します。
     this.editor.addEventListener("custom-resizeTextAreaWidth", (event) => {
-      this.textArea.style.maxWidth = `${event.detail.width}px`;
       this.dispatchEvents();
     });
 

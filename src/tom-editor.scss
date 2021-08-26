@@ -185,6 +185,13 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
         height: 100%;
       }
     }
+
+    // 行のラッパー要素です。
+    &__text-lines-wrapper {
+      display: inline-block;
+      height: 100%;
+      min-width: 100%;
+    }
   }
 
   // 垂直スクロールバー領域です。
