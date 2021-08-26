@@ -609,15 +609,27 @@ const TextArea = class {
     // 対象が行か文字だったということでフォーカス位置と選択範囲の更新処理を行います。
     while (targetRowIndex < this.focusedRowIndex) {
       this.moveFocusPointByArrowKey("ArrowUp", true);
+      if (this.focusedRowIndex === 0 && this.focusedColumnIndex === 0) {
+        break;
+      }
     }
     while (targetRowIndex > this.focusedRowIndex) {
       this.moveFocusPointByArrowKey("ArrowDown", true);
+      if (this.focusedRowIndex === this.getRowsLastIndex() && this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        break;
+      }
     }
     while (targetColumnIndex < this.focusedColumnIndex) {
       this.moveFocusPointByArrowKey("ArrowLeft", true);
+      if (this.focusedColumnIndex === 0) {
+        break;
+      }
     }
     while (targetColumnIndex > this.focusedColumnIndex) {
       this.moveFocusPointByArrowKey("ArrowRight", true);
+      if (this.focusedColumnIndex === this.getColumnsLastIndex()) {
+        break;
+      }
     }
 
     return true;
