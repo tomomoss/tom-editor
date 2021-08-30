@@ -75,7 +75,7 @@ const DecorationUnderline = class {
 
       // 装飾下線と垂直スクロールバー領域との間にもうける隙間の大きさです。
       // これがないとピッタリくっついてしまい、なんだか窮屈な感じになってしまいます。
-      const decorationUnderlineGapSize = parseFloat(getComputedStyle(this.editor).fontSize) * 0.5;
+      const decorationUnderlineGapSize = parseFloat(getComputedStyle(this.decorationUnderline).fontSize) * 0.5;
 
       // 範囲選択中は装飾下線を表示しません。
       this.editor.addEventListener("custom-changeSelectingRange", (event) => {

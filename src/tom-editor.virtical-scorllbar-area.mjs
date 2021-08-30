@@ -66,7 +66,7 @@ const VirticalScrollbarArea = class {
 
     // マウスホイール操作、および垂直スクロールバー領域の余白をクリックしたときに実行する、
     // 垂直スクロール処理で用いるスクロール量です。
-    const absoluteScrollSize = parseFloat(getComputedStyle(this.editor).lineHeight) * 3.5;
+    const absoluteScrollSize = parseFloat(getComputedStyle(this.virticalScrollbarArea).lineHeight) * 3.5;
 
     // 最後に検知した、文字領域の垂直方向のスクロール量です。
     let lastScrollTop;
@@ -104,9 +104,6 @@ const VirticalScrollbarArea = class {
     // 文字領域の垂直方向のスクロール量が変化したので、垂直スクロールバーの座標に反映します。
     this.editor.addEventListener("custom-changeTextAreaScrollTop", (event) => {
       lastScrollTop = event.detail.scrollTop;
-      if (!this.virticalScrollbar.classList.contains("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active")) {
-        return;
-      }
       this.virticalScrollbar.style.top = `${lastViewportHeightRatio * lastScrollTop}px`;
     });
 
@@ -145,6 +142,18 @@ const VirticalScrollbarArea = class {
     // 垂直スクロールバーのドラッグ操作処理を終了します。
     this.editor.addEventListener("custom-mouseup", () => {
       lastY = null;
+    });
+
+    this.editor.addEventListener("custom-resizeTextAreaHeight", () => {
+      this.virticalScrollbar.style.top = `${lastViewportHeightRatio * lastScrollTop}px`;
+      if (lastViewportHeightRatio === 1) {
+        if (this.virticalScrollbar.classList.contains("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active")) {
+          this.virticalScrollbar.classList.remove("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active");
+        }
+        return;
+      }
+      this.virticalScrollbar.classList.add("tom-editor__virtical-scrollbar-area__virtical-scrollbar--active");
+      this.virticalScrollbar.style.height = `${lastViewportHeightRatio * 100}%`;
     });
 
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
