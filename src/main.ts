@@ -191,9 +191,7 @@ const Main = class extends EventTarget implements Main {
       subtree: true
     });
     this.addEventListener("TOMEditor-compositionend", () => {
-      if (this.textArea.differenceBetweenCurrentAndHistory()) {
-        handler(this.value);
-      }
+      handler(this.value);
     });
   }
 
