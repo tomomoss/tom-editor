@@ -96,8 +96,24 @@ const Main = class extends EventTarget implements Main {
    * @returns {string} 入力されている文章です。
    */
   get value(): string {
-    console.log("Main.prototype.value(get)");
-    return "";
+    let convertedText = "";
+    for (let i = 0; i < this.textArea.textAreaContentList.length; i += 1) {
+      for (let j = 0; j < this.textArea.textAreaContentList[i].characterList.length; j += 1) {
+        
+        // 行末文字は改行文字（\n）に置き換えます。
+        // ただし、最後の行の行末文字は無視します。
+        if (j === this.textArea.textAreaContentList[i].characterList.length - 1) {
+          if (i === this.textArea.textAreaContentList.length - 1) {
+            break;
+          }
+          convertedText += "\n";
+          break;
+        }
+
+        convertedText += this.textArea.textAreaContentList[i].characterList[j].textContent;
+      }
+    }
+    return convertedText;
   }
 
   /**
@@ -109,19 +125,76 @@ const Main = class extends EventTarget implements Main {
     if (typeof text !== "string") {
       throw new Error(`引数に${typeof text}型の値が指定されています。引数にはエディターに入力したい文章をstring型で指定してください。`);
     }
-    console.log("Main.prototype.value(set)");
+    
+    // まずは文字領域のプロパティを初期化します。
+    this.textArea.focusPointIndex = {
+      column: null,
+      row: null
+    };
+    this.textArea.selectionRange = [];
+    this.textArea.textAreaContentList = [];
+
+    // Webページに挿入されている行・文字を全て削除します。
+    this.textArea.textLinesWrapper.innerHTML = "";
+
+    // 引数で受けとった文字列をHTML要素に置きかえてWebページに挿入していきます。
+    for (const textLine of text.replace(/\r\n/, "\n").split("\n")) {
+
+      // 行となるHTML要素を生成します。
+      const newTextLine = this.textArea.createTextLine();
+
+      // 文字となるHTML要素を生成します。
+      const newCharacterList = [];
+      for (const character of textLine) {
+        newCharacterList.push(this.textArea.createCharacter(character));
+      }
+      newCharacterList.push(this.textArea.createCharacter("eol"));
+
+      // 行のなかに文字を挿入します。
+      for (const newCharacter of newCharacterList) {
+        newTextLine.appendChild(newCharacter);
+      }
+
+      // 文字領域に行を挿入します。
+      this.textArea.textLinesWrapper.appendChild(newTextLine);
+
+      // TextAreaContentオブジェクトをプロパティに追加保存します。
+      this.textArea.textAreaContentList.push({
+        characterList: newCharacterList,
+        textLine: newTextLine
+      });
+    }
+
+    this.textArea.dispatchEvents();
   }
 
   /**
-   * エディターの入力内容が変更されたときに実行する関数を指定するAPIです。
+   * エディターの入力内容が変更されたときに実行するコールバック関数を指定するAPIです。
+   * 当該関数の第1引数には当クラスのvalueゲッターで取得した値を渡します。
    * 当セッターは外部に露出するため厳格な引数検査を実施します。
    * @param {Function} handler 入力内容変更時に呼び出す関数です。
    */
-  set valueObserver(handler: Function) {
+  set valueObserver(handler: ValueObserver) {
     if (typeof handler !== "function") {
       throw new Error(`引数に${typeof handler}型の値が指定されています。引数にはエディターの入力内容が変更されたときに実行させたい関数を指定してください。`);
     }
-    console.log("Main.prototype.valueObserver(set)");
+
+    // 当セッターが検知する「エディターの入力内容が変更されたとき」とは半角英数字の入力時と、
+    // IMEによる変換処理が終了したときのことを指します。
+    new MutationObserver((): void => {
+      if (this.textArea.compositionState.isComposing) {
+        return;
+      }
+      handler(this.value);
+    }).observe(this.textArea.textLinesWrapper, {
+      childList: true,
+      subtree: true
+    });
+    this.addEventListener("TOMEditor-compositionend", () => {
+      if (this.textArea.differenceBetweenCurrentAndHistory()) {
+        handler(this.value);
+      }
+    });
   }
 
   /** @type {Caret} キャレットを制御するオブジェクトです。 */
