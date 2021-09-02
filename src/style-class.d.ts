@@ -1,4 +1,5 @@
-interface CaretStyleClass extends StyleClass {
+// 以下、エディターを構成する主要な要素で用いられるCSSクラスをまとめたオブジェクトの構造を表す型エイリアスです。
+type CaretStyleClass = StyleClass & {
   caret: {
     element: string,
     modifier: {
@@ -6,27 +7,27 @@ interface CaretStyleClass extends StyleClass {
       focus: string
     }
   }
-}
-interface EditorStyleClass extends StyleClass {
+};
+type EditorStyleClass = StyleClass & {
   editor: {
     element: string
   },
   editorWrapper: {
     element: string
   }
-}
-interface HorizontalScrollbarAreaStyleClass extends StyleClass {
+};
+type HorizontalScrollbarAreaStyleClass = StyleClass & {
   horizontalScrollbar: {
     element: string,
     modifier: {
       valid: string
     }
-  }, 
+  },
   horizontalScrollbarArea: {
     element: string
   }
-}
-interface LineNumberAreaStyleClass extends StyleClass {
+};
+type LineNumberAreaStyleClass = StyleClass & {
   lineNumber: {
     element: string,
     modifier: {
@@ -40,28 +41,21 @@ interface LineNumberAreaStyleClass extends StyleClass {
       readOnly: string
     }
   }
-}
-interface Main extends EventTarget { }
-interface MainInitializeEvent {
-  editor: HTMLDivElement
-}
-interface StyleClass {
+};
+type StyleClass = {
   [key: string]: {
     element: string,
     modifier?: {
       [key: string]: string
     }
   }
-}
-interface TextAreaContents {
-  characterList: HTMLSpanElement[],
-  textLine: HTMLDivElement
-}
-interface TextAreaStyleClass extends StyleClass {
+};
+type TextAreaStyleClass = StyleClass & {
   character: {
     element: string,
     modifier: {
-      eol: string
+      eol: string,
+      select: string
     }
   },
   textArea: {
@@ -73,26 +67,23 @@ interface TextAreaStyleClass extends StyleClass {
   textLinesWrapper: {
     element: string
   }
-}
-interface TOMEditorOption {
-  readonly: boolean
-}
-interface UnderlineStyleClass extends StyleClass {
+};
+type UnderlineStyleClass = StyleClass & {
   underline: {
     element: string,
     modifier: {
       valid: string
     }
   }
-}
-interface VerticalScrollbarAreaStyleClass extends StyleClass {
+};
+type VerticalScrollbarAreaStyleClass = StyleClass & {
   verticalScrollbar: {
     element: string,
     modifier: {
       valid: string
     }
-  }, 
+  },
   verticalScrollbarArea: {
     element: string
   }
-}
+};

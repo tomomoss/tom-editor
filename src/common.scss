@@ -57,19 +57,6 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     }
   }
 
-  // 装飾下線です。
-  &__decoration-underline {
-    border-bottom: $default-border;
-    height: $character-height;
-    pointer-events: none;
-    position: absolute;
-    display: none;
-
-    &--active {
-      display: block;
-    }
-  }
-
   // エディター本体です。
   &__editor {
     background: $default-background-color;
@@ -96,17 +83,13 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
   // 水平スクロールバー領域です。
   &__horizontal-scrollbar-area {
     bottom: 0;
-    display: none;
     height: 1rem;
     position: absolute;
-
-    &--active {
-      display: block;
-    }
 
     // 水平スクロールバーです。
     &__horizontal-scrollbar {
       background: $scrollbar-default-color;
+      display: none;
       height: 100%;
       position: absolute;
 
@@ -116,6 +99,10 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
       
       &:active {
         background: $scrollbar-dragging-color;
+      }
+
+      &--valid {
+        display: block;
       }
     }
   }
@@ -192,6 +179,19 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
       display: inline-block;
       height: 100%;
       min-width: 100%;
+    }
+  }
+
+  // 装飾下線です。
+  &__underline {
+    border-bottom: $default-border;
+    height: $character-height;
+    pointer-events: none;
+    position: absolute;
+    display: none;
+
+    &--valid {
+      display: block;
     }
   }
 
