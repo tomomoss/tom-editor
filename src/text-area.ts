@@ -445,6 +445,7 @@ const TextArea = class {
         return;
       }
       this.moveFocusPointByDragTarget(event.detail.target);
+      this.scrollAutomatically();
       this.dispatchEvents();
     });
 

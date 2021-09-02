@@ -92,6 +92,14 @@ const Main = class extends EventTarget implements Main {
   }
 
   /**
+   * ライブラリのバージョンを返すAPIです。
+   * @returns {string} ライブラリのバージョンです。
+   */
+  static get version(): string {
+    return "4.4.0";
+  }
+
+  /**
    * エディターに入力されている文章をstring型に変換して返すAPIです。
    * @returns {string} 入力されている文章です。
    */

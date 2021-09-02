@@ -7,6 +7,7 @@ const Underline = class {
   constructor(root: Main, readonlyFlag: boolean) {
     this.root = root;
     this.readonlyFlag = readonlyFlag;
+    this.lastSelectingRange = false;
     this.styleClass = {
       underline: {
         element: "tom-editor__underline",
@@ -19,6 +20,9 @@ const Underline = class {
     this.definePublishingEventListeners();
     this.defineSubscribingEventListeners();
   }
+
+  /** @type {boolean} 最後に検知した、範囲選択をしているかどうかのフラグです。 */
+  lastSelectingRange: boolean;
 
   /** @type {boolean} 読みとり専用状態ならばtrueが入ります。 */
   readonlyFlag: boolean;
@@ -84,7 +88,8 @@ const Underline = class {
       if (typeof event.detail === "undefined") {
         throw new Error("Underline.prototype.defineSubscribingEventListeners: TOMEditor-changeselectingrangeイベントのdetailプロパティが空です。");
       }
-      if (event.detail.selectingRange) {
+      this.lastSelectingRange = event.detail.selectingRange;
+      if (this.lastSelectingRange) {
         if (this.underline.classList.contains(this.styleClass.underline.modifier.valid)) {
           this.underline.classList.remove(this.styleClass.underline.modifier.valid);
         }
@@ -98,7 +103,7 @@ const Underline = class {
       if (typeof event.detail === "undefined") {
         throw new Error("Underline.prototype.defineSubscribingEventListeners: TOMEditor-movefocuspointpositionイベントのdetailプロパティが空です。");
       }
-      if (event.detail.top === null) {
+      if (event.detail.top === null || this.lastSelectingRange) {
         if (this.underline.classList.contains(this.styleClass.underline.modifier.valid)) {
           this.underline.classList.remove(this.styleClass.underline.modifier.valid);
         }

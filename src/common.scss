@@ -85,6 +85,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     bottom: 0;
     height: 1rem;
     position: absolute;
+    z-index: 1;
 
     // 水平スクロールバーです。
     &__horizontal-scrollbar {
