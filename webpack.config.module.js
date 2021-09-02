@@ -1,7 +1,7 @@
 const path = require("path");
 
 module.exports = {
-  entry: "./src/tom-editor.mjs",
+  entry: "./src/main.ts",
   experiments: {
     outputModule: true
   },
@@ -10,6 +10,9 @@ module.exports = {
     rules: [{
       test: /\.scss$/,
       use: ["style-loader", "css-loader", "sass-loader"]
+    }, {
+      test: /\.ts$/,
+      use: ["ts-loader"]
     }]
   },
   output: {
@@ -18,5 +21,8 @@ module.exports = {
       type: "module"
     },
     path: path.resolve(__dirname, "dist"),
+  },
+  resolve: {
+    extensions: [".ts"]
   }
 };

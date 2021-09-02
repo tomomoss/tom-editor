@@ -1,31 +1,36 @@
 # TOM Editor
 
-TOM Editorは簡素なエディターライブラリです。
+TOM Editorはブラウザ環境に簡素なエディターを実装するライブラリです。
 
-現在、バージョン4.3.1です。以下より動作確認ができます。
+現在のバージョンは4.4.0です。以下より動作確認ができます。
 
-[TOM Editor 4.3.1 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 4.4.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
 
 ## 導入手順
 
-当ライブラリでは `<script>` タグで読みこむ方法と、 `import` 文で読みこむ方法の2種類を用意しています。
+当ライブラリは `<script>` タグで読みこむ方法と、 `import` 文で読みこむ方法の2種類を用意しています。
 
-`<script>` タグで読みこむ場合は `dist` ディレクトリにある `tom-editor.js` を適当な階層に配置し、当該ファイルを参照するスクリプトファイルをよりも先に読みこんでください。
+`<script>` タグで読みこむ場合は `dist` ディレクトリにある `tom-editor.js` を適当な階層に配置し、当該ファイルを参照するスクリプトファイルをよりも先に読みこむようにしてください。
 
 ```html
 <!DOCTYPE html>
 <html>
   <head>
+
+    <!-- 当ライブラリ -->
     <script src="./tom-editor.js"></script>
+
+    <!-- 当ライブラリを読みこむスクリプトファイル -->
     <script src="./main.js"></script>
   </head>
 </html>
 <body> ... </body>
 ```
 
-`import` 文でエディターオブジェクトをES Modulesとして読みこむ場合は `dist` ディレクトリにある `tom-editor.mjs` を適当な階層に配置し、適当なスクリプトファイル内から読みこんでください。
+`import` 文で読みこむ場合は `dist` ディレクトリにある `tom-editor.mjs` を適当な階層に配置し、適当なスクリプトファイル内から読みこんでください。
 
 ```javascript
+// 当ライブラリを読みこむ適当なスクリプトファイル
 import {
   TOMEditor
 } from "./tom-editor.mjs";
@@ -33,7 +38,11 @@ import {
 
 それぞれの方法で読みこんだ後はライブラリから公開されている `TOMEditor` クラスをインスタンス化してください。
 
-第1引数にはエディターを実装する対象となるHTML要素を指定してください。第1引数を省略することはできません。エディターの寸法は第1引数に指定されたHTML要素の寸法に依存します。
+```javascript
+const tomEditor = new TOMEditor(editorContainer [, editorOption]);
+```
+
+第1引数にはエディターを実装する対象となるHTML要素を指定してください。第1引数を省略することはできません。なお、 **エディターの寸法は第1引数に指定されたHTML要素の寸法に依存する** ため寸法の制御は呼びだし側で行ってください。
 
 第2引数にはエディターの挙動を制御するオブジェクトを渡すことができます。第2引数は省略することができます。省略した場合は初期設定が適用されます。
 
@@ -55,7 +64,7 @@ const setting = { ... };
 const tomEditor = new TOMEditor(tomEditorContainer, setting);
 ```
 
-## 設定
+## エディターの設定
 
 `TOMEditor` クラスのコンストラクタの第2引数にはエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。
 
@@ -71,7 +80,7 @@ const setting = {
 const tomEditor = new TOMEditor(tomEditorContainer, setting);
 ```
 
-この設定を適用するとキーボードによる文字の入力を行うことができなくなります。 `value` プロパティを介してのみ入力内容を変更することができます。
+この設定を適用するとキーボードによる文字の入力を行うことができなくなります。入力内容の変更は後述する `TOMEditor.prototype.value` APIを介してのみ行うことができます。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
@@ -83,7 +92,7 @@ const tomEditor = new TOMEditor(tomEditorContainer, setting);
 tomEditor.value = "Hello world.";
 ```
 
-また、マウス操作も受け付けなくなりますので入力内容を取得する場合は `value` プロパティを参照してください。
+また、マウス操作も受け付けなくなりますので入力内容を取得する場合も `TOMEditor.prototype.value` APIを利用するようにしてください。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
@@ -98,38 +107,48 @@ console.log(tomEditor.value);
 
 ## API
 
-### getter: value
+### TOMEditor.version
 
-入力された内容を取得したい場合は `value` プロパティを参照してください。
+`TOMEditor.version` APIはライブラリのバージョン情報を `string` 型で返します。
+
+```javascript
+const version = TOMEditor.version;
+
+// 4.4.0
+console.log(version);
+```
+
+### TOMEditor.prototype.value
+
+`TOMEditor.prototype.value` APIはエディターに入力されている値を取得したり、任意の値に変更するのに使用します。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 
+// 入力されている内容を取得する場合
 const inputtedValue = tomEditor.value;
 ```
 
-### setter: value
-
-エディターの内容を更新したい場合は `value` プロパティに更新する値を代入してください。
-
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 
+// 任意の値に変更する場合
 tomEditor.value = "Hello world.";
 ```
 
-### setter: valueObserver
+### TOMEditor.prototype.valueObserver
 
-入力内容に変化があるたびに呼び出したい関数があるときは `valueObserver` プロパティに当該関数を代入してください。
+`TOMEditor.prototype.valueObserver` APIはエディターの入力内容が変化するたびに呼びだしたいコールバック関数を指定するためのAPIです。
 
-渡された関数の第1引数（以下例での `value` ）には変化後の入力内容が格納されています。
+コールバック関数の第1引数には変更後のエディター内容が渡されます。
 
 ```javascript
 const tomEditorContainer = document.querySelector(".tom-editor-container");
 const tomEditor = new TOMEditor(tomEditorContainer);
 
+// 以下「value」に変更後のエディターの入力内容が格納されています。
 tomEditor.valueObserver = (value) => {
   console.log(value);
 };

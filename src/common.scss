@@ -48,25 +48,12 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     resize: none;
     width: 0;
 
-    &--active {
+    &--animation {
       animation: tom-editor-caret-blinking 1.25s steps(1) infinite both;
     }
 
     &--focus {
       display: inline-block;
-    }
-  }
-
-  // 装飾下線です。
-  &__decoration-underline {
-    border-bottom: $default-border;
-    height: $character-height;
-    pointer-events: none;
-    position: absolute;
-    display: none;
-
-    &--active {
-      display: block;
     }
   }
 
@@ -96,17 +83,14 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
   // 水平スクロールバー領域です。
   &__horizontal-scrollbar-area {
     bottom: 0;
-    display: none;
     height: 1rem;
     position: absolute;
-
-    &--active {
-      display: block;
-    }
+    z-index: 1;
 
     // 水平スクロールバーです。
     &__horizontal-scrollbar {
       background: $scrollbar-default-color;
+      display: none;
       height: 100%;
       position: absolute;
 
@@ -116,6 +100,10 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
       
       &:active {
         background: $scrollbar-dragging-color;
+      }
+
+      &--valid {
+        display: block;
       }
     }
   }
@@ -195,8 +183,21 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     }
   }
 
+  // 装飾下線です。
+  &__underline {
+    border-bottom: $default-border;
+    height: $character-height;
+    pointer-events: none;
+    position: absolute;
+    display: none;
+
+    &--valid {
+      display: block;
+    }
+  }
+
   // 垂直スクロールバー領域です。
-  &__virtical-scrollbar-area {
+  &__vertical-scrollbar-area {
     background: $default-background-color;
     border-left: $default-border;
     flex: 0 0 1rem;
@@ -205,7 +206,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     z-index: 1;
 
     // 垂直スクロールバーです。
-    &__virtical-scrollbar {
+    &__vertical-scrollbar {
       background: $scrollbar-default-color;
       display: none;
       position: absolute;
@@ -219,7 +220,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
         background: $scrollbar-dragging-color;
       }
 
-      &--active {
+      &--valid {
         display: block;
       }
     }
