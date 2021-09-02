@@ -615,12 +615,12 @@ const TextArea = class {
    * @param {number} index 反映させたい編集履歴を指すインデックスです。
    */
   loadHistory = (index: number): void => {
-    if (!this.history.data[index]) {
+    if (typeof this.history.data[index] === "undefined") {
       return;
     }
 
     // 指定された編集履歴に保存された文字領域の状態をWebページに反映します。
-    this.textArea.textContent = "";
+    this.textLinesWrapper.innerHTML = "";
     for (let i = 0; i < this.history.data[index].textAreaContentList.length; i += 1) {
       const textLine = this.history.data[index].textAreaContentList[i].textLine;
       textLine.textContent = "";
@@ -1234,11 +1234,14 @@ const TextArea = class {
       return;
     }
 
-    // 現在の文字領域の状態・値が編集履歴の最新となるように保存します。
+    // 現在の文字領域の状態・値が編集履歴の最新となるように保存（参照渡しではなく値渡しになるように注意すること）します。
     // このときRedo中ならばRedoされている履歴は削除します。
     this.history.data.splice(this.history.index + 1);
     const currentHistory = {
-      focusPointIndex: this.focusPointIndex,
+      focusPointIndex: {
+        column: this.focusPointIndex.column,
+        row: this.focusPointIndex.row
+      },
       scrollLeft: this.textArea.scrollLeft,
       scrollTop: this.textArea.scrollTop,
       textAreaContentList: [] as TextAreaContent[]
