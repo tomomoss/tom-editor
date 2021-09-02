@@ -1,0 +1,228 @@
+@charset "UTF-8";
+
+// 文字領域の行の高さ、ひいては文字の高さです。
+// 多くのプロパティから参照される値のため変数で保持しています。
+$character-height: 1.25rem;
+
+// エディターの標準背景色です。
+$default-background-color: rgb(255, 255, 255);
+
+// borderプロパティの標準設定です。
+$default-border: .1rem solid rgb(238, 238, 238);
+
+// 行番号のpadding-rightプロパティ値です。
+$line-number-padding-right: 2rem;
+
+// スクロールバーの通常時の色です。
+$scrollbar-default-color: rgb(238, 238, 238);
+
+// スクロールバーが操作されているときの色です。
+$scrollbar-dragging-color: rgb(204, 204, 204);
+
+// スクロールバー上にマウスが乗っているときの色です。
+$scrollbar-hovering-color: rgb(221, 221, 221);
+
+@keyframes tom-editor-caret-blinking {
+  0% {
+    border-left-color: rgb(51, 51, 51);
+  }
+  50% {
+    border-left-color: transparent;
+  }
+}
+
+.tom-editor {
+
+  // キャレットです。
+  &__caret {
+    background: transparent;
+    border: none;
+    border-left: solid .15rem;
+    display: none;
+    height: $character-height;
+    outline: none;
+    overflow: hidden;
+    padding: 0;
+    pointer-events: none;
+    position: absolute;
+    resize: none;
+    width: 0;
+
+    &--animation {
+      animation: tom-editor-caret-blinking 1.25s steps(1) infinite both;
+    }
+
+    &--focus {
+      display: inline-block;
+    }
+  }
+
+  // エディター本体です。
+  &__editor {
+    background: $default-background-color;
+    bottom: 0;
+    display: flex;
+    font: normal 1rem/#{$character-height} Consolas, "Courier New", monospace;
+    justify-content: space-between;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
+    white-space: pre;
+    width: 100%;
+  }
+  
+  // エディターのラッパー要素です。
+  &__editor-wrapper {
+    height: 100%;
+    position: relative;
+    width: 100%;
+  }
+
+  // 水平スクロールバー領域です。
+  &__horizontal-scrollbar-area {
+    bottom: 0;
+    height: 1rem;
+    position: absolute;
+    z-index: 1;
+
+    // 水平スクロールバーです。
+    &__horizontal-scrollbar {
+      background: $scrollbar-default-color;
+      display: none;
+      height: 100%;
+      position: absolute;
+
+      &:hover {
+        background: $scrollbar-hovering-color;
+      }
+      
+      &:active {
+        background: $scrollbar-dragging-color;
+      }
+
+      &--valid {
+        display: block;
+      }
+    }
+  }
+
+  // 行番号領域です。
+  &__line-number-area {
+    background: $default-background-color;
+    cursor: default;
+    flex: 0 0 calc(5ch + #{$line-number-padding-right});
+    overflow: hidden;
+    text-align: right;
+    z-index: 1;
+
+    // 行番号です。
+    &__line-number {
+      color: rgb(204, 204, 204);
+      padding: 0 $line-number-padding-right 0 0;
+
+      &::selection {
+        background: transparent;
+      }
+
+      &:not(
+        .tom-editor__line-number-area__line-number--focus,
+        .tom-editor__line-number-area__line-number--read-only
+      ):hover {
+        color: rgb(153, 153, 153);
+      }
+
+      &:last-of-type {
+        height: 100%;
+      }
+
+      &--focus {
+        color: rgb(102, 102, 102);
+      }
+    }
+  }
+
+  // 文字領域です。
+  &__text-area {
+    background: $default-background-color;
+    cursor: text;
+    flex: 1 1 auto;
+    overflow: hidden;
+
+    // 文字です。
+    &__character {
+      display: inline-block;
+
+      &::selection {
+        background: transparent;
+      }
+
+      &--eol {
+        margin: 0 3rem 0 0;
+      }
+
+      &--select {
+        background: rgb(221, 238, 255);
+      }
+    }
+
+    // 行です。
+    &__text-line {
+
+      &:last-of-type {
+        height: 100%;
+      }
+    }
+
+    // 行のラッパー要素です。
+    &__text-lines-wrapper {
+      display: inline-block;
+      height: 100%;
+      min-width: 100%;
+    }
+  }
+
+  // 装飾下線です。
+  &__underline {
+    border-bottom: $default-border;
+    height: $character-height;
+    pointer-events: none;
+    position: absolute;
+    display: none;
+
+    &--valid {
+      display: block;
+    }
+  }
+
+  // 垂直スクロールバー領域です。
+  &__vertical-scrollbar-area {
+    background: $default-background-color;
+    border-left: $default-border;
+    flex: 0 0 1rem;
+    position: relative;
+    width: 1rem;
+    z-index: 1;
+
+    // 垂直スクロールバーです。
+    &__vertical-scrollbar {
+      background: $scrollbar-default-color;
+      display: none;
+      position: absolute;
+      width: 100%;
+
+      &:hover {
+        background: $scrollbar-hovering-color;
+      }
+
+      &:active {
+        background: $scrollbar-dragging-color;
+      }
+
+      &--valid {
+        display: block;
+      }
+    }
+  }
+}

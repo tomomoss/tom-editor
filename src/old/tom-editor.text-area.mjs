@@ -152,64 +152,7 @@ const TextArea = class {
     }
     return convertedText;
   };
-
-  /**
-   * 文字を生成します。
-   * @param {number|string} characterNode 文字となるHTML要素に入れる値です。
-   * @returns {HTMLSpanElement} 文字です。
-   */
-  createCharacter = (characterNode) => {
-    const character = document.createElement("span");
-    character.classList.add(this.CSSClass.character.element);
-    character.textContent = characterNode;
-    return character
-  };
-
-  /**
-   * 行末文字を生成します。
-   * @returns {HTMLSpanElement} 行末文字です。
-   */
-  createEOL = () => {
-    const EOL = document.createElement("span");
-    EOL.classList.add(this.CSSClass.character.element, this.CSSClass.character.modifier.EOL);
-    EOL.textContent = " ";
-    return EOL;
-  };
-
-  /**
-   * 文字領域を作成します。
-   * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
-   * @returns {HTMLDivElement} 文字領域です。
-   */
-  createTextArea = (readonlyFlag) => {
-    const textArea = document.createElement("div");
-    textArea.classList.add(this.CSSClass.textArea.element);
-    if (readonlyFlag) {
-      textArea.style.cursor = "default";
-    }
-    return textArea;
-  };
-
-  /**
-   * 行を生成します。
-   * @returns {HTMLDivElement} 行です。
-   */
-  createTextLine = () => {
-    const textLine = document.createElement("div");
-    textLine.classList.add(this.CSSClass.textLine.element);
-    return textLine;
-  };
-
-  /**
-   * 行のラッパー要素を生成します。
-   * @returns {HTMLDivElement} 行のラッパー要素です。
-   */
-  createTextLinesWrapper = () => {
-    const textLinesWrapper = document.createElement("div");
-    textLinesWrapper.classList.add(this.CSSClass.textLinesWrapper.element);
-    return textLinesWrapper;
-  };
-
+  
   /**
    * 現在の入力内容と現在表示中の編集履歴の入力内容の間に差異があるかを確認します。
    * MutationObserverオブジェクトが使えるかと思ったのですが当該オブジェクトは少しでも変更があるたびに走ってしまうので、
@@ -239,142 +182,6 @@ const TextArea = class {
     }
 
     return false;
-  };
-
-  /**
-   * カスタムイベントを発信します。
-   */
-  dispatchEvents = () => {
-
-    // フォーカス座標の通知処理は変更の有無を問わず通知します。
-    // そのため最後に送信されたときの値を保存する必要はありません。
-    const focusedCharacterPoint = {};
-    if (this.getFocusedCharacter() === null) {
-      focusedCharacterPoint.left = null;
-      focusedCharacterPoint.top = null;
-    } else {
-      const focusedCharacter = this.getFocusedCharacter();
-      focusedCharacterPoint.left = focusedCharacter.offsetLeft - this.textArea.scrollLeft;
-      focusedCharacterPoint.top = focusedCharacter.offsetTop - this.textArea.scrollTop;
-    }
-    this.editor.dispatchEvent(new CustomEvent("custom-moveFocusPoint", {
-      detail: {
-        left: focusedCharacterPoint.left,
-        top: focusedCharacterPoint.top
-      }
-    }));
-
-    // フォーカスしている行番号と行数の通知処理は値の性質上、後者のほうが先に呼び出される必要があります。
-    const currentLength = this.textLines.length;
-    if (currentLength !== this.lastDispatchedEventValue.length) {
-      this.lastDispatchedEventValue.length = currentLength;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeNumberOfTextLines", {
-        detail: {
-          length: this.lastDispatchedEventValue.length
-        }
-      }));
-    }
-    const currentIndex = this.focusedRowIndex;
-    if (currentIndex !== this.lastDispatchedEventValue.index) {
-      this.lastDispatchedEventValue.index = currentIndex;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeFocusedRowIndex", {
-        detail: {
-          index: this.lastDispatchedEventValue.index
-        }
-      }));
-    }
-
-    // 文字領域の実際の縦幅に対するビューポートの縦幅の割合とスクロール量は値の性質上、
-    // 前者のほうが先に呼び出される必要があります。
-    const currentViewportHeightRatio = this.textArea.clientHeight / this.textArea.scrollHeight;
-    if (currentViewportHeightRatio !== this.lastDispatchedEventValue.viewportHeightRatio) {
-      this.lastDispatchedEventValue.viewportHeightRatio = currentViewportHeightRatio;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportHeightRatio", {
-        detail: {
-          viewportHeightRatio: this.lastDispatchedEventValue.viewportHeightRatio
-        }
-      }));
-    }
-    const currentScrollTop = this.textArea.scrollTop;
-    if (currentScrollTop !== this.lastDispatchedEventValue.scrollTop) {
-      this.lastDispatchedEventValue.scrollTop = currentScrollTop;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollTop", {
-        detail: {
-          scrollTop: this.lastDispatchedEventValue.scrollTop
-        }
-      }));
-    }
-
-    // 文字領域の実際の横幅に対するビューポートの横幅の割合とスクロール量は値の性質上、
-    // 前者のほうが先に呼び出される必要があります。
-    const currentViewportWidthRatio = this.textArea.clientWidth / this.textArea.scrollWidth;
-    if (currentViewportWidthRatio !== this.lastDispatchedEventValue.viewportWidthRatio) {
-      this.lastDispatchedEventValue.viewportWidthRatio = currentViewportWidthRatio;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaViewportWidthRatio", {
-        detail: {
-          viewportWidthRatio: this.lastDispatchedEventValue.viewportWidthRatio
-        }
-      }));
-    }
-    const currentScrollLeft = this.textArea.scrollLeft;
-    if (currentScrollLeft !== this.lastDispatchedEventValue.scrollLeft) {
-      this.lastDispatchedEventValue.scrollLeft = currentScrollLeft;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeTextAreaScrollLeft", {
-        detail: {
-          scrollLeft: this.lastDispatchedEventValue.scrollLeft
-        }
-      }));
-    }
-
-    // その他の値は順番を気にせず呼びだします。
-    const currentHeight = this.textArea.clientHeight;
-    if (currentHeight !== this.lastDispatchedEventValue.height) {
-      this.lastDispatchedEventValue.height = currentHeight;
-      this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaHeight"));
-    }
-    const currentSelectingRange = Boolean(this.selectionRange.length);
-    if (currentSelectingRange !== this.lastDispatchedEventValue.selecingRange) {
-      this.lastDispatchedEventValue.selecingRange = currentSelectingRange;
-      this.editor.dispatchEvent(new CustomEvent("custom-changeSelectingRange", {
-        detail: {
-          selectingRange: this.lastDispatchedEventValue.selecingRange
-        }
-      }));
-    }
-    const currentWidth = this.textArea.clientWidth;
-    if (currentWidth !== this.lastDispatchedEventValue.width) {
-      this.lastDispatchedEventValue.width = currentWidth;
-      this.editor.dispatchEvent(new CustomEvent("custom-resizeTextAreaWidth", {
-        detail: {
-          width: this.lastDispatchedEventValue.width
-        }
-      }));
-    }
-  };
-
-  /**
-   * 現在フォーカスしている行の最後の文字のインデックスを返します。
-   */
-  getColumnsLastIndex = () => {
-    return this.characters[this.focusedRowIndex].length - 1;
-  };
-
-  /**
-   * 現在フォーカスしている文字を返します。
-   * @returns {null|HTMLSpanElement} フォーカスしている文字です。
-   */
-  getFocusedCharacter = () => {
-    if (this.focusedRowIndex === null) {
-      return null;
-    }
-    return this.characters[this.focusedRowIndex][this.focusedColumnIndex];
-  };
-
-  /**
-   * Webページに挿入中の行のうち、最後の行のインデックスを返します。
-   */
-  getRowsLastIndex = () => {
-    return this.textLines.length - 1;
   };
 
   /**
@@ -651,43 +458,6 @@ const TextArea = class {
   };
 
   /**
-   * mousedownイベントが発生したHTML要素に応じてフォーカス位置を更新します。
-   * @param {Event} event mousedownイベントのEventオブジェクトです。
-   */
-  moveFocusPointByMousedownTarget = (event) => {
-
-    // 文字（行末文字含む）がクリックされたされたときは、その文字をそのままフォーカス位置とします。
-    if (event.target.classList.contains("tom-editor__text-area__character")) {
-
-      // MousedonwEvent.pathプロパティが非標準につき一部のブラウザで実装されていないので、
-      // 当該プロパティと同等の結果を内包する配列を用意して、それを利用することにします。
-      const path = [];
-      let checkingTarget = event.target;
-      while (checkingTarget !== null) {
-        path.push(checkingTarget);
-        checkingTarget = checkingTarget.parentElement;
-      }
-
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === path[1];
-      });
-      this.focusedColumnIndex = this.characters[this.focusedRowIndex].findIndex((character) => {
-        return character === event.target;
-      });
-      return;
-    }
-
-    // 行がクリックされたときは当該行の行末文字をフォーカス位置とします。
-    if (event.target.classList.contains("tom-editor__text-area__text-line")) {
-      this.focusedRowIndex = this.textLines.findIndex((textLine) => {
-        return textLine === event.target;
-      });
-      this.focusedColumnIndex = this.getColumnsLastIndex();
-      return;
-    }
-  };
-
-  /**
    * キャレット上で押されたキーに応じた処理を実行します。
    * 一部のキー処理で非同期のClipboard APIを利用しているため、
    * その他同期的なキー入力処理と同じ使い勝手になるように全体をPromiseで囲って非同期処理化しています。
@@ -915,152 +685,16 @@ const TextArea = class {
   };
 
   /**
-   * 編集履歴を保存します。
-   */
-  saveHistory = () => {
-
-    // 初期化時の処理です。
-    if (typeof this.history === "undefined") {
-      this.history = {
-        data: [{
-          characters: this.characters.map((characters) => {
-            return Array.from(characters);
-          }),
-          focusedColumnIndex: 0,
-          focusedRowIndex: 0,
-          scrollLeft: 0,
-          scrollTop: 0,
-          textLines: Array.from(this.textLines)
-        }],
-        index: 0
-      };
-      return;
-    }
-
-    // 現在の状態が編集履歴の最新となるように保存します。
-    // Redo中ならば未来の履歴は全て削除します。
-    this.history.data.splice(this.history.index + 1);
-    this.history.data.push({
-      characters: this.characters.map((characters) => {
-        return Array.from(characters);
-      }),
-      focusedColumnIndex: this.focusedColumnIndex,
-      focusedRowIndex: this.focusedRowIndex,
-      scrollLeft: this.textArea.scrollLeft,
-      scrollTop: this.textArea.scrollTop,
-      textLines: Array.from(this.textLines)
-    });
-    this.history.index += 1;
-  };
-
-  /**
-   * 現在のフォーカス位置がビューポート外や見えにくい位置にあるときは自動的にスクロールします。
-   */
-  scrollAutomatically = () => {
-
-    // 自動スクロールはフォーカスされた文字が文字領域外に出たときには必ず実行されます。
-    // ただ、それだと当該文字が文字領域縁ギリギリのところに置かれつづけるために視認性が悪いという問題が残ります、
-    // そこで、いくらか内側にも処理の対象範囲を広げています。
-    // 以下4つの変数は上下左右の対象範囲を何文字分広げるかという値です。
-    const innerRangeTop = 0.5;
-    const innerRangeBottom = 1.5;
-    const innerRangeLeft = 1.5;
-    const innerRangeRight = 2.5;
-
-    const focusedCharacterRect = this.getFocusedCharacter().getBoundingClientRect();
-    const textAreaRect = this.textArea.getBoundingClientRect();
-    if (focusedCharacterRect.top < textAreaRect.top + focusedCharacterRect.height * innerRangeTop) {
-      this.textArea.scrollTop -= (textAreaRect.top + focusedCharacterRect.height * innerRangeTop) - focusedCharacterRect.top;
-    } else if (focusedCharacterRect.bottom > textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom) {
-      this.textArea.scrollTop += focusedCharacterRect.bottom - (textAreaRect.bottom - focusedCharacterRect.height * innerRangeBottom);
-    }
-    if (focusedCharacterRect.left < textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) {
-      this.textArea.scrollLeft -= (textAreaRect.left + focusedCharacterRect.width * innerRangeLeft) - focusedCharacterRect.left;
-    } else if (focusedCharacterRect.right > textAreaRect.right - focusedCharacterRect.width * innerRangeRight) {
-      this.textArea.scrollLeft += focusedCharacterRect.right - (textAreaRect.right - focusedCharacterRect.width * innerRangeRight);
-    }
-  };
-
-  /**
    * イベントリスナーを実装します。
    * @param {boolean} readonlyFlag 読みとり専用状態にするならばtrueが入っています。
    */
   setEventListeners = (readonlyFlag) => {
 
-    // エディターの寸法が変化したのを通知します。
-    new ResizeObserver(this.dispatchEvents).observe(this.textArea);
-
-    // 水平スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
-    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
-    this.editor.addEventListener("custom-scrollHorizontally", (event) => {
-      if (event.detail.hasOwnProperty("scrollSize")) {
-        this.textArea.scrollLeft += event.detail.scrollSize;
-      } else if (event.detail.hasOwnProperty("scrollRatio")) {
-        this.textArea.scrollLeft += event.detail.scrollRatio / this.textArea.clientWidth * this.textArea.scrollWidth;
-      } else {
-        return;
-      }      
-      this.dispatchEvents();
-    });
-
-    // 垂直スクロール操作が発生しましたので、垂直スクロール量を文字領域に反映します。
-    // event.detail.scrollRatioは比率スクロール、event.detail.scrollSizeは絶対値でのスクロールです。
-    this.editor.addEventListener("custom-scrollVertically", (event) => {
-      if (event.detail.hasOwnProperty("scrollSize")) {
-        this.textArea.scrollTop += event.detail.scrollSize;
-      } else if (event.detail.hasOwnProperty("scrollRatio")) {
-        this.textArea.scrollTop += event.detail.scrollRatio / this.textArea.clientHeight * this.textArea.scrollHeight;
-      } else {
-        return;
-      }
-      this.dispatchEvents();
-    });
-
     // 読みとり専用状態にする場合は一部のイベントリスナーを省略します。
     // 以下、読み取り専用状態時は省略する値やイベントリスナーです。
     if (!readonlyFlag) {
 
-      // IMEによる入力処理の状態や値をまとめたオブジェクトです。
-      const compositionState = {
-        lastData: null,
-        startColumnIndex: null,
-        startSelectionStart: null
-      };
-
-      // IMEによる入力処理のフラグです。
-      let isComposing = false;
-
-      // マウスドラッグによる範囲選択処理のフラグです。
-      let isDragging = false;
-
-      // 文字領域がクリックされたので、クリックされた場所に応じてフォーカス位置を更新します。
-      // また、範囲選択状態にあるならば当該状態を解除するとともにマウスドラッグ処理のフラグを立てます。
-      this.textArea.addEventListener("mousedown", (event) => {
-        isDragging = true;
-        this.unselctRange();
-        this.moveFocusPointByMousedownTarget(event);
-        this.scrollAutomatically();
-        this.dispatchEvents();
-      });
-
-      // キャレットが外れたので、フォーカスも外します。
-      this.editor.addEventListener("custom-blur", () => {
-        this.unselctRange();
-        this.focusedRowIndex = null;
-        this.focusedColumnIndex = null;
-        this.dispatchEvents();
-      });
-
-      // IMEによる入力処理のフラグを下ろし、当該処理に関する値を消去します。
-      this.editor.addEventListener("custom-compositionend", () => {
-        isComposing = false;
-        compositionState.lastData = null;
-        compositionState.startColumnIndex = null;
-        compositionState.startSelectionStart = null;
-        if (this.differenceBetweenCurrentAndHistory()) {
-          this.saveHistory();
-        }
-      });
+      
 
       // IMEによる入力処理のフラグを立て、当該処理に関する値を初期化します。
       this.editor.addEventListener("custom-compositionstart", () => {
@@ -1162,18 +796,6 @@ const TextArea = class {
         this.dispatchEvents();
       });
     }
-  };
-
-  /**
-   * 選択範囲を解除します。
-   */
-  unselctRange = () => {
-    for (const charactersInSelectionRange of this.selectionRange) {
-      for (const characterInSelectionRange of charactersInSelectionRange) {
-        characterInSelectionRange.classList.remove("tom-editor__text-area__character--select");
-      }
-    }
-    this.selectionRange = [];
   };
 };
 
