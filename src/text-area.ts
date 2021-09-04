@@ -617,7 +617,7 @@ const TextArea = class {
    */
   loadHistory = (index: number): void => {
     if (typeof this.history.data[index] === "undefined") {
-      return;
+      throw new Error(`TextArea.prototype.loadHistory: 存在しない履歴が参照されています（${index}）。`);
     }
 
     // 指定された編集履歴に保存された文字領域の状態をWebページに反映します。
@@ -634,7 +634,8 @@ const TextArea = class {
     this.textArea.scrollTop = this.history.data[index].scrollTop;
 
     // プロパティの値にも反映させます。
-    this.focusPointIndex = this.history.data[index].focusPointIndex;
+    this.focusPointIndex.column = this.history.data[index].focusPointIndex.column;
+    this.focusPointIndex.row = this.history.data[index].focusPointIndex.row;
     this.textAreaContentList = this.history.data[index].textAreaContentList.map((textAreaContent): TextAreaContent => {
       return {
         characterList: Array.from(textAreaContent.characterList),
@@ -1044,9 +1045,10 @@ const TextArea = class {
 
         // Ctrl + yで1つ後の編集状態に移動します。
         if (key === "y") {
-          if (!this.history.data[this.history.index + 1]) {
+          if (typeof this.history.data[this.history.index + 1] === "undefined") {
             return resolve(false);
           }
+          this.unselctRange();
           this.history.index += 1;
           this.loadHistory(this.history.index);
           return resolve(true);
@@ -1054,9 +1056,10 @@ const TextArea = class {
 
         // Ctrl + zで1つ前の編集状態に移動します。
         if (key === "z") {
-          if (!this.history.data[this.history.index - 1]) {
+          if (typeof this.history.data[this.history.index - 1] === "undefined") {
             return resolve(false);
           }
+          this.unselctRange();
           this.history.index -= 1;
           this.loadHistory(this.history.index);
           return resolve(true);
