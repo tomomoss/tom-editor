@@ -626,6 +626,9 @@ const TextArea = class {
       const textLine = this.history.data[index].textAreaContentList[i].textLine;
       textLine.textContent = "";
       for (const character of this.history.data[index].textAreaContentList[i].characterList) {
+        if (character.classList.contains(this.styleClass.character.modifier.select)) {
+          character.classList.remove(this.styleClass.character.modifier.select);
+        }
         textLine.appendChild(character);
       }
       this.textLinesWrapper.appendChild(textLine);
@@ -634,8 +637,10 @@ const TextArea = class {
     this.textArea.scrollTop = this.history.data[index].scrollTop;
 
     // プロパティの値にも反映させます。
-    this.focusPointIndex.column = this.history.data[index].focusPointIndex.column;
-    this.focusPointIndex.row = this.history.data[index].focusPointIndex.row;
+    this.focusPointIndex = {
+      column: this.history.data[index].focusPointIndex.column,
+      row: this.history.data[index].focusPointIndex.row
+    };
     this.textAreaContentList = this.history.data[index].textAreaContentList.map((textAreaContent): TextAreaContent => {
       return {
         characterList: Array.from(textAreaContent.characterList),
