@@ -35,7 +35,7 @@ type TextAreaHistoryList = {
   index: number
 };
 type TOMEditorOption = {
-  readonly: boolean
+  readonly?: boolean
 };
-type ValueObserver = (value?: string) => void;
+type ValueObserver = (value: string) => void;
 type VerticalScrollbarArea = {};

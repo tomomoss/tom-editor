@@ -41,6 +41,20 @@ const Underline = class {
   underline: HTMLDivElement;
 
   /**
+   * 下線のスタイルを調整します。
+   */
+  adjustUnderlineStyle = () => {
+    if (this.lastSelectingRange || this.lastTop === null) {
+      if (this.underline.classList.contains(this.styleClass.underline.modifier.valid)) {
+        this.underline.classList.remove(this.styleClass.underline.modifier.valid);
+      }
+      return;
+    }
+    this.underline.classList.add(this.styleClass.underline.modifier.valid);
+    this.underline.style.top = `${this.lastTop}px`;
+  };
+
+  /**
    * フォーカス位置を強調する下線を生成します。
    * @returns {HTMLDivElement} フォーカス位置を強調する下線です。
    */
@@ -93,13 +107,7 @@ const Underline = class {
         throw new Error("Underline.prototype.defineSubscribingEventListeners: TOMEditor-changeselectingrangeイベントのdetailプロパティが空です。");
       }
       this.lastSelectingRange = event.detail.selectingRange;
-      if (this.lastSelectingRange || this.lastTop === null) {
-        if (this.underline.classList.contains(this.styleClass.underline.modifier.valid)) {
-          this.underline.classList.remove(this.styleClass.underline.modifier.valid);
-        }
-        return;
-      }
-      this.underline.classList.add(this.styleClass.underline.modifier.valid);
+      this.adjustUnderlineStyle();
     });
 
     // フォーカス位置が変更されたので、変更後の座標に下線を移動させます。
@@ -108,14 +116,7 @@ const Underline = class {
         throw new Error("Underline.prototype.defineSubscribingEventListeners: TOMEditor-movefocuspointpositionイベントのdetailプロパティが空です。");
       }
       this.lastTop = event.detail.top;
-      if (this.lastTop === null || this.lastSelectingRange) {
-        if (this.underline.classList.contains(this.styleClass.underline.modifier.valid)) {
-          this.underline.classList.remove(this.styleClass.underline.modifier.valid);
-        }
-        return;
-      }
-      this.underline.classList.add(this.styleClass.underline.modifier.valid);
-      this.underline.style.top = `${this.lastTop}px`;
+      this.adjustUnderlineStyle();
     });
 
     // 文字領域の横幅が変化したので、下線の横幅も合わせます。

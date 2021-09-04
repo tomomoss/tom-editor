@@ -30,7 +30,7 @@ import {
  * @param {...any} rest ※引数検査用の引数です。
  */
 const Main = class extends EventTarget implements Main {
-  constructor(editorContainer: HTMLElement, editorOption: TOMEditorOption, ...rest: any) {
+  constructor(editorContainer: HTMLElement, editorOption?: TOMEditorOption, ...rest: any) {
     super();
     if (typeof editorContainer === "undefined") {
       throw new Error("第1引数が指定されていません。第1引数にはエディター実装対象となるHTML要素を指定してください。");
@@ -96,7 +96,7 @@ const Main = class extends EventTarget implements Main {
    * @returns {string} ライブラリのバージョンです。
    */
   static get version(): string {
-    return "4.4.1";
+    return "4.4.2";
   }
 
   /**
