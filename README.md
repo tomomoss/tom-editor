@@ -2,9 +2,9 @@
 
 TOM Editorはブラウザ環境に簡素なエディターを実装するライブラリです。
 
-現在のバージョンは4.4.0です。以下より動作確認ができます。
+現在のバージョンは4.4.1です。以下より動作確認ができます。
 
-[TOM Editor 4.4.0 動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 4.4.1動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
 
 ## 導入手順
 
