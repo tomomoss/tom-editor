@@ -36,7 +36,9 @@ singleModeRadio.addEventListener("change", () => {
   // エディターを実装します。
   const editorContainer = createTOMEditorContainer(singleModeRadio.value);
   main.appendChild(editorContainer);
-  new TOMEditor(editorContainer);
+  new TOMEditor(editorContainer, {
+    autofocus: true
+  });
 });
 
 // マルチプルモード時のエディター実装処理です。
@@ -52,8 +54,12 @@ multipleModeRadio.addEventListener("change", () => {
   const outputEditorContainer = createTOMEditorContainer(multipleModeRadio.value);
   main.appendChild(inputEditorContainer);
   main.appendChild(outputEditorContainer);
-  const inputEditor = new TOMEditor(inputEditorContainer);
-  const outputEditor = new TOMEditor(outputEditorContainer, {readonly: true});
+  const inputEditor = new TOMEditor(inputEditorContainer, {
+    autofocus: true
+  });
+  const outputEditor = new TOMEditor(outputEditorContainer, {
+    readonly: true
+  });
 
   // エディター間を連携させます。
   inputEditor.valueObserver = (value) => {
