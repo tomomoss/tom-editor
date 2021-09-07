@@ -35,6 +35,7 @@ type TextAreaHistoryList = {
   index: number;
 };
 type TOMEditorOption = {
+  autofocus?: boolean;
   readonly?: boolean;
 };
 type ValueObserver = (value: string) => void;
