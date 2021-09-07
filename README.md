@@ -2,9 +2,9 @@
 
 TOM Editorはブラウザ環境に簡素なエディターを実装するライブラリです。
 
-現在のバージョンは4.4.3です。以下より動作確認ができます。
+現在のバージョンは4.5.0です。以下より動作確認ができます。
 
-[TOM Editor 4.4.3動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
+[TOM Editor 4.5.0動作確認ページ](https://tomomoss.github.io/tom-editor/trial)
 
 ## 導入手順
 
@@ -67,6 +67,18 @@ const tomEditor = new TOMEditor(tomEditorContainer, setting);
 ## エディターの設定
 
 `TOMEditor` クラスのコンストラクタの第2引数にはエディターの挙動を制御する情報をまとめたオブジェクトを渡すことができます。
+
+### autofocus
+
+エディター実装時に1行目1列目に自動的にフォーカスさせたい場合は `autofocus` プロパティに `true` を設定してください。
+
+```javascript
+const tomEditorContainer = document.querySelector(".tom-editor-container");
+const setting = {
+  autofocus: true
+};
+const tomEditor = new TOMEditor(tomEditorContainer, setting);
+```
 
 ### readonly
 
