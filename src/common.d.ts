@@ -1,13 +1,13 @@
 // 以下、特定の括りに属さない型エイリアスです。
 type CompositionState = {
-  isComposing: boolean,
-  lastData: string | null,
-  startColumnIndex: number | null,
-  startSelectionStart: number | null
+  isComposing: boolean;
+  lastData: string | null;
+  startColumnIndex: number | null;
+  startSelectionStart: number | null;
 };
 type FocusPointIndex = {
-  column: number | null,
-  row: number | null
+  column: number | null;
+  row: number | null;
 };
 type LastDispatchedEventValue =
   TOMEditorChangeFocusedRowIndexEvent &
@@ -18,24 +18,25 @@ type LastDispatchedEventValue =
   TOMEditorChangeTextAreaScrollTop &
   TOMEditorChangeTextAreaViewportHeightRatio &
   TOMEditorChangeTextAreaViewportWidthRatio &
-  TOMEditorResizeTextAreaWidth
+  TOMEditorResizeTextAreaWidth;
 type Main = EventTarget;
 type TextAreaContent = {
-  characterList: HTMLSpanElement[],
-  textLine: HTMLDivElement
+  characterList: HTMLSpanElement[];
+  textLine: HTMLDivElement;
 };
 type TextAreaHistory = {
-  focusPointIndex: FocusPointIndex,
-  scrollLeft: number,
-  scrollTop: number,
-  textAreaContentList: TextAreaContent[]
+  focusPointIndex: FocusPointIndex;
+  scrollLeft: number;
+  scrollTop: number;
+  textAreaContentList: TextAreaContent[];
 };
 type TextAreaHistoryList = {
-  data: TextAreaHistory[]
-  index: number
+  data: TextAreaHistory[];
+  index: number;
 };
 type TOMEditorOption = {
-  readonly?: boolean
+  autofocus?: boolean;
+  readonly?: boolean;
 };
 type ValueObserver = (value: string) => void;
 type VerticalScrollbarArea = {};

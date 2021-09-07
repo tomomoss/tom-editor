@@ -1,79 +1,79 @@
 // 以下、カスタムイベントに関係する型エイリアスです。
 type TOMEditorBlurEvent = {};
 type TOMEditorChangeFocusedRowIndexEvent = {
-  focusedRowIndex: number | null
+  focusedRowIndex: number | null;
 };
 type TOMEditorChangeNumberOfTextLinesEvent = {
-  numberOfTextLines: number
+  numberOfTextLines: number;
 };
 type TOMEditorChangeSelectiingRange = {
-  selectingRange: boolean
+  selectingRange: boolean;
 };
 type TOMEditorChangeTextAreaScrollLeft = {
-  scrollLeft: number
+  scrollLeft: number;
 };
 type TOMEditorChangeTextAreaScrollTop = {
-  scrollTop: number
+  scrollTop: number;
 };
 type TOMEditorChangeTextAreaViewportHeightRatio = {
-  viewportHeightRatio: number
+  viewportHeightRatio: number;
 };
 type TOMEditorChangeTextAreaViewportWidthRatio = {
-  viewportWidthRatio: number
+  viewportWidthRatio: number;
 };
 type TOMEditorCompositionEndEvent = {};
 type TOMEditorCompositionStartEvent = {};
 type TOMEditorDragHorizontalScrollbarEvent = {
-  distance: number
+  distance: number;
 };
 type TOMEditorDragLineNumberEvent = {
-  draggedIndex: number
+  draggedIndex: number;
 };
 type TOMEditorDragVerticalScrollbarEvent = {
-  distance: number
+  distance: number;
 };
 type TOMEditorFirstInitializeEvent = {
-  editor: HTMLDivElement,
-  horizontalScrollbarArea: HTMLDivElement
+  editor: HTMLDivElement;
+  horizontalScrollbarArea: HTMLDivElement;
 };
 type TOMEditorHorizontalScrollEvent = {
-  scrollSize: number
+  scrollSize: number;
 };
 type TOMEditorInputEvent = {
-  data: string,
-  selectionStart: number
+  data: string;
+  selectionStart: number;
 };
 type TOMEditorKeyDownEvent = {
-  ctrlKey: boolean,
-  key: string,
-  shiftKey: boolean
+  ctrlKey: boolean;
+  key: string;
+  shiftKey: boolean;
 };
 type TOMEditorMouseDownHorizontalScrollbarAreaEvent = TOMEditorMouseDownScrollbarAreaEvent;
 type TOMEditorMouseDownLineNumber = {
-  lineNumberIndex: number
+  lineNumberIndex: number;
 };
 type TOMEditorMouseDownScrollbarAreaEvent = {
-  scrollDirection: 1 | -1
+  scrollDirection: 1 | -1;
 };
 type TOMEditorMouseDownVerticalScrollbarAreaEvent = TOMEditorMouseDownScrollbarAreaEvent;
 type TOMEditorMouseMoveEvent = {
-  left: number,
-  target: HTMLElement,
-  top: number
+  left: number;
+  target: HTMLElement;
+  top: number;
 };
 type TOMEditorMoveFocusPointPositionEvent = {
-  left: number | null,
-  top: number | null
+  left: number | null;
+  top: number | null;
 };
 type TOMEditorResizeTextAreaHeight = {
-  height: number
+  height: number;
 };
 type TOMEditorResizeTextAreaWidth = {
-  width: number
+  width: number;
 };
 type TOMEditorSecondInitializeEvent = {
-  lineNumberAreaWidth: number
+  lineNumberAreaWidth: number;
 };
 type TOMEditorVerticalScrollEvent = {
-  scrollSize: number
+  scrollSize: number;
 };

@@ -43,6 +43,12 @@ const Main = class extends EventTarget implements Main {
         throw new Error(`第2引数に${typeof editorOption}型の値が指定されています。第2引数にはエディターの挙動を制御するオブジェクトを指定してください。`);
       }
       for (const key in editorOption) {
+        if (key === "autofocus") {
+          if (typeof editorOption.autofocus !== "boolean") {
+            throw new Error("第2引数のキー「autofocus」には真偽値を指定してください。");
+          }
+          continue;
+        }
         if (key === "readonly") {
           if (typeof editorOption.readonly !== "boolean") {
             throw new Error("第2引数のキー「readonly」には真偽値を指定してください。");
@@ -61,12 +67,23 @@ const Main = class extends EventTarget implements Main {
     // こちらが把握できないHTML要素が入っているときの挙動が想定できないためです。
     editorContainer.innerHTML = "";
 
-    // エディターの挙動を制御するオブジェクトの値を利用できる状態に加工します。
+    // エディターの挙動を制御するオブジェクトの値を利用しやすい状態に加工します。
+    let autofocusFlag: boolean;
     let readonlyFlag: boolean;
-    if (typeof editorOption === "undefined" || typeof editorOption.readonly === "undefined") {
+    if (typeof editorOption === "undefined") {
+      autofocusFlag = false;
       readonlyFlag = false;
     } else {
-      readonlyFlag = editorOption.readonly;
+      if (typeof editorOption.autofocus === "undefined") {
+        autofocusFlag = false;
+      } else {
+        autofocusFlag = editorOption.autofocus;
+      }
+      if (typeof editorOption.readonly === "undefined") {
+        readonlyFlag = false;
+      } else {
+        readonlyFlag = editorOption.readonly;
+      }
     }
 
     // エディターを構成する主要な要素を2段階に分けて初期化します。
@@ -89,6 +106,15 @@ const Main = class extends EventTarget implements Main {
         lineNumberAreaWidth: this.lineNumberArea.lineNumberArea.clientWidth
       } as TOMEditorSecondInitializeEvent
     }));
+
+    // エディター設定の「autofocus」が有効になっている場合は、エディター実装時にフォーカスします。
+    if (autofocusFlag) {
+      this.textArea.focusPointIndex = {
+        column: 0,
+        row: 0
+      };
+      this.textArea.dispatchEvents();
+    }
   }
 
   /**
@@ -96,7 +122,7 @@ const Main = class extends EventTarget implements Main {
    * @returns {string} ライブラリのバージョンです。
    */
   static get version(): string {
-    return "4.4.3";
+    return "4.5.0";
   }
 
   /**

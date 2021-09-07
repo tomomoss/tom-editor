@@ -1,89 +1,89 @@
 // 以下、エディターを構成する主要な要素で用いられるCSSクラスをまとめたオブジェクトの構造を表す型エイリアスです。
 type CaretStyleClass = StyleClass & {
   caret: {
-    element: string,
+    element: string;
     modifier: {
-      animation: string,
-      focus: string
-    }
-  }
+      animation: string;
+      focus: string;
+    };
+  };
 };
 type EditorStyleClass = StyleClass & {
   editor: {
-    element: string
-  },
+    element: string;
+  };
   editorWrapper: {
-    element: string
-  }
+    element: string;
+  };
 };
 type HorizontalScrollbarAreaStyleClass = StyleClass & {
   horizontalScrollbar: {
-    element: string,
+    element: string;
     modifier: {
-      valid: string
-    }
-  },
+      valid: string;
+    };
+  };
   horizontalScrollbarArea: {
-    element: string
-  }
+    element: string;
+  };
 };
 type LineNumberAreaStyleClass = StyleClass & {
   lineNumber: {
-    element: string,
+    element: string;
     modifier: {
-      focus: string,
-      readOnly: string
-    }
-  },
+      focus: string;
+      readOnly: string;
+    };
+  };
   lineNumberArea: {
-    element: string,
+    element: string;
     modifier: {
-      readOnly: string
-    }
-  }
+      readOnly: string;
+    };
+  };
 };
 type StyleClass = {
   [key: string]: {
-    element: string,
+    element: string;
     modifier?: {
-      [key: string]: string
-    }
-  }
+      [key: string]: string;
+    };
+  };
 };
 type TextAreaStyleClass = StyleClass & {
   character: {
-    element: string,
+    element: string;
     modifier: {
-      eol: string,
-      select: string
-    }
-  },
+      eol: string;
+      select: string;
+    };
+  };
   textArea: {
-    element: string
-  },
+    element: string;
+  };
   textLine: {
-    element: string
-  },
+    element: string;
+  };
   textLinesWrapper: {
-    element: string
-  }
+    element: string;
+  };
 };
 type UnderlineStyleClass = StyleClass & {
   underline: {
-    element: string,
+    element: string;
     modifier: {
-      valid: string
-    }
-  }
+      valid: string;
+    };
+  };
 };
 type VerticalScrollbarAreaStyleClass = StyleClass & {
   verticalScrollbar: {
-    element: string,
+    element: string;
     modifier: {
-      valid: string
-    }
-  },
+      valid: string;
+    };
+  };
   verticalScrollbarArea: {
-    element: string
-  }
+    element: string;
+  };
 };
