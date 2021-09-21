@@ -122,7 +122,7 @@ const Main = class extends EventTarget implements Main {
    * @returns {string} ライブラリのバージョンです。
    */
   static get version(): string {
-    return "4.5.0";
+    return "4.6.0";
   }
 
   /**
