@@ -69,6 +69,7 @@ $scrollbar-hovering-color: rgb(221, 221, 221);
     position: absolute;
     right: 0;
     top: 0;
+    user-select: none;
     white-space: pre;
     width: 100%;
   }
